@@ -76,14 +76,15 @@ for(chr in chrstr) {
       maxcp = round(diff(range(dat$x)) / nrBasesPerSeg)
 
       if(rand==2)
-         dat$y = sample(dat$y)
+        dat$y = dat$y[ sample(nrow(dat$y)), ]
       
       seg = findSegments(dat$y, maxk=maxk, maxcp=maxcp, verbose=99)
       save(seg, dat, file=datfn, compress=TRUE)
-
-  } else {
-    cat(datfn, "exists, skipping.\n")
-  } ## if
-} # for chr
+      
+    } else {
+      cat(datfn, "exists, skipping.\n")
+    } ## if
+  } ## for rand
+} ## for chr
 
 
