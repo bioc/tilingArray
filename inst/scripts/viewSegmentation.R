@@ -40,7 +40,6 @@ cat("\n")
 ##     gff = gff, nrBasesPerSeg = 1500)
 
 
-
 ## new transcripts:
 sel = which( (segScore$same.feature=="") &
              (segScore$frac.dup < 0.2) &
@@ -55,9 +54,7 @@ ord = order(segScore$level[sel], decreasing=TRUE)
 sel = sel[ord]
 
 outtab = cbind(plot=I(paste('<a href="', sel, '.tiff">', sel, '</a>', sep="")),
-               segScore[sel, 1:4],
-               length=as.integer(segScore$end[sel]-segScore$start[sel]+1),
-               segScore[sel, 5:ncol(segScore)])
+               segScore[sel, ])
   
 for(i in which(colnames(outtab) %in% c("start", "end",
      "same.dist.start2feat", "same.dist.end2feat",

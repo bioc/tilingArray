@@ -50,7 +50,7 @@ scoreSegments = function(x, gff,
       segScore$strand[idx]   = strand
       segScore$start[idx]    = dat$x[i1]
       segScore$end[idx]      = dat$x[i2]
-      segScore$length[idx]   = dat$x[i2]-dat$x[i1]
+      segScore$length[idx]   = dat$x[i2]-dat$x[i1]+1
       segScore$frac.dup[idx] = mapply(function(h1, h2) {
         z = dat$xunique[h1:h2]
         1-sum(z)/length(z)
