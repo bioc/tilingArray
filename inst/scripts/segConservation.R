@@ -37,9 +37,6 @@ groups = list(at = which(!is.na(segScore$same.feature)),
 titgr = c("Annotated features", "Unannotated but transcribed",
           "Unannotated and not transcribed")
 
-colors = brewer.pal(9, "GnBu")[c(8,5,2)]
-par(mfrow=c(3,2))
-
 lE = -log(blastres[[11]], 10)
 lE[lE>60] = 60
 bs = blastres[[12]]
@@ -47,17 +44,30 @@ bs[bs>400] = 400
 
 brE = seq(min(lE), max(lE), length=50)
 brS = seq(min(bs), max(bs), length=50)
+
+## A 'match' is a S. cerevisiae segment that has a BLAST hit in S. pombe.
+## A 'hit' is a BLAST hit in S. pombe, corresponding to a S. cerevisiae segment
+hits = lapply(groups, function(g) {
+  h=which(blastres[[1]] %in% g)
+  stopifnot(!any(duplicated(h)))
+  return(h)
+})
+matches = lapply(groups, function(g) {
+  which(g %in% blastres[[1]])
+})
+
+colors = brewer.pal(4, "Paired")[c(4,2,1)]
+par(mfrow=c(3,2))
+
 for(i in seq(along=groups)) {
   ntot = length(groups[[i]])
-  ## A 'match' is a S. cerevisiae segment that has a BLAST hit in S. pombe.
-  ## A 'hit' is a BLAST hit in S. pombe, corresponding to a S. cerevisiae segment
-  hits = which(blastres[[1]] %in% groups[[i]])
-  stopifnot(!any(duplicated(hits)))
-  matches = which(groups[[i]] %in% blastres[[1]])
-  
   txt = paste(length(matches), " / ", ntot, " (", signif(length(matches)/ntot, 3)*100, "%)")
-  hist(lE[hits], col=colors[i], main=titgr[i], xlab=expression(-log[10](E-value)), breaks=brE)
-  hist(bs[hits], col=colors[i], main= txt, xlab="Bit-score", breaks=brS)
+  hist(lE[hits[[i]]], col=colors[i], main=titgr[i], xlab=expression(-log[10](E-value)), breaks=brE)
+  hist(bs[hits[[i]]], col=colors[i], main= txt, xlab="Bit-score", breaks=brS)
 }
 
+dev.copy(pdf, file="segConservation.pdf", width=7, height=10); dev.off()
+
+print(wilcox.test(bs[hits[[2]]], bs[hits[[1]]]))
+print(wilcox.test(bs[hits[[2]]], bs[hits[[3]]]))
 
