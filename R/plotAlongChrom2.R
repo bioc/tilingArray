@@ -72,6 +72,11 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, segScore,
 
 plotSegmentation = function(x, y, coord=range(x), uniq, segScore, scoreShow,
   gff, chr, chrSeqname, strand, theViewports) {
+
+  ## could this be done better?
+  if(is.matrix(y))
+    y = rowMeans(y)
+    
   stopifnot(length(x)==length(y))
 
   istrand = match(strand, c("+", "-"))

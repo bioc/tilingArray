@@ -1,23 +1,24 @@
-options(error=recover)
+options(error=recover, warn=0)
 
 library("tilingArray")
 library("arrayMagic")   ## for write.htmltable
 library("geneplotter")  ## for savetiff
 
 source("colorRamp.R") ## can go with R 2.1
-## source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
+source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 
 if(!exists("gff"))
   load("probeAnno.rda")
 
-indir  = "segmentation-050209v4"
+indir = "segmentation-3polyA"
+## indir  = "segmentation-050209v4"
 outdir = file.path(indir, "viz")
 
 if(!file.exists(outdir) || !file.info(outdir)$isdir)
   stop(paste("Output directory", outdir, "does not exist."))
 
 if(!exists("segRes")) {
-  chrs = 1:17
+  chrs = 1:3
   segRes  = new.env()
   cat("Loading ")
   for(chr in chrs) {
@@ -29,16 +30,18 @@ if(!exists("segRes")) {
       assign(paste(chr, strand, "dat", sep="."), dat, envir=segRes)
     }
   } ## for chr
-  load(file.path(indir, "segScore.rda"))
+  ## load(file.path(indir, "segScore.rda"))
 } ## if
 cat("\n")
 
 
 
 #### Generic plot
-##plotAlongChrom2(chr=1, coord = c(0, 230)*1e3, segRes = segRes,
-##     gff = gff, nrBasesPerSeg = 1500)
+X11(); grid.newpage()
+plotAlongChrom2(chr=1, coord = c(0, 230)*1e3, segRes = segRes,
+     gff = gff, nrBasesPerSeg = 1500)
 
+stop()
 
 ## new transcripts:
 sel = which( (segScore$same.feature=="") &
