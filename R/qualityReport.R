@@ -43,6 +43,10 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
   exprs(x) = log(exprs(x), 2)
 
   ## normalize if applicable
+  if(hybeType=="Direct") {
+    cat("--> Not normalizing since it is a Direct hybe. <--\n")
+    normRef = NULL
+  }
   if(!is.null(normRef)) {
     if(is(normRef, "character"))
       normRef = read.affybatch(filenames=normRef, compress=compress, verbose=verbose)
@@ -77,6 +81,7 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
     for (i in seq(along=selG)) {
       wh = selG[i]
       plotAlongChrom(y    = exprs(x)[,s],
+                     hybeType = hybeType[s],
                      chr  = as.character(gff$seqname[wh]), 
                      from = gff$start[wh],
                      to   = gff$end[wh],
@@ -92,7 +97,7 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
     } ## for i
 
     ## calculate scores
-    probe = get(paste("probe", hybeType, sep=""), probeAnno)
+    probe = get(paste("probe", hybeType[s], sep=""), probeAnno)
     nsc = calcScores(exprs(x), probe)
 
     ## compare with unnomalized score (if applicable)

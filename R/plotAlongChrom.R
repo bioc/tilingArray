@@ -1,7 +1,7 @@
 
 ## gff and chrSeqname into an environment or object?
 
-plotAlongChrom = function(y, chr, from, to, extend=0, gff, chrSeqname,
+plotAlongChrom = function(y, hybeType, chr, from, to, extend=0, gff, chrSeqname,
   probeAnno, probeLength=25) {
   if(is.character(chr)) {
     chr = match(chr, chrSeqname)
@@ -32,10 +32,14 @@ plotAlongChrom = function(y, chr, from, to, extend=0, gff, chrSeqname,
   
   strandnames = c("-", "+")
   colors = c("-" = "#1F78B4", "+" = "#33A02C")
-  sgn    = c("-" = -1, "+" = +1)
+  sgn = list(
+    Reverse = c("-" = -1, "+" = +1),
+    Direct  = c("-" = +1, "+" = -1))
+  stopifnot(hybeType %in% names(sgn))
+
   stopifnot(identical(strandnames, names(colors)),
-            identical(strandnames, names(sgn)),
-            all(as.character(thegff$strand) %in% names(sgn)))
+            identical(strandnames, names(sgn[[hybeType]])),
+            all(as.character(thegff$strand) %in% strandnames))
   
   for(strand in strandnames) {
     pos = get(paste(chr, strand, "start", sep="."), envir=probeAnno)
@@ -45,7 +49,7 @@ plotAlongChrom = function(y, chr, from, to, extend=0, gff, chrSeqname,
     probesel = which(((pos >= start) & (pos+probeLength <= end)) |
                 ((pos+probeLength <= start) & (pos >= end)))
 
-    points(pos[probesel], y[ind[probesel]] * sgn[strand], pch=20, cex=0.5,
+    points(pos[probesel], y[ind[probesel]] * sgn[[hybeType]][strand], pch=20, cex=0.5,
            col= ifelse(uni[probesel], colors[strand], "grey"))
   }
 
@@ -57,7 +61,7 @@ plotAlongChrom = function(y, chr, from, to, extend=0, gff, chrSeqname,
   }
   if(any(featsel)) {
     strd = as.character(thegff$strand[featsel])
-    y  = sgn[strd] * 0.2 * maxy
+    y  = sgn[["Reverse"]][strd] * 0.2 * maxy
     ax = cbind(thegff$start[featsel], thegff$end[featsel])
     ax[strd=="-", ] = ax[strd=="-", 2:1]
     arrows(x0=ax[,1], y0=y, x1=ax[,2], y1=y, lwd=2, length=0.1, col="black", code=2)
