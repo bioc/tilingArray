@@ -81,7 +81,7 @@ for(chr in chrstr) {
 
     seg = findsegments(dat$y, maxk=maxk, maxcp=maxcp, verbose=99)
       
-    save(seg, dat, file=datfn)
+    save(seg, dat, file=datfn, compress=TRUE)
   } else {
     cat(datfn, "exists, skipping.\n")
   } ## if
