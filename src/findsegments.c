@@ -21,8 +21,8 @@
 
 /*  Global variables */
 double *G;  /* cost matrix */
-unsigned long int maxk; /* number of rows of G:    maximum length of segments */
-unsigned long int n;    /* number of columns of G: number of data points      */
+unsigned int maxk; /* number of rows of G:    maximum length of segments */
+unsigned int n;    /* number of columns of G: number of data points      */
 int verbose;
 
 /*--------------------------------------------------
@@ -57,7 +57,7 @@ void print_matrix_int(int* x, int nrow, int ncol, char *s) {
 -----------------------------------------------------------------*/
 void findsegments_dp(double* J, unsigned int* th, unsigned int maxcp) {
     unsigned int i, imin, cp, j, k, k0;
-    unsigned long int vs;
+    unsigned long vs;
     double z, zmin;
     double *mI;
     unsigned int * mt;
@@ -73,9 +73,11 @@ void findsegments_dp(double* J, unsigned int* th, unsigned int maxcp) {
        in the optimal segmentation from 0 to i with cp change points;
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
-    vs = (unsigned long int) maxcp * (unsigned long int) n;
+    vs = (unsigned long) maxcp * (unsigned long) n;
+	Rprintf("vs=%d\n", vs);
     mI = (double*) R_alloc(vs, sizeof(double));
-    vs = (unsigned long int) (maxcp-1) * (unsigned long int) n;
+    vs = (unsigned long) (maxcp-1) * (unsigned long) n;
+	Rprintf("vs=%d\n", vs);
     mt = (unsigned int*) R_alloc(vs, sizeof(unsigned int));
 
     /* initialize for cp=0: mI[k, 0] is simply G[k, 0] */
