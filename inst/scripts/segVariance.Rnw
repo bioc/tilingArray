@@ -1,0 +1,152 @@
+\documentclass[11pt]{article}
+\newcommand{\Robject}[1]{\texttt{#1}}
+\newcommand{\Rpackage}[1]{\textit{#1}}
+\newcommand{\Rfunction}[1]{\textit{#1}}
+\newcommand{\Rclass}[1]{\textit{#1}}
+
+\newcommand{\myincfig}[3]{%
+  \begin{figure}[htbp]
+    \begin{center}
+      \includegraphics[width=#2]{#1}
+      \caption{\label{#1}#3}
+    \end{center}
+  \end{figure}
+}
+
+\begin{document}
+
+%------------------------------------------------------------
+\title{Assessing the significance of segmentation}
+%------------------------------------------------------------
+\author{Wolfgang Huber}
+\maketitle
+% \tableofcontents
+
+<<setup, echo=FALSE>>=
+options(error=recover, warn=2)
+library("tilingArray")
+
+indir = "segmentation-050209v4"
+## indir = "segmentation-3polyA"
+
+nrchr = 3
+js = paste(rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "rda", sep=".")
+
+if(!exists("s")) {
+  s  = new.env()
+  r  = new.env()
+  cat("Loading: ")
+  for(j in js) {
+    cat(j, "")
+    load(file.path(indir, j))
+    assign(sub("rda", "seg", j), seg, envir=s)
+    assign(sub("rda", "dat", j), dat, envir=s)
+    if(FALSE){
+      load(file.path(indir, sub(".rda", "rand.rda", j)))
+      assign(sub("rda", "seg", j), seg, envir=r)
+      assign(sub("rda", "dat", j), dat, envir=r)
+    }
+  }
+  cat("\n")
+}
+
+calcStat = function(e, nrBasePerSeg = 1500) {
+  dat = get(sub("rda", "dat", j), envir=e)
+  seg = get(sub("rda", "seg", j), envir=e)
+  if(is.vector(dat$y))
+    dim(dat$y)=c(length(dat$y), 1)
+  stopifnot(nrow(dat$y)==length(dat$x))
+  cp = round(max(dat$x)/nrBasePerSeg)
+  th = c(1, seg$th[cp, 1:cp])
+  ct = cut(1:nrow(dat$y), breaks=th-1)
+  ## note: dat$y is a matrix with length(ct) rows. The recycling rule
+  ## works in our favour here!
+  sp = split(dat$y, ct)
+
+  v    = sapply(sp, var)
+  m    = sapply(sp, mean)
+  n    = listLen(sp)
+  res  = sapply(sp, function(x) {x-mean(x)}) ## residuals
+    
+  if(TRUE){
+    t = numeric(length(sp))
+    for (z in 2:length(sp)) {
+      sdev = sqrt(  ((n[z-1]-1)*v[z-1]+(n[z]-1)*v[z]) / (n[z]+n[z-1]-2) )
+      t[z] = (m[z]-m[z-1]) / (sdev*sqrt(1/n[z]+1/n[z-1]))
+    }
+    z = sample(2:length(sp), 1)
+    stopifnot(abs(t[z] - t.test(sp[[z]], sp[[z-1]], var.equal=TRUE)$statistic) < 1e-9)
+  }
+
+  if(FALSE)
+    t=c(0, diff(m))
+  
+  return(list(statistic=t, n=n, res=res))
+}
+j = js[3]
+@ 
+
+%--------------------------------------------------
+\section{Autocorrelation}
+%--------------------------------------------------
+First we have a look at the autocorrelation of the residuals.
+%
+<<acf, fig=TRUE, include=FALSE>>=
+ts = calcStat(s)
+acf(unlist(ts$res), lag.max=50, main="autocorrelation of residuals")
+@
+% 
+\myincfig{segVariance-acf}{0.66\textwidth}{Autocorrelation of residuals. 
+(Residuals are what remains of the data when within each segment the segment's
+  mean is subtracted. A \textit{Lag} of 1 corresponds to the typical spacing
+  between probe starts, i.e. 8 bases.)}
+The result is shown in Fig.~\ref{segVariance-acf}. We can see that next
+neighbours and second-next neighbours have pretty high correlation. The
+correlation then decays is gone after after 25 probes (200 bases).
+
+<<eval=FALSE>>=
+##--------------------------------------------------
+## likelihood
+##--------------------------------------------------
+if(FALSE) {
+
+  segs = get(sub("rda", "seg", j), envir=s)
+  segr = get(sub("rda", "seg", j), envir=r)
+  par(mfrow=c(2,2))
+  plot(segr$J, segs$J)
+  plot(2*seq(along=segs$J), segs$J, main="data")
+  plot(2*seq(along=segr$J), segr$J, main="random")
+  ddJ = diff(segs$J) ## diff(diff(segs$J))
+  plot(2*seq(along=ddJ), ddJ, ylim=quantile(ddJ, c(0.01, .99), na.rm=TRUE), main="data")
+}
+
+
+##--------------------------------------------------
+## t-statistic
+##--------------------------------------------------
+if(FALSE){
+  ts = calcStat(s)
+  tr = calcStat(r)
+  par(mfrow=c(3,2))
+  hist(ts$statistic, col="lightblue", breaks=50)
+  hist(tr$statistic, col="orange", breaks=50)
+  hist(ts$n, col="lightblue", breaks=50)
+  hist(tr$n, col="orange", breaks=50)
+  qqplot(ts$statistic, tr$statistic); abline(a=0, b=1, col="red")
+}  
+
+
+## see whether variance depends on position along chromosome
+## (it doesn't seem to)
+if(FALSE) {
+  par(mfrow=c(4,4), mai=c(0.3, 0.4, 0.4, 0.01))
+  for(j in js[17:32]) {
+    dat = get(sub("rda", "dat", j), envir=s)
+    dy  = diff(dat$y)
+    dy  = dy[abs(dy)<=2]
+    smoothScatter(seq(along=dy), dy, pch=".", main=j)
+  }
+}
+@
+
+\end{document}
