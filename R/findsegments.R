@@ -1,22 +1,23 @@
 findsegments = function(x, maxcp, maxk, verbose=0) {
+  if(is.vector(x))
+    x = matrix(x, nrow=length(x), ncol=1)
+
+  n       = nrow(x)
   maxcp   = as.integer(maxcp)
   maxk    = as.integer(maxk)
   verbose = as.integer(verbose)
-  if(maxcp>length(x))
-    stop(sprintf("maxcp=%d must not be larger than length(x)=%d", maxcp, length(x)))
-  if(maxk>length(x))
-    stop(sprintf("maxk=%d must not be larger than length(x)=%d", maxk, length(x)))
+  if(maxcp>n)
+    stop(sprintf("maxcp=%d must not be larger than nrow(x)=%d", maxcp, n))
+  if(maxk>n)
+    stop(sprintf("maxk=%d must not be larger than length(x)=%d", maxk, n))
   if(verbose>=2)
     cat(sprintf("findsegments: calculating Gmean, n=%d, maxk=%d.\n",
-                length(x), as.integer(maxk)))
+                n, as.integer(maxk)))
 
-  if(is.vector(x)) {
-    G = Gmean(x, maxk)
-  } else if(is.matrix(x)) {
-    G = Gmean(x[,1], maxk)
-    if(ncol(x)>=2)
-      for(i in 2:ncol(x))
-        G = G + Gmean(x[,i], maxk)
+  G = Gmean(x[,1], maxk)
+  if(ncol(x)>=2) {
+    for(i in 2:ncol(x))
+      G = G + Gmean(x[,i], maxk)
   }
   
   res = .Call("findsegments", G, maxcp, verbose, PACKAGE="tilingArray")
