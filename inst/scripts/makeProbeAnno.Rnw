@@ -71,7 +71,8 @@ if(!exists("whPM")) {
   MMIndexFromPM = function(i) i + arraySize
   stopifnot(all(MMIndexFromPM(blastRes[[1]][whPM] %in% blastRes[[1]][whMM])))
 
-  cat("found BLAST hits for", length(whPM), "PM probes\n")
+  cat("found", length(whPM), "perfect match and", length(whMM),
+      "mismatch BLAST hits.\n")
 }
 
 ## See which ones have multiple hits
@@ -125,74 +126,67 @@ if(!exists("gff")) {
 ##--------------------------------------------------
 featNames = c("no_feature", "CDS", "ncRNA", "nc_primary_transcript",
               "rRNA", "snRNA", "snoRNA", "tRNA")
-selGff  = which(gff$feature %in% featNames)  ##
+selGff  = which(gff$feature %in% featNames)  
 sgff    = gff[selGff, ]
 
 stopifnot(nrow(sgff)>1000)
-stopifnot(all(sgff$strand %in% c("+", "-")))  ##
+stopifnot(all(sgff$strand %in% c("+", "-")))  
 
 mseq = match(sgff$seqname, chrSeqname)
 stopifnot(!any(is.na(mseq)), !any(mseq<1), !any(mseq>17))
 
-hybeTypes = c("Reverse", "Direct")
-probeReverse = probeDirect = lapply(featNames, function(i) character(nrProbes))
-names(probeReverse) = names(probeDirect) = featNames
-
-for() {
-
+for(hybeType in c("Reverse", "Direct")) {
+  cat("-----", hybeType, "-----\n")
+  p = lapply(featNames, function(i) character(nrProbes))
+  names(p) = featNames
+  ## loop over chromosomes and strands
   for(chr in 1:length(chrSeqname)) {
     for(s in c("+", "-")) {
       ifeat  = which(sgff$strand == s & mseq == chr)
-      cat("chr=", chr, "\ts=", s,
-      "\tno.features=", length(ifeat), "\n", sep="")
-  
+      cat(chr, s, ": ", length(ifeat), "features\n", sep="")
+
       k1 = sgff$start[ifeat]
       k2 = sgff$end[ifeat]
       stopifnot(all(k1<=k2))
+   
+      Name = getAttributeField(sgff$attributes[ifeat], "Name")
 
-      p  = get(paste(chr, s, "start", sep="."), envir=probeAnno)
-      k1 = matrix(k1, nrow=length(p), ncol=length(ifeat), byrow=TRUE)
-      k2 = matrix(k2, nrow=length(p), ncol=length(ifeat), byrow=TRUE)
-
-      ## sel is a logical matrix with as many rows as probes in p,
-      ##   and as many columns as features in ifeat
-      sel = (p>=k1 & p+(probeLength-1)<=k2)
-      wh = which(colSums(sel)==0)
+      pas = switch(hybeType,
+        Reverse = s,
+        Direct  = otherstrand(s)
+      )
+      sta = get(paste(chr, pas, "start", sep="."), envir=probeAnno)
+      ind = get(paste(chr, pas, "index", sep="."), envir=probeAnno)
+      sel = isWithinInterval(sta+(probeLength-1)/2, k1, k2)
+      wh  = which(colSums(sel)==0)
       if(length(wh)>0) {
 	cat("\nNo probes for i=", ifeat[wh], "\n")
 	print(sgff[ifeat[wh], 1:8])
       }
-      
       print(table(rowSums(sel)))
-      
-      ind = get(paste(chr, s, "index", sep="."), envir=probeAnno)
-      
+       
       for(i in seq(along=ifeat)) {
 	fi = ifeat[i]
-	attrs = strsplit(sgff[fi, "attributes"], split=";")[[1]]
-	g = grep("Name=", attrs)
-	stopifnot(length(g)==1)
-	probe[[as.character(sgff$feature[fi])]] [ind[sel[, i]]]  = sub("Name=", "", attrs[g])
+	p[[as.character(sgff$feature[fi])]] [ind[sel[, i]]]  = Name[i]
       } ## for i
     } ## for s
   } ## for chr
-} ## for hybetype
 
-## now set 'no_feature' to all PMs that are not something else:
-anyFeature = which(0 < rowSums(sapply(probe, function(s) s!="")))
-allProbes = unlist(mget(paste(rep(seq(along=chrSeqname), each=2),
+  ## now set 'no_feature' to all PMs that are not something else:
+  anyFeature = which(0 < rowSums(sapply(p, function(s) s!="")))
+  allProbes = unlist(mget(paste(rep(seq(along=chrSeqname), each=2),
                               rep(c("+", "-"), length(chrSeqname)), "index", sep="."),
-                   envir=probeAnno))
-probe[["no_feature"]][setdiff(allProbes, anyFeature)] = "no" 
-cat("length(allProbes)=", length(allProbes),
-    "length(anyFeature)=", length(anyFeature),
-    "no feature=", length(which(probe[["no_feature"]]=="no")), "\n")
+    envir=probeAnno))
+  p[["no_feature"]][setdiff(allProbes, anyFeature)] = "no" 
+  cat("length(allProbes)=", length(allProbes),
+      "length(anyFeature)=", length(anyFeature),
+      "no feature=", length(which(p[["no_feature"]]=="no")), "\n")
 
+  for(i in 1:length(p))
+    p[[i]] = factor(p[[i]])
 
-for(i in 1:length(probe))
-  probe[[i]] = factor(probe[[i]])
-
-assign("probe", probe, envir=probeAnno)
+  assign(paste("probe", hybeType, sep=""), p, envir=probeAnno)
+} ## for hybetype
 
 cat("\n")
 
