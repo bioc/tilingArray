@@ -86,6 +86,9 @@ The result is shown in Figure~\ref{findsegments-plotData}.
 We can use the function \Rfunction{findsegments} to reconstruct the
 changepoints from the \Robject{x} data alone.
 %
+<<loadlib, results=hide>>=
+library(tilingArray)
+@ 
 <<findSegments>>=
 library(tilingArray)
 maxk = 500

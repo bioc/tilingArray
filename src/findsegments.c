@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 #define DEBUG
-#define VERBOSE
+#undef VERBOSE
 
 #define MAT_ELT(x, i, j, nrow) x[i+(j)*(nrow)]
 
@@ -61,7 +61,7 @@ static R_INLINE double fG(int i, int j) {
     k = j-i-1;
 #ifdef DEBUG
     if((i<0) || (i>=n) || (k<0) || (k>=maxk)) {
-      Rprintf("i=%d j=%d k=%d\n.", i, j, k);
+      Rprintf("i=%d j=%d k=%d\n", i, j, k);
       error("Illegal value.");
     }
 #endif
@@ -90,35 +90,35 @@ void findsegments_dp(double* J, int* th, int maxcp) {
     mI = (double*) R_alloc(  maxcp  *n, sizeof(double));
     mt = (int*)    R_alloc((maxcp-1)*n, sizeof(int));
 
-    /* initialize for cp=0: mI[0, i] is simply fG(0, i) */
-    for(i=0; i<n; i++)
-	MAT_ELT(mI, 0, i, maxcp) = fG(0, i);
+    /* initialize for cp=0: mI[0, j] is simply fG(0, j) */
+    for(j=0; j<maxk; j++)
+	MAT_ELT(mI, 0, j, maxcp) = fG(0, j);
+    for(j=maxk; j<n; j++)
+	MAT_ELT(mI, 0, j, maxcp) = R_PosInf;
 
     for (cp=1; cp<maxcp; cp++) {	
       if(verbose>=2)
 	Rprintf("findsegments_dp: cp=%d.\n", cp);
       /*  Best segmentation with cp change points from 0 to j 
       is found from considering best segmentations from 0 to i (<j)
-      with cp-1 segments, plus cost of segment from i to j. i must
-      be >= j-maxk */
+      with cp-1 segments, plus cost of segment from i to j. 
+      And j-maxk <= i <= j */
       for (j=0; j<n; j++) {   
 	  zmin = R_PosInf;
 	  imin = j;
           /* find the best change point between 0 and j-1 */ 
-          i0 = j-maxk-1;
+          i0 = j-maxk;
           if(i0<0) i0=0;
-	  for (i=i0; i<j; i++) { 
-	    /* Instead of the code below, we could just write */
-	    /* but this would lead to floating point exceptions with DEC 
-	       alpha processors */
-	    /* z1 = fG(i, j);
-	       z2 = MAT_ELT(mI, cp-1, i, maxcp);
-               if(finite(z1) && finite(z2)){
-	       z = z1+z2; */
-	    z = MAT_ELT(mI, cp-1, i, maxcp) + fG(i, j);
+	  for (i=i0; i<=j; i++) { 
 #ifdef VERBOSE              
-		Rprintf("%2d %2d %2d %6g %6g %6g\n", 
-			cp, j, i, MAT_ELT(mI, cp-1, i, maxcp), fG(i, j), z);
+	      Rprintf("%2d %2d %2d %6g %6g", 
+		      cp, j, i, MAT_ELT(mI, cp-1, i, maxcp), fG(i, j));
+#endif
+	      z = MAT_ELT(mI, cp-1, i, maxcp);
+              if (finite(z))
+		  z += fG(i, j);
+#ifdef VERBOSE              
+	      Rprintf(" %6g\n", z);
 #endif
 	     if(z<zmin) {
 		  zmin = z;
