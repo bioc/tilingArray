@@ -9,20 +9,17 @@
 
 #include <R.h>
 #include <Rinternals.h>
-/* #include "R_ext/Applic.h"  */
 #include <R_ext/Rdynload.h>
 
-/* #include <string.h> */
 #include <stdlib.h>
 
 #define DEBUG
-
 #define MAT_ELT(x, i, j, nrow) x[i+(j)*(nrow)]
 
 /*  Global variables */
-int maxk; /* number of rows of G :    maximum length of segments */
-int n;    /* number of columns of G : number of data points      */
-double *G;   /* cost matrix */
+double *G;  /* cost matrix                                        */
+int maxk;   /* number of rows of G:    maximum length of segments */
+int n;      /* number of columns of G: number of data points      */
 
 /*--------------------------------------------------
   For debugging
@@ -98,7 +95,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
       with cp-1 segments, plus cost of segment from i to j */
       for (j=0; j<n; j++) {   
 	  zmin = R_PosInf;
-	  imin = -1;
+	  imin = j;
           /* find the best change point between 0 and j-1 */ 
 	  for (i=1; i<j; i++) { 
 	      z = MAT_ELT(mI, cp-1, i, maxcp) + fG(i, j);
@@ -115,34 +112,37 @@ void findsegments_dp(double* J, int* th, int maxcp) {
     } /* for cp */
 
     /* print_matrix_double(mI, maxcp, n, "mI");
-       print_matrix_int(mt, maxcp-1, n, "mt");  */
+       print_matrix_int(mt, maxcp-1, n, "mt"); */
    
     /* th: elements 0...cp-1 of the cp-th row of matrix th contain
        the cp change points; element cp has value n, which corresponds
        to a changepoint at the rightmost point */
     for(cp=0;  cp<maxcp; cp++) {
-	/* Calculate J */
-	J[cp] = log(MAT_ELT(mI, cp, n-1, maxcp) / n);
-	/* Backtrack to get th */
-        MAT_ELT(th, cp, cp, maxcp) = n;
+	/* Calculate J, the log-likelihood. TO DO: constant factors, sqrt(2*pi) */
+	J[cp] = -log(MAT_ELT(mI, cp, n-1, maxcp) / n);
+
 	for(j=cp+1; j<maxcp; j++)
 	    MAT_ELT(th, cp, j, maxcp) = -1;
+
+	/* Backtrack to get th */
+        /* In the following loop, i is always the changepoint to the right */
+        MAT_ELT(th, cp, cp, maxcp) = i = n;  /* note the chained assignment */
 	for(j=cp-1; j>=0; j--) {
-	    /* i  is the changepoint to the right */
-            i = MAT_ELT(th, cp, j+1, maxcp)-1;  
-            /* Rprintf("%2d %2d %2d\n", cp, j, i); */
+	    Rprintf("cp=%4d j=%4d i=%4d\n", cp, j, i); 
 #ifdef DEBUG
-	    if((i<0)||(i>=n))
-		error("Illegal value for i.");
+	    if((i<1)||(i>n)) {
+	       error("Illegal value for i.");
+	    }
 #endif
-	    MAT_ELT(th, cp, j, maxcp) = MAT_ELT(mt, j, i, maxcp-1);
+            /* note the chained assignment */
+	    MAT_ELT(th, cp, j, maxcp) = i = MAT_ELT(mt, j, i-1, maxcp-1);
 	}
     }
 
     /* add 1 to all elements of th since in R array indices start at 1,
        while here they were from 0 */
     for(i=0; i<cp*cp; i++) 
-       th[i] += 1;
+       th[i] += 1; 
 
     return;
 } 

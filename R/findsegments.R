@@ -1,6 +1,8 @@
 findsegments <- function(x, maxcp, maxk) {
   G = Gmean(x, maxk)
-  .Call("findsegments", G, as.integer(maxcp), PACKAGE="tilingArray")
+  res = .Call("findsegments", G, as.integer(maxcp), PACKAGE="tilingArray")
+  class(res) = c("segmentation", class(res)) 
+  return(res)
 }
 
 
