@@ -80,23 +80,24 @@ scoreSegments = function(x, gff,
           ## this matrix has as many rows are there are probes in the segment,
           ## and as many columns as there as features
           matchSeg2Feats = matchProbes2Feats[i1[j]:i2[j], ]
-          overlap        = colSums(matchSeg2Feats)/nrow(matchSeg2Feats)
-          wh             = which(overlap>0)
-          segScore[j, p("feature")] = paste(sgff$Name[wh], collapse=", ")
-          segScore[j, p("overlap")] = sum(overlap[wh])
+          ## features that have overlap with this segment:
+          whf = which(colSums(matchSeg2Feats) > 0)
+          segScore[j, p("feature")] = paste(unique(sgff$Name[whf]), collapse=", ")
+          ## fraction of probes that have overlap with any feature:
+          segScore[j, p("overlap")] = mean(rowSums(matchSeg2Feats) > 0)
           ## see man page!
           sp  = segScore$start[j] + probeMiddle
-          wh = which(matchSeg2Feats[1, ])
-          if(length(wh)>0) {
-            segScore[j, p("dist.start2feat")] = sp - sgff$start[wh[1]]
+          whs = which(matchSeg2Feats[1, ])
+          if(length(whs)>0) {
+            segScore[j, p("dist.start2feat")] = min(sp - sgff$start[whs])
           } else {
             segScore[j, p("dist.start2feat")] = posMin(sp - sgff$end)
           }
           ## see man page!
           sp  = segScore$end[j] + probeMiddle
-          wh = which(matchSeg2Feats[nrow(matchSeg2Feats), ])
+          whe = which(matchSeg2Feats[nrow(matchSeg2Feats), ])
           if(length(wh)>0) {
-            segScore[j, p("dist.end2feat")] = sp - sgff$end[wh[1]]
+            segScore[j, p("dist.end2feat")] = min(sgff$end[whe] - sp)
           } else {
             segScore[j, p("dist.end2feat")] = posMin(sgff$start - sp)
           }
