@@ -7,13 +7,15 @@
   algorithm of Picard et al. (full citation see below).
 }
 \usage{
-findsegments(x, maxcp, maxk)
+findsegments(x, maxcp, maxk, verbose=0)
 }
 \arguments{
   \item{x}{Numeric (real) vector.}
   \item{maxcp}{Integer (length 1): maximum number of segments (= 1 + maximum
     number of change points).}
   \item{maxk}{Integer (length 1): maximum length of a segment.}
+  \item{verbose}{Integer (length 1): if this parameter has a positive
+    value, various diagnostic output is printed.}
 }
 \details{The complexity of the algorithm is 
   \code{length(x) * maxk}.
