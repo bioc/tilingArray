@@ -22,6 +22,7 @@ scoreSegments(x, gff,
     \code{gff} which should be considered \emph{known features}.}
   \item{verbose}{Logical.}
 }
+
 \details{
   This function is typically called after a \emph{segmentation}.
   For an example segmentation script, see the script \code{segment.R}
@@ -58,7 +59,7 @@ scoreSegments(x, gff,
           nucleotide and the annotated end point of the feature.
          \item If it is not part of an annotated feature, then dist.end2feat
           is the difference between the start point of the next feature to the
-          right and the middle nucleotide.}}
+          right and the middle nucleotide.}}}
     In addition, quantities oppo.XXX are calculated for the opposite
     strand analogous to the same.XXX.
 
