@@ -10,6 +10,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
+#include <R_ext/Utils.h> 
 
 #include <stdlib.h>
 
@@ -61,7 +62,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
     int * mt;
 
     if(verbose>=2)
-	Rprintf("In findsegments_dp: cp=");
+	Rprintf("In findsegments_dp: cp=      ");
 
     /* G[k, i] is the cost of segment from i to i+k, including these 
        endpoints */
@@ -82,7 +83,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 
     for (cp=1; cp<maxcp; cp++) {	
       if(verbose>=2)
-	Rprintf("%d ", cp);
+	Rprintf("\b\b\b\b\b\b%6d", cp);
       /*  Best segmentation with cp change points from 0 to j 
       is found from considering best segmentations from 0 to j-k-1
       with cp-1 segments, plus cost of segment from j-k to j. */
@@ -148,6 +149,8 @@ void findsegments_dp(double* J, int* th, int maxcp) {
             /* note the chained assignment */
 	    MAT_ELT(th, cp, j, maxcp) = i = MAT_ELT(mt, i-1, j, n);
 	}
+        /* to allow user interrupts */
+	R_CheckUserInterrupt();
     }
 
     /* add 1 to all elements of th since in R array indices start at 1,
