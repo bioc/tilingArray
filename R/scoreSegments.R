@@ -84,13 +84,7 @@ scoreSegments = function(x, gff,
           wh             = which(overlap>0)
           segScore[j, p("feature")] = paste(sgff$Name[wh], collapse=", ")
           segScore[j, p("overlap")] = sum(overlap[wh])
-          ## For dist.start2feat, we distinguish two cases:
-          ## 1. if the leftmost probe of a segment is part of an annotated feature
-          ##    then dist.start2feat is the difference between that probe's middle
-          ##    nucleotide and the annotated start point of the feature
-          ## 2. if it is not part of an annotated feature, then dist.start2feat
-          ##    is the difference between the middle nucleotide and the end point of
-          ##    the next feature on the left.
+          ## see man page!
           sp  = segScore$start[j] + probeMiddle
           wh = which(matchSeg2Feats[1, ])
           if(length(wh)>0) {
@@ -98,13 +92,7 @@ scoreSegments = function(x, gff,
           } else {
             segScore[j, p("dist.start2feat")] = posMin(sp - sgff$end)
           }
-          ## For dist.end2feat, we distinguish two cases:
-          ## 1. if the rightmost probe of a segment is part of an annotated feature
-          ##    then dist.endfeat is the difference between that probe's middle
-          ##    nucleotide and the annotated end point of the feature
-          ## 2. if it is not part of an annotated feature, then dist.end2feat
-          ##    is the difference between the start point of the next feature on the
-          ##    right left and the middle nucleotide.
+          ## see man page!
           sp  = segScore$end[j] + probeMiddle
           wh = which(matchSeg2Feats[nrow(matchSeg2Feats), ])
           if(length(wh)>0) {
@@ -135,7 +123,7 @@ scoreSegments = function(x, gff,
       segScore$pt[idx[mt]]     = p
       
       ## just check
-      ri = sample(seq(along=p), size=1)
+      ri = sample(which(listLen(ys) > 5), size=1)
       stopifnot(abs(p[ri] - t.test(ys[[ri]], alternative="greater")$p.value) < 1e-10)
       
       rv = rbind(rv, segScore)
