@@ -38,13 +38,13 @@ cat("Writing", nrow(segScore), "sequences.\n")
 con = file(file.path(outdir, "segments.fsa"), open="wt")
 
 
-stopifnot(all(segScore$strand[s] %in% c("+", "-")))
+stopifnot(all(segScore$strand %in% c("+", "-")))
 for(s in 1:nrow(segScore)) {
   sequence = substr(fsa[[paste(segScore$chr[s])]],
                  start = segScore$start[s],
                  stop  = segScore$end[s])
-  if(segScore$strand[s] == "-")
-    sequence = complementSeq(sequence)
+  ## if(segScore$strand[s] == "-")
+  ##   sequence = complementSeq(sequence)
   
   cat(">", s, "\n", sequence, "\n", sep="", file=con, append=TRUE)
 }
