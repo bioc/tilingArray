@@ -110,8 +110,11 @@ for(chr in chrs) {
       cat(wgff, ": ", nrow(sgff), "  ", sep="")
 
       ## matchProbes2Feats is a matrix of probes (dat$x) times features
-      ## and a matrix element [p,j] is TRUE iff probe p is part of feature
-      matchProbes2Feats = isWithinInterval(dat$x+probeLength/2, sgff$start, sgff$end)
+      ## and a matrix element [p,j] is TRUE iff probe p is part of
+      ## feature. A probe is considered part of a feature if its 13th
+      ## nucleotide falls into it. That's an arbitrary rule, which is
+      ## intended to err on the side of assigning probes to features.
+      matchProbes2Feats = isWithinInterval(dat$x+(probeLength-1)/2, sgff$start, sgff$end)
 
       p = function(x) paste(wgff, x, sep=".")
       for(j in 1:cp) {
@@ -129,8 +132,8 @@ for(chr in chrs) {
         } else {  
           segScore[js, p("feature")] = as.character(NA)
           segScore[js, p("overlap")] = 0
-          segScore[js, p("dist.start2feat")] = pos.min(segScore$start[js] - sgff$end  )
-          segScore[js, p("dist.end2feat")]   = pos.min(segScore$end[js]   - sgff$start)
+          segScore[js, p("dist.start2feat")] = pos.min(segScore$start[js] - sgff$end)
+          segScore[js, p("dist.end2feat")]   = pos.min(sgff$start - segScore$end[js])
         }
       }
     }

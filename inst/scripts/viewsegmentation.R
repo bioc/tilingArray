@@ -1,7 +1,8 @@
-options(error=recover, warn=2)
+options(error=recover)
 
 library("tilingArray")
-library("arrayMagic")
+library("arrayMagic")   ## for write.htmltable
+library("geneplotter")  ## for savetiff
 
 source("colorRamp.R") ## can go with R 2.1
 source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
@@ -52,9 +53,7 @@ sel = which(is.na(segScore$same.feature) & (segScore$frac.dup < 0.2)
 ord = order(segScore$level[sel], decreasing=TRUE)
 sel = sel[ord]
 
-sel = sel[1:20]
-
-outtab = cbind(plot=I(paste('<a href="', sel, '.png">plot</a>', sep="")),
+outtab = cbind(plot=I(paste('<a href="', sel, '.tiff">plot</a>', sep="")),
                segScore[sel, 1:4],
                length=as.integer(segScore$end[sel]-segScore$start[sel]+1),
                segScore[sel, 5:ncol(segScore)])
@@ -70,10 +69,14 @@ write.htmltable(outtab,
    filename=file.path(outdir, "newtranscripts"),
    title=paste(length(sel), " segments with candidates for new transcripts (", indir, ")", sep=""))
 
-for(s in sel) {
-  cat(segScore$chr[s], segScore$strand[s], "  ",
-      segScore$start[s], "...", segScore$end[s], "\n", sep="")
-  png(file=file.path(outdir, paste(s, "png", sep=".")), width=1280, height=640)
+cat("Writing", length(sel), "alongChrom images.\n")
+for(i in seq(along=sel)) {
+  s = sel[i]
+  cat(i, segScore$chr[s], segScore$strand[s], "  ",
+      segScore$start[s], "...", segScore$end[s], "   ", sep="")
+
+  tmpf = paste(tempfile(), "pdf", sep=".")
+  pdf(file=tmpf, width=12, height=6)
   grid.newpage()
   plotAlongChrom2(chr=as.numeric(segScore$chr[s]),
                   coord=c(max(segScore$start[s]-2e4, 0),
@@ -83,7 +86,7 @@ for(s in sel) {
                   segRes = segRes,
                   segScore = segScore, gff = gff)
   dev.off()
-  
-  ## locator(n=1)
-  ## readline("Type <enter>") 
+  cmd = paste("convert -density 120", tmpf, "-compress RLE",
+              file.path(outdir, paste(s, "tiff", sep=".")), "; rm", tmpf, "&")
+  system(cmd)
 }
