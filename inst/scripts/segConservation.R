@@ -61,12 +61,13 @@ par(mfrow=c(3,2))
 
 for(i in seq(along=groups)) {
   ntot = length(groups[[i]])
-  txt = paste(length(matches), " / ", ntot, " (", signif(length(matches)/ntot, 3)*100, "%)")
+  nmt  = length(matches[[i]])
+  txt = paste(nmt, " / ", ntot, " (", signif(nmt/ntot, 3)*100, "%)")
   hist(lE[hits[[i]]], col=colors[i], main=titgr[i], xlab=expression(-log[10](E-value)), breaks=brE)
   hist(bs[hits[[i]]], col=colors[i], main= txt, xlab="Bit-score", breaks=brS)
 }
 
-dev.copy(pdf, file="segConservation.pdf", width=7, height=10); dev.off()
+dev.copy(pdf, file="segConservation.pdf", width=6, height=8); dev.off()
 
 print(wilcox.test(bs[hits[[2]]], bs[hits[[1]]]))
 print(wilcox.test(bs[hits[[2]]], bs[hits[[3]]]))

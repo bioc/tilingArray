@@ -1,31 +1,30 @@
-##------------------------------------------------------------
-## Copyright Wolfgang Huber 17 March 2005
+##--------------------------------------------------------------------------------
+## Copyright (2005) Wolfgang Huber
 ##
 ## This algorithm scores segments.
-## It goes sequentially through the result directory "segmentDir" in 
-## ascending order, and in parallel through the GFF table.
 ## For each segment, we calculate and/or record its:
 ## * chromosome, strand, start position, end position (in bases)
 ## * level (mean-background)
-## * t-score   (level / std error of mean)
+## * p-value (one-sample t-test againt hypothesis mean=0)
+##
 ## If it overlaps with an annotated feature
-##   * the name of that feature
-##   * the signed distance between its start and that of the feature
-##   * the signed distance between its end and that of the feature
+## * the name of that feature
+## * the signed distance between its start and that of the feature
+## * the signed distance between its end and that of the feature
 ## If not:
-##   * the distance between its start and the end of the next feature to the left
-##   * the distance between its end and the start of the next feature to the left
+## * the distance between its start and the end of the next feature to the left
+## * the distance between its end and the start of the next feature to the left
 ## 
 ## and the same information again for the opposite strand
-##------------------------------------------------------------
+##--------------------------------------------------------------------------------
 
 nrBasePerSeg = 1500 
 probeLength  = 25
 
 ## For the definition of pseudogenes at SGD, see Docs/PseudogenesAtSGD.pdf
 knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
-                  "rRNA", "snRNA", "snoRNA", 
-                  "tRNA", "transposable_element", "transposable_element_gene")
+        "rRNA", "snRNA", "snoRNA", "tRNA",
+        "transposable_element", "transposable_element_gene")
 
 options(error=recover, warn=2)
 library("tilingArray")
@@ -51,13 +50,13 @@ if(!exists("s")) {
 } ## if
 
 segScore = data.frame(
-  chr                 = integer(totcp),
-  strand              = I(character(totcp)),
-  start               = integer(totcp),
-  end                 = integer(totcp),
-  level               = numeric(totcp),
-  pt                  = numeric(totcp),
-  frac.dup            = numeric(totcp),
+  chr                   = integer(totcp),
+  strand                = I(character(totcp)),
+  start                 = integer(totcp),
+  end                   = integer(totcp),
+  level                 = numeric(totcp),
+  pt                    = numeric(totcp),
+  frac.dup              = numeric(totcp),
   same.feature          = I(character(totcp)),
   same.overlap          = numeric(totcp),
   same.dist.start2feat  = integer(totcp),
@@ -95,8 +94,8 @@ for(chr in chrs) {
 
     for(wgff in c("same", "oppo")) {
       gffstrand = switch(wgff,
-        same = c("+"="+", "-"="-")[strand],
-        oppo = c("-"="+", "+"="-")[strand],
+        same = strand,
+        oppo = otherStrand(strand),
         stop("Sapperlot"))
       sgff = gff[ gff$seqname == chrSeqname[chr] &
                   gff$strand  == gffstrand &
