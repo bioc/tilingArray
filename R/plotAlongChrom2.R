@@ -1,0 +1,250 @@
+## to do:
+## use segScore instead of th
+## remove baseline and score calculations!
+
+plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, cp, gff) {
+                   
+  pushViewport(viewport(width=0.9, height=0.95)) ## plot margin
+  pushViewport(viewport(layout=grid.layout(8, 1, height=c(0.2,5,0.4,1,1,1,0.4,5))))
+
+  ## name the viewports otherwise it gets too confusing:
+  theViewports=1:10
+  names(theViewports)=c("title", "expr1", "z1", "gff1", "coord", "gff2", "z2", "expr2")
+
+  if(!xor(missing(nrBasesPerSeg), missing(segScore)))
+    stop("Please specify either 'segScore' or 'nrBasesPerSeg'")
+
+  for(i in 1:2) {
+    strand = c("+", "-")[i]
+    seg = get(paste(chr, strand, "seg", sep="."), segRes)
+    app = get(paste(chr, strand, "app", sep="."), segRes)
+    
+    if(missing(segScore)) {
+      cp = round(max(app$x)/nrBasesPerSeg)
+      th=c(1, seg$th[cp, 1:cp])
+      sgs = data.frame(
+        chr    = I(rep(chr, cp)),
+        strand = I(rep(strand, cp)),
+        start  = app$x[th[-length(th)]],
+        end    = app$x[th[-1]]-1)
+    } else {
+      sgs = segScore
+    }
+  
+    plotSegmentation(x=app$x, y=app$y, coord=coord, segScore=sgs,
+                     gff=gff, chr=chr, chrSeqname=chrSeqname, strand=strand,
+                     theViewports)
+    
+  }
+
+  ## chromosomal coordinates
+  pushViewport(dataViewport(xData=coord, yscale=c(-.3,0.8), extension=0, 
+                            layout.pos.col=1, layout.pos.row=theViewports["coord"]))
+  grid.lines(coord, c(0,0), default.units = "native")
+  tck= alongChromTicks(coord)
+  grid.text(label=formatC(tck, format="d"), x = tck, y = 0.2, 
+            just = c("centre", "bottom"), gp = gpar(cex=.6), default.units = "native")
+  grid.segments(x0 = tck, x1 = tck, y0 = -0.17, y1 = 0.17,  default.units = "native")
+  popViewport()
+
+  ## title
+  pushViewport(viewport(layout.pos.col=1, layout.pos.row=theViewports["title"]))
+  grid.text(label=paste("Chromosome", chr), x = 0.5, y = 0.5, 
+            just = "centre", gp = gpar(cex=1))
+  popViewport()
+
+  popViewport(2)
+}
+
+## gff and chrSeqname into an environment or object?
+
+plotSegmentation = function(x, y, coord=range(x), segScore, gff, chr, chrSeqname, strand, theViewports) {
+  stopifnot(length(x)==length(y))
+
+  istrand = match(strand, c("+", "-"))
+  stopifnot(length(strand)==1, !is.na(istrand))
+  chrName = chrSeqname[chr]
+  stopifnot(!is.na(chrName))
+
+  ## the expression data. use two viewports for different clipping behavior
+  rgy = range(y)
+  pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="off",
+    layout.pos.col=1, layout.pos.row=theViewports[sprintf("expr%d", istrand)]))
+  grid.yaxis()
+  
+  pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="on",
+    layout.pos.col=1, layout.pos.row=theViewports[sprintf("expr%d", istrand)]))
+  
+  grid.points(x, y, pch=".", gp=gpar(col=c("#33A02C", "#1F78B4")[istrand]))
+
+  segSel   = which(segScore$chr==chr & segScore$strand==strand)
+  segstart = segScore$start[segSel]
+  segend   = segScore$end[segSel]
+  stopifnot(all(segstart[-1] > segend[-length(segend)]))
+  grid.segments(x0 = unit(segstart, "native"), x1 = unit(segstart, "native"),
+                y0 = unit(0.1, "npc"),      y1 = unit(0.9, "npc"),
+                gp = gpar(col="#d0d0d0"))
+
+  popViewport(2)
+
+  pushViewport(dataViewport(xData=coord, yscale=c(0,2), extension=0, clip="on",
+    layout.pos.col=1, layout.pos.row=theViewports[sprintf("z%d", istrand)]))
+
+
+  deckel = function(s, smin=0, smax=30) {
+    s[s<smin]=smin
+    s[s>smax]=smax
+    sqrt(s/smax)
+  }
+
+  if("tscore" %in% colnames(segScore)) {
+    colo = colorRamp(brewer.pal(9, "Blues")[-9])(deckel(segScore$tscore[segSel]))
+  } else {
+    colo = "#f0f0f0"
+  }
+  grid.rect(x = unit(segstart, "native"), 
+            y = unit(0.4, "npc"),
+            width  = unit(segend-segstart+1, "native"),
+            height = unit(0.8, "npc"),
+            just   = c("left", "center"),	
+            gp     = gpar(col="#a0a0a0", fill=colo))
+  
+  
+  popViewport(1)
+
+  pushViewport(dataViewport(xData=coord, yscale=c(-1.2,1.2),  extension=0, 
+    layout.pos.col=1, layout.pos.row=theViewports[sprintf("gff%d", istrand)]))
+
+  stopifnot(all(gff$start <= gff$end))
+  sel = which(gff$seqname == chrName &
+              gff$strand  == strand &
+              gff$start <= coord[2] &
+              gff$end   >= coord[1])
+
+  featnam = getAttributeField(gff$attributes[sel], "Name")
+  featsp  = split(seq(along=sel), gff$feature[sel])
+
+  ### gene ###
+  if("gene" %in% names(featsp)) {
+    i = featsp[["gene"]]
+    s = sel[i]
+    grid.segments(x0 = gff$start[s], x1 = gff$end[s], y0 = 0, y1 = 0,
+                  default.units = "native", gp = gpar(col="black"))
+    ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
+  }
+  
+  ### CDS, ncRNA, tRNA, snoRNA ###
+  feattypes = c("CDS",     "ncRNA",   "tRNA",    "snoRNA",  "pseudogene")
+  colors    = c("#c6dbef", "#d94801", "#005a32", "#fc4e2a", "#707070")
+  fill      = c("#deebf7", "#fd8d3c", "#41ab5d", "#feb24c", "#e0e0e0")
+  ##             lightblue    brown     green    orange     light grey
+  names(colors) = names(fill) = feattypes
+
+  ll = listLen(featsp[feattypes])
+  if(any(ll>0)) {
+    i      = unlist(featsp[feattypes])
+    ord    = order(gff$start[sel[i]])
+    colors = rep(colors, ll)[ord]
+    fill   = rep(fill,   ll)[ord]
+    i      = i[ord]
+    s      = sel[i]
+    
+    grid.rect(x     = gff$start[s],
+              y     = 0,
+              width = gff$end[s]-gff$start[s],
+              height= 2,
+              default.units = "native",
+              just  = c("left", "center"),
+              gp    = gpar(col=colors, fill=fill))
+    grid.text(label = featnam[i],
+              x     = (gff$start[s]+gff$end[s])/2,
+              y     = (seq(along=s)%%3-1)*.7,
+              default.units = "native",
+              gp    = gpar(cex=.6))
+    ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
+  } ## if
+  
+  ### intron ###
+  if("intron" %in% names(featsp)) {
+    i = featsp[["intron"]]
+    s = sel[i]
+    mid = (gff$start[s]+gff$end[s])/2
+    wid = (gff$end[s]-gff$start[s])/2 
+    for(z in c(-1,1))
+      grid.segments(x0 = mid,
+                    x1 = mid+z*wid,
+                    y0 = c(1, -1)[istrand]*1.2,  ## istrand is 1 or 2
+                    y1 = c(1, -1)[istrand]*0.95,
+                    default.units = "native",
+                    gp = gpar(col="black"))
+    cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
+  }
+  
+  notDealtWith = setdiff(names(featsp), c(feattypes, "gene", "intron"))
+  if(length(notDealtWith)>0) {
+    warning(paste("The following feature(s) were not displayed:",
+                  paste(notDealtWith, collapse=", ")))
+  }
+  
+  popViewport()
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+plotDuplication = function(coord, chr, strand, probeAnno, theViewports) { 
+
+  istrand = match(strand, c("+", "-"))
+  stopifnot(length(strand)==1, !is.na(istrand))
+
+  sta = get(paste(chr, strand, "start", sep="."),  probeAnno)
+  uni = get(paste(chr, strand, "unique", sep="."), probeAnno)
+  ord = order(sta)
+  uni = uni[ord]
+  sta = sta[ord]
+
+  pp  = diff(uni)
+  x0 = which(pp==-1)  ## transition from TRUE to FALSE
+  x1 = which(pp==+1)  ## transition from FALSE to TRUE
+
+  if(!uni[1])
+    x0 = c(1, x0)
+  if(!uni[length(uni)])
+    x1 = c(x1, length(uni))
+
+  stopifnot(length(x0)==length(x1))
+  stopifnot(all(x1>x0))
+  
+  pushViewport(dataViewport(xData=coord, yscale=c(-1,1),  extension=0,  clip="on",
+    layout.pos.col=1, layout.pos.row=theViewports[sprintf("dup%d", istrand)]))
+
+  grid.segments(x0=sta[x0], x1=sta[x1], y0=0, y1=0, default.units = "native",
+                gp=gpar(lwd=3, col="#606060")) #  "#FE9929"
+  ## browser()
+  popViewport()
+}
+
+
+alongChromTicks = function(x){
+  rx = range(x)
+  lz = log((rx[2]-rx[1])/5, 10)
+  fl = floor(lz)
+  if( lz-fl > log(5, 10))
+    fl = fl +  log(5, 10)
+  tw = round(10^fl)
+  i0 = floor(rx[1]/tw)
+  i1 = ceiling(rx[2]/tw)
+  seq(i0, i1)*tw
+}
