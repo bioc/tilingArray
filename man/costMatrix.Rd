@@ -2,7 +2,7 @@
 \alias{costMatrix}
 \title{Segmentation cost matrix}
 \description{
-  This function calculates the cost matrix for a homoscedastic model
+  This function calculates the cost matrix for the segmentation model
 }
 \usage{
 costMatrix(x, maxk)
@@ -23,18 +23,18 @@ costMatrix(x, maxk)
 \author{W. Huber}
 
 \examples{
-x = cumsum(rnorm(100))
-G = costMatrix(x, maxk=20)
-
-
+d = 4
+x = apply(matrix(rnorm(200), ncol=d), 2, cumsum)
+maxk = 30
+ 
+G = costMatrix(x, maxk=maxk)
+ 
 G.pedestrian = matrix(NA, nrow=nrow(G), ncol=ncol(G))
-G.pedestrian[1,] = 0
-for(i in 1:(ncol(G)-1))
-  for(k in 2:min(nrow(G), length(x)-i+1))
-    G.pedestrian[k, i] = (k-1)*var(x[i:(i+k-1)])
-
+for(i in 1:(ncol(G)))
+  for(k in 1:min(nrow(G), nrow(x)-i+1))
+    G.pedestrian[k, i] = (k*d-1)/d*var(as.vector(x[i:(i+k-1), ]))
+ 
 stopifnot(identical(is.na(G), is.na(G.pedestrian)))
 stopifnot(max(abs(G-G.pedestrian), na.rm=TRUE) <= 1e-6)
-
 }
 \keyword{manip}

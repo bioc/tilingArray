@@ -1,5 +1,9 @@
 findSegments = function(x, maxcp, maxk, verbose=0) {
-  n       = nrow(x)
+  if(is.matrix(x)) {
+    n = nrow(x)
+  } else {
+    n = length(x)
+  }
   maxcp   = as.integer(maxcp)
   maxk    = as.integer(maxk)
   verbose = as.integer(verbose)

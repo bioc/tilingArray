@@ -11,23 +11,27 @@ costMatrix = function(x, maxk) {
   if(is.vector(x))  {
     r = x
     q = x*x
-    S = 1
+    d = 1
   } else {
     r = rowSums(x)
     q = rowSums(x*x)
-    S = ncol(x)
+    d = ncol(x)
   }
-
+  n = length(r)
+  
   ## see Wolfgang's handwritten notes for explanation of the algebra
-  c = cumsum(r)
-  d = cumsum(q)
+  cr = cumsum(r)
+  cq = cumsum(q)
   
   G = matrix(as.numeric(NA), nrow=maxk, ncol=n)
+  k = 1:maxk
+  G[, 1] = (cq[k] - cr[k]*cr[k]/(k*d)) / d
   for(k in 1:maxk) {
-    i   = 0:(n-k)
-    dki = d[i+k]-d[i]
-    cki = c[i+k]-c[i]
-    G[k, ] = (dki - cki*cki/S)/S
+    i   = 1:(n-k)
+    j   = 2:(n-k+1)
+    cqk = cq[i+k]-cq[i]
+    crk = cr[i+k]-cr[i]
+    G[k,j] = (cqk - crk*crk/(k*d))/d
   }
   return(G)
 }
