@@ -110,10 +110,12 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 		  zmin = z;
 		  imin = j-k;
 	     } /* if z */
-	  } /* for i */	  
+	  } /* for k */	  
 	  MAT_ELT(mI, j,   cp, n) = zmin;
 	  MAT_ELT(mt, j, cp-1, n) = imin;
       } /* for j */
+      /* to allow user interrupts */
+      R_CheckUserInterrupt();
     } /* for cp */
 
     if(verbose>=2)
@@ -149,8 +151,6 @@ void findsegments_dp(double* J, int* th, int maxcp) {
             /* note the chained assignment */
 	    MAT_ELT(th, cp, j, maxcp) = i = MAT_ELT(mt, i-1, j, n);
 	}
-        /* to allow user interrupts */
-	R_CheckUserInterrupt();
     }
 
     /* add 1 to all elements of th since in R array indices start at 1,
