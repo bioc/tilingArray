@@ -17,10 +17,12 @@ normalize = function(fn, x) {
 
 if(!exists("lxj")) {
   load("x.Rdata")
-  lxj = normalize("030505_totcDNA_15ug_affy.cel.gz", x)
-  outdir = "segmentation-050305"
+  ## lxj = normalize("030505_totcDNA_15ug_affy.cel.gz", x)
+  ## outdir = "segmentation-050305"
   ## lxj = normalize("050209_mRNAx4_30min_re-hybe_RH6.cel.gz", x)
   ## outdir = "segmentation-050209v4"
+
+
   rm(x)
   gc()
 }

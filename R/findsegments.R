@@ -9,9 +9,16 @@ findsegments = function(x, maxcp, maxk, verbose=0) {
   if(verbose>=2)
     cat(sprintf("findsegments: calculating Gmean, n=%d, maxk=%d.\n",
                 length(x), as.integer(maxk)))
+
+  if(is.vector(x)) {
+    G = Gmean(x, maxk)
+  } else if(is.matrix(x)) {
+    G = Gmean(x[,1], maxk)
+    if(ncol(x)>=2)
+      for(i in 2:ncol(x))
+        G = G + Gmean(x[,i], maxk)
+  }
   
-  G = Gmean(x, maxk)
-  gc()
   res = .Call("findsegments", G, maxcp, verbose, PACKAGE="tilingArray")
   class(res) = c("segmentation", class(res)) 
   return(res)

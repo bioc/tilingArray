@@ -71,7 +71,7 @@ write.htmltable(outtab,
 cat("Writing", length(sel), "alongChrom images.\n")
 for(i in seq(along=sel)) {
   s = sel[i]
-  cat(i, segScore$chr[s], segScore$strand[s], "  ",
+  cat(i, ":  ", segScore$chr[s], segScore$strand[s], "  ",
       segScore$start[s], "...", segScore$end[s], "   ", sep="")
 
   tmpf = paste(tempfile(), "pdf", sep=".")
