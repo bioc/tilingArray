@@ -15,14 +15,14 @@
 #include <stdlib.h>
 
 #define DEBUG
-#undef VERBOSE
+#define VERBOSE
 
-#define MAT_ELT(x, i, j, nrow) x[(unsigned long int)(i)+(unsigned long int)(j)*(unsigned long int)(nrow)]
+#define MAT_ELT(x, i, j, nrow) x[(long)(i)+(long)(j)*(long)(nrow)]
 
 /*  Global variables */
 double *G;  /* cost matrix */
-unsigned int maxk; /* number of rows of G:    maximum length of segments */
-unsigned int n;    /* number of columns of G: number of data points      */
+int maxk;   /* number of rows of G:    maximum length of segments */
+int n;      /* number of columns of G: number of data points      */
 int verbose;
 
 /*--------------------------------------------------
@@ -55,12 +55,12 @@ void print_matrix_int(int* x, int nrow, int ncol, char *s) {
    Note that all array indices here start at 0 and run to size(array)-1.
    At the end we add 1 to the result indices in matrix 'th'
 -----------------------------------------------------------------*/
-void findsegments_dp(double* J, unsigned int* th, unsigned int maxcp) {
-    unsigned int i, imin, cp, j, k, k0;
-    unsigned long vs;
+void findsegments_dp(double* J, int* th, int maxcp) {
+    int i, imin, cp, j, k, k0;
+    long vs;
     double z, zmin;
     double *mI;
-    unsigned int * mt;
+    int * mt;
 
     if(verbose>=2)
 	Rprintf("In findsegments_dp: cp=      ");
@@ -73,12 +73,12 @@ void findsegments_dp(double* J, unsigned int* th, unsigned int maxcp) {
        in the optimal segmentation from 0 to i with cp change points;
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
-    vs = (unsigned long) maxcp * (unsigned long) n;
-	Rprintf("vs=%d\n", vs);
+    vs = (long) maxcp * (long) n;
+	Rprintf("vs=%ld\n", vs);
     mI = (double*) R_alloc(vs, sizeof(double));
-    vs = (unsigned long) (maxcp-1) * (unsigned long) n;
-	Rprintf("vs=%d\n", vs);
-    mt = (unsigned int*) R_alloc(vs, sizeof(unsigned int));
+    vs = (long) (maxcp-1) * (long) n;
+	Rprintf("vs=%ld\n", vs);
+    mt = (int*) R_alloc(vs, sizeof(int));
 
     /* initialize for cp=0: mI[k, 0] is simply G[k, 0] */
     for(k=0; k<maxk; k++)
@@ -178,7 +178,7 @@ SEXP findsegments(SEXP _G, SEXP _maxcp, SEXP _verbose)
   SEXP dimG;  /* dimensions of G */
   SEXP res;   /* return value    */
   SEXP J, th, dimth, namesres;  /* for the return value */
-  unsigned int maxcp;
+  int maxcp;
 
   /* check input arguments */
   PROTECT(dimG = getAttrib(_G, R_DimSymbol));
