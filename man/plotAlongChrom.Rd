@@ -4,7 +4,8 @@
 \keyword{hplot}
 \description{Plot microarray data and annotation features along a chromosomal region}
 
-\usage{plotAlongChrom(y, chr, from, to, extend=0, gff, chrSeqname, probeAnno)}
+\usage{plotAlongChrom(y, chr, from, to, extend=0, gff, chrSeqname,
+  probeAnno, probeLength=25)}
 
 \arguments{
   \item{y}{vector of real numbers, one for each probe on the array.}
@@ -17,6 +18,7 @@
     the i-th chromosome, as used in the \code{seqname} column of the
     \code{gff} table.}
   \item{probeAnno}{a probe annotation environment.}
+  \item{probeLength}{integer of length 1: length of the microarray probes.}
 }
 
 \details{No details.}

@@ -1,8 +1,4 @@
-## to do:
-## use segScore instead of th
-## remove baseline and score calculations!
-
-plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, cp, gff) {
+plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, gff) {
                    
   pushViewport(viewport(width=0.9, height=0.95)) ## plot margin
   pushViewport(viewport(layout=grid.layout(8, 1, height=c(0.2,5,0.4,1,1,1,0.4,5))))
