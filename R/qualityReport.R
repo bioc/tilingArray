@@ -26,7 +26,7 @@ qualityReport <- function(x, normRef=NULL, compress = TRUE,
   if(!file.info(outputDir)$isdir)
     stop(paste("'", outputDir, "' is not a directory.", sep=""))
 
-  graphicsDir = file.path(outputDir, "png")
+  graphicsDir = "png"
   if(!file.exists(graphicsDir))
     dir.create(graphicsDir)
   
@@ -80,8 +80,8 @@ qualityReport <- function(x, normRef=NULL, compress = TRUE,
                      chrSeqname = get("chrSeqname", envir=probeAnno),
                      probeAnno = probeAnno)
       if(output == "HTML") {
-        HTMLplot(file=out, Width=700, Height=300, GraphDirectory=graphicsDir, 
-                 GraphFileName=paste(sampleNames[s], selectGenes[i], sep="-"),
+        HTMLplot(file=out, Width=700, Height=300, GraphDirectory=outputDir,
+                 GraphFileName=file.path(graphicsDir, paste(sampleNames[s], selectGenes[i], sep="-")),
                  GraphBorder=0)
       }
     } ## for i
@@ -111,8 +111,8 @@ qualityReport <- function(x, normRef=NULL, compress = TRUE,
       if (output == "HTML") {
         HTMLhr(file=out)
         HTML.title("Comparing CDSs between raw and normalized data", HR=3, file=out)
-        HTMLplot(file=out, Width=800, Height=450, GraphDirectory=graphicsDir, 
-                 GraphFileName=paste(sampleNames[s], "norm", sep="-"),
+        HTMLplot(file=out, Width=800, Height=450, GraphDirectory=outputDir,
+                 GraphFileName=file.path(graphicsDir, paste(sampleNames[s], "norm", sep="-")),
                  GraphBorder=0)
       }
     }
@@ -128,8 +128,8 @@ qualityReport <- function(x, normRef=NULL, compress = TRUE,
     if (output == "HTML"){
       HTMLhr(file=out)
       HTML.title("Histogram of CDSs' mean levels", HR=3, file=out)
-      HTMLplot(file=out, Width=600, Height=400, GraphDirectory=graphicsDir, 
-               GraphFileName=paste(sampleNames[s], "hist", sep="-"),
+      HTMLplot(file=out, Width=600, Height=400, GraphDirectory=outputDir,
+               GraphFileName=file.path(graphicsDir, paste(sampleNames[s], "hist", sep="-")),
                GraphBorder=0)
       HTML(numberExpr, file=out)
       HTMLEndFile(file=out)
