@@ -1,7 +1,7 @@
-posMin = function(x) {
+posMin = function(x, ...) {
   x=x[x>=0]
   if(length(x)>0) {
-    min(x)
+    min(x, ...)
   } else {
     as.numeric(NA)
   }

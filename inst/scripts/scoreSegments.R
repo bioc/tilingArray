@@ -29,6 +29,9 @@ knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
 options(error=recover, warn=2)
 library("tilingArray")
 
+if(!exists("gff"))
+  load("probeAnno.rda")
+
 indir = "segmentation-050209v4"
 chrs = 1:17
 
@@ -109,7 +112,7 @@ for(chr in chrs) {
       ## nucleotide falls into it. That's an arbitrary rule, which is
       ## intended to err on the side of assigning probes to features.
       matchProbes2Feats = isWithinInterval(dat$x+(probeLength-1)/2, sgff$start, sgff$end)
-      print(gc)
+      cat("\n"); print(gc())
       
       p = function(x) paste(wgff, x, sep=".")
       for(j in 1:cp) {

@@ -3,10 +3,11 @@
 \title{Find the smallest positive number in a vector}
 \description{Find the smallest positive number in a vector}
 \usage{
-posMin(x)
+posMin(x, ...)
 }
 \arguments{
   \item{x}{Numeric vector.}
+  \item{...}{Further arguments that get passed on to \code{min}.}
 }
 \details{
   This is a rather trivial convenience function.

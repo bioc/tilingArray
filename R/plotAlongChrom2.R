@@ -1,4 +1,5 @@
-plotAlongChrom2 = function(chr, coord, highlight, segRes, segScore, scoreShow="pt", nrBasesPerSeg, gff) {
+plotAlongChrom2 = function(chr, coord, highlight, segRes, segScore,
+  scoreShow="pt", nrBasesPerSeg, gff) {
                    
   pushViewport(viewport(width=0.9, height=0.95)) ## plot margin
   pushViewport(viewport(layout=grid.layout(9, 1, height=c(0.2, 5, 0.4,1,1,1,0.4,5,0.4))))
@@ -30,7 +31,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, segScore, scoreShow="p
     if(missing(coord))
       coord = range(dat$x)
 
-    plotSegmentation(x=dat$x, y=dat$y, coord=coord, uniq=dat$unique,
+    plotSegmentation(x=dat$start, y=dat$yraw, coord=coord, uniq=dat$unique,
                      segScore=sgs, scoreShow=scoreShow,
                      gff=gff, chr=chr, chrSeqname=chrSeqname, strand=strand,
                      theViewports)
