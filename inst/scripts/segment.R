@@ -79,7 +79,7 @@ for(chr in chrstr) {
     maxk  = 1500
     maxcp = round(diff(range(dat$x)) / nrBasesPerSeg)
 
-    seg = findsegments(dat$y, maxk=maxk, maxcp=maxcp, verbose=99)
+    seg = findSegments(dat$y, maxk=maxk, maxcp=maxcp, verbose=99)
       
     save(seg, dat, file=datfn, compress=TRUE)
   } else {

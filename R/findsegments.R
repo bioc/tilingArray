@@ -1,4 +1,4 @@
-findsegments = function(x, maxcp, maxk, verbose=0) {
+findSegments = function(x, maxcp, maxk, verbose=0) {
   if(is.vector(x))
     x = matrix(x, nrow=length(x), ncol=1)
 

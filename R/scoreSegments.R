@@ -82,8 +82,8 @@ scoreSegments = function(x, gff,
           matchSeg2Feats = matchProbes2Feats[i1[j]:i2[j], ]
           overlap        = colSums(matchSeg2Feats)/nrow(matchSeg2Feats)
           wh             = which(overlap>0)
-          segScore[js, p("feature")] = paste(sgff$Name[wh], collapse=", ")
-          segScore[js, p("overlap")] = sum(overlap[wh])
+          segScore[j, p("feature")] = paste(sgff$Name[wh], collapse=", ")
+          segScore[j, p("overlap")] = sum(overlap[wh])
           ## For dist.start2feat, we distinguish two cases:
           ## 1. if the leftmost probe of a segment is part of an annotated feature
           ##    then dist.start2feat is the difference between that probe's middle
@@ -91,12 +91,12 @@ scoreSegments = function(x, gff,
           ## 2. if it is not part of an annotated feature, then dist.start2feat
           ##    is the difference between the middle nucleotide and the end point of
           ##    the next feature on the left.
-          sp  = segScore$start[js] + probeMiddle
+          sp  = segScore$start[j] + probeMiddle
           wh = which(matchSeg2Feats[1, ])
           if(length(wh)>0) {
-            segScore[js, p("dist.start2feat")] = sp - sgff$start[wh[1]]
+            segScore[j, p("dist.start2feat")] = sp - sgff$start[wh[1]]
           } else {
-            segScore[js, p("dist.start2feat")] = posMin(sp - sgff$end)
+            segScore[j, p("dist.start2feat")] = posMin(sp - sgff$end)
           }
           ## For dist.end2feat, we distinguish two cases:
           ## 1. if the rightmost probe of a segment is part of an annotated feature
@@ -105,12 +105,12 @@ scoreSegments = function(x, gff,
           ## 2. if it is not part of an annotated feature, then dist.end2feat
           ##    is the difference between the start point of the next feature on the
           ##    right left and the middle nucleotide.
-          sp  = segScore$end[js] + probeMiddle
+          sp  = segScore$end[j] + probeMiddle
           wh = which(matchSeg2Feats[nrow(matchSeg2Feats), ])
           if(length(wh)>0) {
-            segScore[js, p("dist.end2feat")] = sp - sgff$end[wh[1]]
+            segScore[j, p("dist.end2feat")] = sp - sgff$end[wh[1]]
           } else {
-            segScore[js, p("dist.end2feat")] = posMin(sgff$start - sp)
+            segScore[j, p("dist.end2feat")] = posMin(sgff$start - sp)
           }
         } ## for j
       } ## for wgff

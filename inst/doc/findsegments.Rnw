@@ -1,4 +1,4 @@
-%\VignetteIndexEntry{How to use the findsegments function to fit a piecewise constant curve}
+%\VignetteIndexEntry{How to use the findSegments function to fit a piecewise constant curve}
 %\VignetteDepends{Biobase}
 %\VignetteKeywords{Expression Analysis}
 %\VignettePackage{tilingArray}
@@ -8,7 +8,7 @@
 \definecolor{darkblue}{rgb}{0.0,0.0,0.75}
 \usepackage[%
 baseurl={http://www.bioconductor.org},%
-pdftitle={How to use the findsegments function to fit a piecewise constant curve},%
+pdftitle={How to use the findSegments function to fit a piecewise constant curve},%
 pdfauthor={Wolfgang Huber},%
 pdfsubject={tilingArray},%
 pdfkeywords={Bioconductor},%
@@ -32,7 +32,7 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 \begin{document}
 
 %------------------------------------------------------------
-\title{How to use the findsegments function to fit a piecewise constant curve}
+\title{How to use the findSegments function to fit a piecewise constant curve}
 %------------------------------------------------------------
 \author{Wolfgang Huber}
 \maketitle
@@ -78,12 +78,12 @@ plot(gd$x, pch=".")
 abline(v=gd$cp, col="red")
 @ 
 %
-\myincfig{findsegments-plotData}{0.6\textwidth}{%
+\myincfig{findSegments-plotData}{0.6\textwidth}{%
 A simulated data example with \Sexpr{nrcp} change points, shown with red
 vertical lines}
 %
-The result is shown in Figure~\ref{findsegments-plotData}.
-We can use the function \Rfunction{findsegments} to reconstruct the
+The result is shown in Figure~\ref{findSegments-plotData}.
+We can use the function \Rfunction{findSegments} to reconstruct the
 changepoints from the \Robject{x} data alone.
 %
 <<loadlib, results=hide>>=
@@ -93,7 +93,7 @@ library(tilingArray)
 library(tilingArray)
 maxk = 500
 maxcp   = 12
-seg  = findsegments(gd$x, maxk=maxk, maxcp=maxcp)
+seg  = findSegments(gd$x, maxk=maxk, maxcp=maxcp)
 seg
 gd$cp
 @ 
@@ -112,7 +112,7 @@ the original paper of Picard et al.~\cite{Picard} and in their software,
 algorithm's complexity. The complexity of Picard's software is
 \Robject{length(x)*length(x)} in memory and
 \Robject{length(x)*length(x)*maxcp} in time,
-the complexity of the \Rfunction{findsegments} function is 
+the complexity of the \Rfunction{findSegments} function is 
 \Robject{length(x)*maxk} in memory and
 \Robject{length(x)*maxk*maxcp} in time. As I am
 envisaging applications with \Robject{length(x)} $\approx 10^5$ and
@@ -128,13 +128,13 @@ model complexity (i.\,e.\, the number of change points). Details will follow $\l
 \section{Some more testing}
 %--------------------------------------------------
 Here is a little for-loop that generates data using random parameters 
-and checks whether \Rfunction{findsegments} can reconstruct them. 
+and checks whether \Rfunction{findSegments} can reconstruct them. 
 The purpose of this is for checking the validity of the code. 
 <<testing>>=
 set.seed(4711)
 for(i in 1:20){
   gd  = genData(lenx, nrcp)
-  seg = findsegments(gd$x, maxk=maxk, maxcp=maxcp)
+  seg = findSegments(gd$x, maxk=maxk, maxcp=maxcp)
   stopifnot(seg$th[nrcp, 1:nrcp] == gd$cp)
 }
 @ 

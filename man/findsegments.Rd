@@ -1,5 +1,5 @@
-\name{findsegments}
-\alias{findsegments}
+\name{findSegments}
+\alias{findSegments}
 \title{Fit a piecewise constant curve to a sequence of numbers}
 \description{
   The function fits a piecewise constant curve to a sequence of numbers
@@ -7,7 +7,7 @@
   algorithm of Picard et al. (full citation see below).
 }
 \usage{
-findsegments(x, maxcp, maxk, verbose=0)
+findSegments(x, maxcp, maxk, verbose=0)
 }
 \arguments{
   \item{x}{Numeric (real) vector.}
@@ -41,6 +41,6 @@ findsegments(x, maxcp, maxk, verbose=0)
 
 \examples{
  x = rep( sin((0:4)/2*pi), each=3) + rnorm(3*5, sd=0.1)
- res = findsegments(x, maxcp=6, maxk=15)
+ res = findSegments(x, maxcp=6, maxk=15)
 }
 \keyword{manip}

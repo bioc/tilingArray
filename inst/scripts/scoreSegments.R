@@ -9,7 +9,6 @@ chrs = 1:17
 
 if(!exists("s")) {
   s  = new.env()
-  totcp = 0
   cat("Loading ")
   for(chr in chrs) {
     for(strand in c("+", "-")) {
@@ -18,7 +17,6 @@ if(!exists("s")) {
       load(fn)
       assign(paste(chr, strand, "seg", sep="."), seg, envir=s)
       assign(paste(chr, strand, "dat", sep="."), dat, envir=s)
-      totcp = totcp + round(max(dat$x)/nrBasePerSeg)
     }
   } ## for chr
   cat("\n")

@@ -1,3 +1,22 @@
+\name{scoreSegments}
+\alias{scoreSegments}
+\title{BLA}
+\description{BLA}
+\usage{
+scoreSegments(x, gff, 
+  nrBasePerSeg = 1500, 
+  probeLength  = 25,
+  knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
+        "rRNA", "snRNA", "snoRNA", "tRNA",
+        "transposable_element", "transposable_element_gene"),
+  verbose = TRUE)
+}
+\arguments{
+  \item{x}{character vector.}
+  \item{field}{character vector of length 1, containing the field name.}
+  \item{attrsep}{character vector of length 1, containing the separator name.}
+}
+\details{
 ## This algorithm scores segments.
 ## For each segment, we calculate and/or record its:
 ## * chromosome, strand, start position, end position (in bases)
@@ -16,3 +35,14 @@
 ##--------------------------------------------------------------------------------
 
 ## For the definition of pseudogenes at SGD, see Docs/PseudogenesAtSGD.pdf
+}
+
+\value{
+  Character vector.
+}
+
+\author{W. Huber <huber@ebi.ac.uk>}
+
+\examples{
+}
+\keyword{manip}
