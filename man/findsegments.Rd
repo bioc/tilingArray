@@ -37,7 +37,7 @@ findsegments(x, maxcp, maxk, verbose=0)
   ISSN 0249-6399.
   The code of this function is based on the Matlab
   implementation presented at  
-  http://www.inapg.fr/ens_rech/mathinfo/recherche/mathematique/outil.html,
+  \verb+http://www.inapg.fr/ens_rech/mathinfo/recherche/mathematique/outil.html+,
   but it has evolved.}
 
 \examples{
