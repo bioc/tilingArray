@@ -49,90 +49,75 @@ void print_matrix_int(int* x, int nrow, int ncol, char *s) {
 }
 
 /*-----------------------------------------------------------------
-  Accessor function for matrix G
-  G[k, i] is the cost of segment from i to i+k, including these endpoints
-  fG(i, j) calculates the cost for segment from i to j-1, excluding
-    j. (j=i+k+1).
------------------------------------------------------------------*/
-static R_INLINE double fG(int i, int j) {
-    int k;
-    if(i==j)
-      return((double)0);
-    k = j-i-1;
-#ifdef DEBUG
-    if((i<0) || (i>=n) || (k<0) || (k>=maxk)) {
-      Rprintf("i=%d j=%d k=%d\n", i, j, k);
-      error("Illegal value.");
-    }
-#endif
-    return(MAT_ELT(G, k, i, maxk));
-}
-
-
-/*-----------------------------------------------------------------
    Find segments using the dynamic programming algorithm of Picard
    et al.  This is the workhorse routine with C interface.
    Note that all array indices here start at 0 and run to size(array)-1.
    At the end we add 1 to the result indices in matrix 'th'
 -----------------------------------------------------------------*/
 void findsegments_dp(double* J, int* th, int maxcp) {
-    int i, imin, i0, cp, j;
+    int i, imin, cp, j, k, k0;
     double z, zmin;
     double *mI;
     int * mt;
-    
-    /* mI[cp, i] is the optimal cost of segmentation from 0 to i 
+
+    if(verbose>=2)
+	Rprintf("In findsegments_dp: ");
+
+    /* G[k, i] is the cost of segment from i to i+k, including these 
+       endpoints */
+    /* mI[i, cp] is the optimal cost of segmentation from 0 to i 
        with cp change points */
-    /* mt[cp-1, i] is the index (0...n-1) of the rightmost changepoint 
+    /* mt[i, cp-1] is the index (0...n-1) of the rightmost changepoint 
        in the optimal segmentation from 0 to i with cp change points;
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
     mI = (double*) R_alloc(  maxcp  *n, sizeof(double));
     mt = (int*)    R_alloc((maxcp-1)*n, sizeof(int));
 
-    /* initialize for cp=0: mI[0, j] is simply fG(0, j) */
-    for(j=0; j<maxk; j++)
-	MAT_ELT(mI, 0, j, maxcp) = fG(0, j);
-    for(j=maxk; j<n; j++)
-	MAT_ELT(mI, 0, j, maxcp) = R_PosInf;
+    /* initialize for cp=0: mI[k, 0] is simply G[k, 0] */
+    for(k=0; k<maxk; k++)
+	mI[k] = G[k];
+    for(k=maxk; k<n; k++)
+	mI[k] = R_PosInf;
 
     for (cp=1; cp<maxcp; cp++) {	
       if(verbose>=2)
-	Rprintf("findsegments_dp: cp=%d.\n", cp);
+	Rprintf("cp=%d ", cp);
       /*  Best segmentation with cp change points from 0 to j 
-      is found from considering best segmentations from 0 to i (<j)
-      with cp-1 segments, plus cost of segment from i to j. 
-      And j-maxk <= i <= j */
+      is found from considering best segmentations from 0 to j-k-1
+      with cp-1 segments, plus cost of segment from j-k to j. */
       for (j=0; j<n; j++) {   
 	  zmin = R_PosInf;
 	  imin = j;
           /* find the best change point between 0 and j-1 */ 
-          i0 = j-maxk;
-          if(i0<0) i0=0;
-	  for (i=i0; i<=j; i++) { 
+          k0 = (j<maxk) ? j : maxk;
+	  for (k=0; k<k0; k++) { 
 #ifdef VERBOSE              
-	      Rprintf("%2d %2d %2d %6g %6g", 
-		      cp, j, i, MAT_ELT(mI, cp-1, i, maxcp), fG(i, j));
+	      Rprintf("cp=%4d j=%4d k=%4d mI=%6g G=%6g", cp, j, k, 
+		      MAT_ELT(mI, j-k-1, cp-1, n), 
+		      MAT_ELT(G,  k,      j-k, maxk));
 #endif
-	      z = MAT_ELT(mI, cp-1, i, maxcp);
+              /* Best segmentation from 0 to j-k-1 */
+	      z = MAT_ELT(mI, j-k-1, cp-1, n);
               if (finite(z))
-		  z += fG(i, j);
+		  z += MAT_ELT(G, k, j-k, maxk);
+                  /* Cost of segment from j-k to j */
 #ifdef VERBOSE              
 	      Rprintf(" %6g\n", z);
 #endif
 	     if(z<zmin) {
 		  zmin = z;
-		  imin = i;
+		  imin = j-k;
 	     } /* if z */
 	  } /* for i */	  
-	  MAT_ELT(mI, cp,   j, maxcp  ) = zmin;
-	  MAT_ELT(mt, cp-1, j, maxcp-1) = imin;
+	  MAT_ELT(mI, j,   cp, n) = zmin;
+	  MAT_ELT(mt, j, cp-1, n) = imin;
       } /* for j */
     } /* for cp */
 
 #ifdef VERBOSE              
-       print_matrix_double(mI, maxcp, n, "mI");
-       print_matrix_int(mt, maxcp-1, n, "mt"); 
+       print_matrix_double(mI, n, maxcp, "mI");
+       print_matrix_int(mt, n, maxcp-1, "mt"); 
 #endif
    
     /* th: elements 0...cp-1 of the cp-th row of matrix th contain
@@ -140,7 +125,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        to a changepoint at the rightmost point */
     for(cp=0;  cp<maxcp; cp++) {
         /* Calculate J, the log-likelihood. TO DO: constant factors, sqrt(2*pi) */
-        z = MAT_ELT(mI, cp, n-1, maxcp);
+        z = MAT_ELT(mI, n-1, cp, n);
 	J[cp] = finite(z) ? -log(z/n) : R_NegInf;
 
 	for(j=cp+1; j<maxcp; j++)
@@ -158,14 +143,14 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 	       error("Illegal value for i.");
 #endif
             /* note the chained assignment */
-	    MAT_ELT(th, cp, j, maxcp) = i = MAT_ELT(mt, j, i-1, maxcp-1);
+	    MAT_ELT(th, cp, j, maxcp) = i = MAT_ELT(mt, i-1, j, n);
 	}
     }
 
     /* add 1 to all elements of th since in R array indices start at 1,
        while here they were from 0 */
-    for(i=0; i<cp*cp; i++) 
-       th[i] += 1; 
+    for(cp=0; cp<maxcp*maxcp; cp++) 
+       th[cp] += 1; 
 
     return;
 } 

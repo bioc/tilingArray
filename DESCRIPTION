@@ -1,6 +1,6 @@
 Package: tilingArray
-Version: 0.1.1
-Date: 1 Mar 2005
+Version: 0.2.0
+Date: 5 Mar 2005
 Title: Tools for analysis of tiling arrays
 Author: Wolfgang Huber
 Maintainer: W. Huber <huber@ebi.ac.uk>
