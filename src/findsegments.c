@@ -14,6 +14,8 @@
 #include <stdlib.h>
 
 #define DEBUG
+#undef VERBOSE
+
 #define MAT_ELT(x, i, j, nrow) x[i+(j)*(nrow)]
 
 /*  Global variables */
@@ -99,8 +101,10 @@ void findsegments_dp(double* J, int* th, int maxcp) {
           /* find the best change point between 0 and j-1 */ 
 	  for (i=1; i<j; i++) { 
 	      z = MAT_ELT(mI, cp-1, i, maxcp) + fG(i, j);
-              /* Rprintf("%2d %2d %2d %6g %6g %6g\n", 
-		 cp, j, i, mI[cp-1 + i*maxcp], fG(i, j), z); */
+#ifdef VERBOSE              
+              Rprintf("%2d %2d %2d %6g %6g %6g\n", 
+		 cp, j, i, MAT_ELT(mI, cp-1, i, maxcp), fG(i, j), z);
+#endif
 	      if(z<zmin) {
 		  zmin = z;
 		  imin = i;
@@ -111,8 +115,10 @@ void findsegments_dp(double* J, int* th, int maxcp) {
       } /* for j */
     } /* for cp */
 
-    /* print_matrix_double(mI, maxcp, n, "mI");
-       print_matrix_int(mt, maxcp-1, n, "mt"); */
+#ifdef VERBOSE              
+       print_matrix_double(mI, maxcp, n, "mI");
+       print_matrix_int(mt, maxcp-1, n, "mt"); 
+#endif
    
     /* th: elements 0...cp-1 of the cp-th row of matrix th contain
        the cp change points; element cp has value n, which corresponds
@@ -128,11 +134,12 @@ void findsegments_dp(double* J, int* th, int maxcp) {
         /* In the following loop, i is always the changepoint to the right */
         MAT_ELT(th, cp, cp, maxcp) = i = n;  /* note the chained assignment */
 	for(j=cp-1; j>=0; j--) {
+#ifdef VERBOSE              
 	    Rprintf("cp=%4d j=%4d i=%4d\n", cp, j, i); 
+#endif
 #ifdef DEBUG
-	    if((i<1)||(i>n)) {
+	    if((i<1)||(i>n))
 	       error("Illegal value for i.");
-	    }
 #endif
             /* note the chained assignment */
 	    MAT_ELT(th, cp, j, maxcp) = i = MAT_ELT(mt, j, i-1, maxcp-1);
@@ -183,6 +190,10 @@ SEXP findsegments(SEXP _G, SEXP _maxcp)
   PROTECT(dimth = allocVector(INTSXP, 2));
   INTEGER(dimth)[0] = INTEGER(dimth)[1] = maxcp;
   setAttrib(th, R_DimSymbol, dimth);
+
+#ifdef VERBOSE 
+  Rprintf("In findsegments, maxk=%d, n=%d, maxcp=%d\n", maxk, n, maxcp);
+#endif
 
   findsegments_dp(REAL(J), INTEGER(th), maxcp);
 
