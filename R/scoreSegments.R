@@ -96,7 +96,7 @@ scoreSegments = function(x, gff,
           ## see man page!
           sp  = segScore$end[j] + probeMiddle
           whe = which(matchSeg2Feats[nrow(matchSeg2Feats), ])
-          if(length(wh)>0) {
+          if(length(whe)>0) {
             segScore[j, p("dist.end2feat")] = min(sgff$end[whe] - sp)
           } else {
             segScore[j, p("dist.end2feat")] = posMin(sgff$start - sp)
