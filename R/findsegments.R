@@ -1,7 +1,4 @@
 findSegments = function(x, maxcp, maxk, verbose=0) {
-  if(is.vector(x))
-    x = matrix(x, nrow=length(x), ncol=1)
-
   n       = nrow(x)
   maxcp   = as.integer(maxcp)
   maxk    = as.integer(maxk)
@@ -14,12 +11,7 @@ findSegments = function(x, maxcp, maxk, verbose=0) {
     cat(sprintf("findsegments: calculating Gmean, n=%d, maxk=%d.\n",
                 n, as.integer(maxk)))
 
-  G = Gmean(x[,1], maxk)
-  if(ncol(x)>=2) {
-    for(i in 2:ncol(x))
-      G = G + Gmean(x[,i], maxk)
-  }
-  
+  G = costMatrix(x, maxk)
   res = .Call("findsegments", G, maxcp, verbose, PACKAGE="tilingArray")
   class(res) = c("segmentation", class(res)) 
   return(res)

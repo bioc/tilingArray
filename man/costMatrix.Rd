@@ -1,14 +1,16 @@
-\name{Gmean}
-\alias{Gmean}
+\name{costMatrix}
+\alias{costMatrix}
 \title{Segmentation cost matrix}
 \description{
   This function calculates the cost matrix for a homoscedastic model
 }
 \usage{
-Gmean(x, maxk)
+costMatrix(x, maxk)
 }
 \arguments{
-  \item{x}{Numeric (real) vector.}
+  \item{x}{Numeric vector of length \code{n} or matrix with \code{n} rows and \code{d}
+    columns, where \code{n} is the number of sample points and \code{d}
+    the number of replicate measurements (e.g. from multiple arrays).}
   \item{maxk}{Positive integer.}
 }
 \details{
@@ -22,7 +24,7 @@ Gmean(x, maxk)
 
 \examples{
 x = cumsum(rnorm(100))
-G = Gmean(x, maxk=20)
+G = costMatrix(x, maxk=20)
 
 
 G.pedestrian = matrix(NA, nrow=nrow(G), ncol=ncol(G))
