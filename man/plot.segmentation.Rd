@@ -16,7 +16,7 @@
 \author{Wolfgang Huber <huber@ebi.ac.uk>}
 \examples{
  x = rep( sin((0:4)/2*pi), each=3) + rnorm(3*5, sd=0.1)
- res = findsegments(x, maxcp=6, maxk=20)
+ res = findsegments(x, maxcp=6, maxk=15)
  if(interactive())
   plot(res)
  }

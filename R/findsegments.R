@@ -1,4 +1,7 @@
 findsegments <- function(x, maxcp, maxk, verbose=0) {
+  maxcp   = as.integer(maxcp)
+  maxk    = as.integer(maxk)
+  verbose = as.integer(verbose)
   if(maxcp>length(x))
     stop(sprintf("maxcp=%d must not be larger than length(x)=%d", maxcp, length(x)))
   if(maxk>length(x))
@@ -8,7 +11,7 @@ findsegments <- function(x, maxcp, maxk, verbose=0) {
                 length(x), as.integer(maxk)))
   
   G = Gmean(x, maxk)
-  res = .Call("findsegments", G, as.integer(maxcp), as.integer(verbose), PACKAGE="tilingArray")
+  res = .Call("findsegments", G, maxcp, verbose, PACKAGE="tilingArray")
   class(res) = c("segmentation", class(res)) 
   return(res)
 }
