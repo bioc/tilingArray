@@ -1,5 +1,8 @@
 ##--------------------------------------------------------------------------------
 ## 26.3.2005
+## Note: this script is such a memory hog that it currently only works on
+## dijkstra (27 GB). On pavlov (16 GB) it will fail.
+##
 ## Use the output from the BLAST of all probes on chip vs genome to construct
 ## a datastructure for along-chromosome analyses
 ## - coord: coordinate (integer) 
@@ -137,8 +140,7 @@ stopifnot(all(sgff$strand %in% c("+", "-")))
 mseq = match(sgff$seqname, chrSeqname)
 stopifnot(!any(is.na(mseq)), !any(mseq<1), !any(mseq>17))
 
-## for(hybeType in c("Reverse", "Direct")) {
-for(hybeType in c("Direct")) {
+for(hybeType in c("Reverse", "Direct")) {
   cat("-----", hybeType, "-----\n")
   p = lapply(featNames, function(i) character(nrProbes))
   names(p) = featNames
