@@ -110,8 +110,11 @@ the original paper of Picard et al.~\cite{Picard} and in their software,
 \Robject{maxk} is implicitely set to the number of data points
 \Robject{length(x)}. I have introduced this parameter to reduce the
 algorithm's complexity. The complexity of Picard's software is
-\Robject{length(x)*length(x)}, the complexity of the
-\Rfunction{findsegments} function is \Robject{length(x)*maxk}. As I am
+\Robject{length(x)*length(x)} in memory and
+\Robject{length(x)*length(x)*maxcp} in time,
+the complexity of the \Rfunction{findsegments} function is 
+\Robject{length(x)*maxk} in memory and
+\Robject{length(x)*maxk*maxcp} in time. As I am
 envisaging applications with \Robject{length(x)} $\approx 10^5$ and
 \Robject{maxk} $\approx 250$, the difference can be substantial.
 

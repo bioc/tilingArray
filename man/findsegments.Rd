@@ -18,7 +18,7 @@ findsegments(x, maxcp, maxk, verbose=0)
     value, various diagnostic output is printed.}
 }
 \details{The complexity of the algorithm is 
-  \code{length(x) * maxk}.
+  \code{length(x) * maxk * maxcp}.
 }
 
 \value{
