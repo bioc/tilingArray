@@ -49,6 +49,7 @@ qualityReport <- function(x, normRef=NULL, compress = TRUE,
   }
 
   sampleNames = gsub("\\.cel(\\.gz)*$", "", rownames(pData(x)))
+  sampleNames = gsub("#|&|/|\\*", "_", sampleNames)
   
   ## plot some values along the chromosome for selected ORFs:
   gff$Name = getAttributeField(gff$attributes, "Name")
