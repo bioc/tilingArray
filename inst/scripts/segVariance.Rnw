@@ -22,15 +22,15 @@
 \maketitle
 % \tableofcontents
 
-<<setup, echo=FALSE>>=
+<<setup, echo=FALSE, results=hide>>=
 options(error=recover, warn=2)
 library("tilingArray")
 
-indir = "segmentation-050209v4"
-## indir = "segmentation-3polyA"
+indir = "segmentation-3polyA"
 
-nrchr = 3
-js = paste(rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "rda", sep=".")
+nrchr = 1
+## js = paste(rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "rda", sep=".")
+js = "1.+.rda"
 
 if(!exists("s")) {
   s  = new.env()
@@ -41,11 +41,9 @@ if(!exists("s")) {
     load(file.path(indir, j))
     assign(sub("rda", "seg", j), seg, envir=s)
     assign(sub("rda", "dat", j), dat, envir=s)
-    if(FALSE){
-      load(file.path(indir, sub(".rda", "rand.rda", j)))
-      assign(sub("rda", "seg", j), seg, envir=r)
-      assign(sub("rda", "dat", j), dat, envir=r)
-    }
+    load(file.path(indir, sub(".rda", "rand.rda", j)))
+    assign(sub("rda", "seg", j), seg, envir=r)
+    assign(sub("rda", "dat", j), dat, envir=r)
   }
   cat("\n")
 }
@@ -83,7 +81,7 @@ calcStat = function(e, nrBasePerSeg = 1500) {
   
   return(list(statistic=t, n=n, res=res))
 }
-j = js[3]
+j = js[1]
 @ 
 
 %--------------------------------------------------
@@ -91,7 +89,7 @@ j = js[3]
 %--------------------------------------------------
 First we have a look at the autocorrelation of the residuals.
 %
-<<acf, fig=TRUE, include=FALSE>>=
+<<acf, fig=TRUE, include=FALSE, eps=FALSE>>=
 ts = calcStat(s)
 acf(unlist(ts$res), lag.max=50, main="autocorrelation of residuals")
 @
@@ -102,50 +100,111 @@ acf(unlist(ts$res), lag.max=50, main="autocorrelation of residuals")
   between probe starts, i.e. 8 bases.)}
 The result is shown in Fig.~\ref{segVariance-acf}. We can see that next
 neighbours and second-next neighbours have pretty high correlation. The
-correlation then decays is gone after after 25 probes (200 bases).
+correlation then decays and is gone after after 25 probes (200 bases).
 
-<<eval=FALSE>>=
-##--------------------------------------------------
-## likelihood
-##--------------------------------------------------
-if(FALSE) {
+However, we see that (neighbouring) probes are not independent, and we need to
+be careful with methods that make the assumption of independence.
 
-  segs = get(sub("rda", "seg", j), envir=s)
-  segr = get(sub("rda", "seg", j), envir=r)
-  par(mfrow=c(2,2))
-  plot(segr$J, segs$J)
-  plot(2*seq(along=segs$J), segs$J, main="data")
-  plot(2*seq(along=segr$J), segr$J, main="random")
-  ddJ = diff(segs$J) ## diff(diff(segs$J))
-  plot(2*seq(along=ddJ), ddJ, ylim=quantile(ddJ, c(0.01, .99), na.rm=TRUE), main="data")
+%--------------------------------------------------
+\section{(Log-)Likelihood}
+%--------------------------------------------------
+The (log-)likelihood is a number that measures how well a certain model fits
+data. In principle, the higher the likelihood, the better. However, the more
+parameters a model has, the more likely it is susceptible to overfitting, that
+is, to fitting the noise rather than the underlying signal. In our case, each
+additional segment introduces two new parameters. We thus need to compare the
+the gain in likelihood with the cost of having more
+parameters. This is called \textit{penalized likelihood}
+%
+\[
+PL(n) = L(n) - C(n)
+\]  
+%
+where $L(n)$ is the optimal likelihood for a model with $n$ parameters, $C(n)$
+is a cost function for having $n$ parameters, and $PL(n)$ is the penalized
+likelihood. The hard part is finding a good cost function (there are several
+plausible choices and the choice is not obvious).
+
+Some explorations are made in the following code and plots.
+The quantity \Robject{J} which is returned from the segmentation algorithm is
+proportional\footnote{to do: fix this factor so it's actually the 
+log-likelihood} to the log-likelihood. \Robject{J[n]} is the
+log-likelihood of the best model with \Robject{n} segments.
+%
+<<likelihood, fig=TRUE, include=FALSE, eps=FALSE>>=
+j
+segs = get(sub("rda", "seg", j), envir=s)
+segr = get(sub("rda", "seg", j), envir=r)
+par(mfrow=c(2,2))
+plot(segr$J, segs$J)
+plot(2*seq(along=segs$J), segs$J, main="data")
+plot(2*seq(along=segr$J), segr$J, main="random")
+ddJ = diff(segs$J) ## diff(diff(segs$J))
+plot(2*seq(along=ddJ), ddJ, 
+ylim=quantile(ddJ, c(0.01, .99), na.rm=TRUE), main="data")
+@ 
+\myincfig{segVariance-likelihood}{\textwidth}{Top left: plot of 
+log-likelihood of real data ($y$-axis) versus randomly permuted 
+($x$x-axis). Top right: log-likelihood of real data versus number of 
+segments. Bottom left: log-likelihood of randomly permuted data 
+versus number of segments. Bottom right: local slope (``first 
+derivative'') of the function $J(i)$.
 }
+The result is shown in Figure~\ref{segVariance-likelihood}. The major result
+from these plots is that the likelihood of the model on randomized data is
+approximately proportional to the number of segments. This is consistent with
+a cost function $C$ that is simply proportional to $n$ - which is nice.
 
+%--------------------------------------------------
+\section{$t$-statistic}
+%--------------------------------------------------
+For each change point (= the jump points between the segments) we can
+calculate a $t$-statistic between the segments on both of its sides.  The
+distribution of these and the comparison with the situation for randomized
+data is made in the following code and plots.
+%
+<<tstat, fig=TRUE, include=FALSE, eps=FALSE>>=
+ts = calcStat(s)
+tr = calcStat(r)
+par(mfrow=c(3,2))
+hist(ts$statistic, col="lightblue", breaks=50,
+   main="t-statistic (data)")
+hist(ts$n, col="lightblue", breaks=50,
+   main="length of segments (data)")
+hist(tr$statistic, col="orange", breaks=50,
+   main="t-statistic (randomized)")
+hist(tr$n, col="orange", breaks=50,
+   main="length of segments (randomized)")
+qqplot(ts$statistic, tr$statistic); abline(a=0, b=1, col="red")
+@ 
+%
+\myincfig{segVariance-tstat}{\textwidth}{$t$-statistic.  Note how the
+distribution of $t$-statistics has two peaks at positive and negative values,
+and almost no weight at 0, even for randomized data (orange). This is due to
+the segmentation algorithm, which finds apparent segments even in random
+data. However, the $t$-values for the actual data (light blue) are much more
+extreme. Comparison of the two distributions could be used to calculate a 
+false discovery rate (FDR).}
+The result is shown in Figure~\ref{segVariance-tstat}.
 
-##--------------------------------------------------
-## t-statistic
-##--------------------------------------------------
-if(FALSE){
-  ts = calcStat(s)
-  tr = calcStat(r)
-  par(mfrow=c(3,2))
-  hist(ts$statistic, col="lightblue", breaks=50)
-  hist(tr$statistic, col="orange", breaks=50)
-  hist(ts$n, col="lightblue", breaks=50)
-  hist(tr$n, col="orange", breaks=50)
-  qqplot(ts$statistic, tr$statistic); abline(a=0, b=1, col="red")
-}  
+%--------------------------------------------------
+\section{Next step}
+%--------------------------------------------------
+Use a criterion based on the penalized likelihood (with some choice of cost
+function, for what we want to do here it may not matter that much). This will
+produce a set of $n$ segments. Do the same for randomized data. This will
+produce a set of $n'$ segments, with $n'\ll n$ and the false discovery rate
+(FDR) may be estimated by $n'/n$.
 
-
+<<eval=FALSE, echo=FALSE>>=
 ## see whether variance depends on position along chromosome
 ## (it doesn't seem to)
-if(FALSE) {
-  par(mfrow=c(4,4), mai=c(0.3, 0.4, 0.4, 0.01))
-  for(j in js[17:32]) {
-    dat = get(sub("rda", "dat", j), envir=s)
-    dy  = diff(dat$y)
-    dy  = dy[abs(dy)<=2]
-    smoothScatter(seq(along=dy), dy, pch=".", main=j)
-  }
+par(mfrow=c(4,4), mai=c(0.3, 0.4, 0.4, 0.01))
+for(j in js[17:32]) {
+  dat = get(sub("rda", "dat", j), envir=s)
+  dy  = diff(dat$y)
+  dy  = dy[abs(dy)<=2]
+  smoothScatter(seq(along=dy), dy, pch=".", main=j)
 }
 @
 
