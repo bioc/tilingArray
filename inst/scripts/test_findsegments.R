@@ -2,28 +2,28 @@ library("tilingArray")
 options(error=recover)
 options(warn=0)
 
+maxk = 500
+maxcp   = 12
 
+lenx = 1000
+nrcp = 10
+x    = numeric(lenx)
 
-x = NULL
-nseg = round(runif(1)*4+2)
-b = 0
-for(i in 1:nseg) {
-  b      = b + (runif(1)+.5)*sign(runif(1)-0.5)
-  lenseg = round(runif(1)*7+3)
-  x      = c(x, b + rnorm(lenseg, sd=0.1))
+for(i in 1:100){
+  cp = c(1, sort(sample(lenx, nrcp-1)), lenx+1)
+  s  = 0
+  for (j in 2:length(cp)) {
+    sel <- cp[j-1]:(cp[j]-1)
+    s = (.5+runif(1))*sign(rnorm(1))+s
+    x[sel] <- rnorm(length(sel), mean=s, sd=0.1)
+  }
+  seg  = findsegments(x, maxk=maxk, maxcp=maxcp)
+
+  stopifnot(all(seg$th[nrcp, 1:nrcp] == cp[-1]))
+  plot(x, pch=".")
+  abline(v=seg$th[nrcp,], col="red")
+   locator(n=1)
 }
-plot(x)
-
-
-
-maxk = 11
-Km   = 7
-
-seg  = findsegments(x, maxk=maxk, Km=Km)
-abline(v=seg$th[nseg,], col="red")
-
-## plot(Y)
-
 
 
 

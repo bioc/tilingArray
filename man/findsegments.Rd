@@ -4,18 +4,19 @@
 \description{
   The function fits a piecewise constant curve to a sequence of numbers
   using a simple least squares cost function and the dynamic programming
-  algorithms of Picard et al. (full citation see below).
+  algorithm of Picard et al. (full citation see below).
 }
 \usage{
-findsegments(x, Km, maxk)
+findsegments(x, maxcp, maxk)
 }
 \arguments{
   \item{x}{Numeric (real) vector.}
-  \item{Km}{Integer (length 1): maximum number of segments.}
+  \item{maxcp}{Integer (length 1): maximum number of segments (= 1 + maximum
+    number of change points).}
   \item{maxk}{Integer (length 1): maximum length of a segment.}
 }
 \details{The complexity of the algorithm is 
-  \code{length(x) * Km * maxk}.
+  \code{length(x) * maxcp * maxk}.
 }
 
 \value{
@@ -26,8 +27,8 @@ findsegments(x, Km, maxk)
 
 \author{W. Huber <huber@ebi.ac.uk>}
 
-\references{A statistical approach for CGH microarray data analysis,
-  Franck Picard, Stephane Robin, Marc Lavielle , Christian Vaisse ,
+\references{A statistical approach for CGH microarray data analysis.
+  Franck Picard, Stephane Robin, Marc Lavielle, Christian Vaisse,
   Gilles Celeux, Jean-Jacques Daudin,
   Rapport de recherche No. 5139, Mars 2004,
   Institut National de Recherche en Informatique et en Automatique (INRIA),
@@ -39,6 +40,6 @@ findsegments(x, Km, maxk)
 
 \examples{
  x = rep( sin((0:4)/2*pi), each=3) + rnorm(3*5, sd=0.1)
- res = findsegments(x, Km=6, maxk=20)
+ res = findsegments(x, maxcp=6, maxk=20)
 }
 \keyword{manip}
