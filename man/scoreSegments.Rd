@@ -35,7 +35,7 @@ scoreSegments(x, gff,
     \item{chr, strand}{chromosome and strand}
     \item{start, end, length}{start position, end position, length (in
       bases)}
-    \item{frac.dup}{fraction (0...1) of probes mapping to this segments that have
+    \item{frac.dup}{fraction (0...1) of probes in this segment that have
       also hits otherwhere} 
     \item{level}{mean level minus that of the background}
     \item{p-value}{one-sample t-test against hypothesis level=0}
@@ -50,24 +50,22 @@ scoreSegments(x, gff,
           nucleotide and the annotated start point of the feature.
          \item If it is not part of an annotated feature, then dist.start2feat
           is the difference between the middle nucleotide and the end point of
-          the next feature on the left.}}
+          the next feature to the left.}}
     \item{same.dist.end2feat}{Here, we distinguish two cases:
       \enumerate{
          \item If the rightmost probe of a segment is part of an annotated feature,
           then dist.endfeat is the difference between that probe's middle
-          nucleotide and the annotated end point of the feature.}
+          nucleotide and the annotated end point of the feature.
          \item If it is not part of an annotated feature, then dist.end2feat
-          is the difference between the start point of the next feature on the
-          right left and the middle nucleotide.}}
-    In addition, quantities \code{oppo.XXX} are calculated analogous to the
-    \code{same.XXX}, for the opposite strand.
+          is the difference between the start point of the next feature to the
+          right and the middle nucleotide.}}
+    In addition, quantities oppo.XXX are calculated for the opposite
+    strand analogous to the same.XXX.
 
     A probe is considered \emph{part of} a feature if its middle
     nucleotide (\code{(probeLength-1)/2}) falls into it. That is an
     arbitrary rule, which is intended to err on the side of assigning
     probes to features rather than not.
-    
-    For the definition of pseudogenes at SGD, see Docs/PseudogenesAtSGD.pdf
 }
 
 

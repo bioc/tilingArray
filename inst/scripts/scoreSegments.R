@@ -22,6 +22,8 @@ if(!exists("s")) {
   cat("\n")
 } ## if
 
+## For the definition of pseudogenes at SGD, see Docs/PseudogenesAtSGD.pdf
 segScore = scoreSegments(s, gff=gff)
 
 save(segScore, file=file.path(indir, "segScore.rda"), compress=TRUE)
+    
