@@ -22,9 +22,8 @@ findsegments(x, maxcp, maxk, verbose=0)
 }
 
 \value{
-  A list with two elements \code{J} and \code{th}. See the below
-  cited paper for details (and soon it will also be explained
-  in the vignette, please bear with me or remind me).
+  A list with two elements \code{J} and \code{th}. See the vignette, and
+  the paper cited below for details.
 }
 
 \author{W. Huber <huber@ebi.ac.uk>}
