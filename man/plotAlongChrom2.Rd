@@ -4,7 +4,8 @@
 \keyword{hplot}
 \description{Plot the results of segmentation along a chromosomal region}
 
-\usage{plotAlongChrom2(chr, coord, segRes, segScore, nrBasesPerSeg, gff)}
+\usage{plotAlongChrom2(chr, coord, highlight, segRes, segScore,
+   scoreShow = "pt", nrBasesPerSeg, gff)}
 
 \arguments{
   \item{chr}{integer of length 1 with the number of the chromosome for

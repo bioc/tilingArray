@@ -50,9 +50,6 @@ if(!exists("s")) {
   cat("\n")
 } ## if
 
-pos.min = function(x) { x=x[x>=0]; if(length(x)>0) {min(x)} else {as.numeric(NA)} }
-abs.min = function(x) { i = which.min(abs(x)); x[i]  }
-
 segScore = data.frame(
   chr                 = integer(totcp),
   strand              = I(character(totcp)),
@@ -113,14 +110,15 @@ for(chr in chrs) {
       ## nucleotide falls into it. That's an arbitrary rule, which is
       ## intended to err on the side of assigning probes to features.
       matchProbes2Feats = isWithinInterval(dat$x+(probeLength-1)/2, sgff$start, sgff$end)
-
+      print(gc)
+      
       p = function(x) paste(wgff, x, sep=".")
       for(j in 1:cp) {
         js = j+joff
         ## this matrix has as many rows are there are probes in the segment,
         ## and as many columns as there as features
         matchSeg2Feats = matchProbes2Feats[i1[j]:i2[j], ]
-        overlap      = colSums(matchSeg2Feats)/nrow(matchSeg2Feats)
+        overlap        = colSums(matchSeg2Feats)/nrow(matchSeg2Feats)
         if(any(overlap>0)) {
           whf = which.max(overlap)
           segScore[js, p("feature")] = sgff$Name[whf]
@@ -130,8 +128,8 @@ for(chr in chrs) {
         } else {  
           segScore[js, p("feature")] = as.character(NA)
           segScore[js, p("overlap")] = 0
-          segScore[js, p("dist.start2feat")] = abs.min(segScore$start[js] - sgff$end)
-          segScore[js, p("dist.end2feat")]   = abs.min(sgff$start - segScore$end[js])
+          segScore[js, p("dist.start2feat")] = posMin(segScore$start[js] - sgff$end)
+          segScore[js, p("dist.end2feat")]   = posMin(sgff$start - segScore$end[js])
         }
       }
     }

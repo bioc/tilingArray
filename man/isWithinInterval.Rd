@@ -5,7 +5,7 @@
   Test whether a vector of numbers is within a vector of intervals
 }
 \usage{
-isWithinInterval = function(x, start, end)
+isWithinInterval(x, start, end)
 }
 \arguments{
   \item{x}{Numeric vector.}

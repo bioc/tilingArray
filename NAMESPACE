@@ -1,6 +1,6 @@
 useDynLib(tilingArray)
 
 export("findsegments", "Gmean", "plot.segmentation", 
-       "isWithinInterval", "getAttributeField", "otherStrand", 
+       "isWithinInterval", "posMin", "getAttributeField", "otherStrand", 
        "qualityReport", "plotAlongChrom", "plotAlongChrom2")
 
