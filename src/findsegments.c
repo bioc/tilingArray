@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 #define DEBUG
-#undef VERBOSE
+#define VERBOSE
 
 #define MAT_ELT(x, i, j, nrow) x[i+(j)*(nrow)]
 
@@ -22,6 +22,7 @@
 double *G;  /* cost matrix                                        */
 int maxk;   /* number of rows of G:    maximum length of segments */
 int n;      /* number of columns of G: number of data points      */
+int verbose;
 
 /*--------------------------------------------------
   For debugging
@@ -48,21 +49,23 @@ void print_matrix_int(int* x, int nrow, int ncol, char *s) {
 }
 
 /*-----------------------------------------------------------------
-  accessor function for matrix G
-  G[k, i] = G[k+i*maxk] is the cost of segment from i to i+k,
-    including these endpoints
+  Accessor function for matrix G
+  G[k, i] is the cost of segment from i to i+k, including these endpoints
   fG(i, j) calculates the cost for segment from i to j-1, excluding
     j. (j=i+k+1).
 -----------------------------------------------------------------*/
 static R_INLINE double fG(int i, int j) {
     int k;
-    /* Rprintf("fG: %4d %4d\n", i, j); */
-#ifdef DEBUG
-    if((i<0) || (i>=n) || (j<0) || (j>=n))
-	error("Illegal value for i or j.");
-#endif
+    if(i==j)
+      return((double)0);
     k = j-i-1;
-    return ((k>=0) && (k<maxk)) ? MAT_ELT(G, k, i, maxk) : R_PosInf;
+#ifdef DEBUG
+    if((i<0) || (i>=n) || (k<0) || (k>=maxk)) {
+      Rprintf("i=%d j=%d k=%d\n.", i, j, k);
+      error("Illegal value.");
+    }
+#endif
+    return(MAT_ELT(G, k, i, maxk));
 }
 
 
@@ -73,8 +76,8 @@ static R_INLINE double fG(int i, int j) {
    At the end we add 1 to the result indices in matrix 'th'
 -----------------------------------------------------------------*/
 void findsegments_dp(double* J, int* th, int maxcp) {
-    int i, imin, cp, j;
-    double z, zmin, z1, z2;
+    int i, imin, i0, cp, j;
+    double z, zmin;
     double *mI;
     int * mt;
     
@@ -92,31 +95,35 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 	MAT_ELT(mI, 0, i, maxcp) = fG(0, i);
 
     for (cp=1; cp<maxcp; cp++) {	
+      if(verbose>=2)
+	Rprintf("findsegments_dp: cp=%d.\n", cp);
       /*  Best segmentation with cp change points from 0 to j 
       is found from considering best segmentations from 0 to i (<j)
-      with cp-1 segments, plus cost of segment from i to j */
+      with cp-1 segments, plus cost of segment from i to j. i must
+      be >= j-maxk */
       for (j=0; j<n; j++) {   
 	  zmin = R_PosInf;
 	  imin = j;
           /* find the best change point between 0 and j-1 */ 
-	  for (i=1; i<j; i++) { 
-              /* Instead of the code below, we could just write 
-	         z = MAT_ELT(mI, cp-1, i, maxcp) + fG(i, j);
-		 but this would lead to floating point exceptions with DEC 
-		 alpha processors */
-	      z1 = fG(i, j);
-	      z2 = MAT_ELT(mI, cp-1, i, maxcp);
-              if(finite(z1) && finite(z2)){
-		z = z1+z2;
+          i0 = j-maxk-1;
+          if(i0<0) i0=0;
+	  for (i=i0; i<j; i++) { 
+	    /* Instead of the code below, we could just write */
+	    /* but this would lead to floating point exceptions with DEC 
+	       alpha processors */
+	    /* z1 = fG(i, j);
+	       z2 = MAT_ELT(mI, cp-1, i, maxcp);
+               if(finite(z1) && finite(z2)){
+	       z = z1+z2; */
+	    z = MAT_ELT(mI, cp-1, i, maxcp) + fG(i, j);
 #ifdef VERBOSE              
 		Rprintf("%2d %2d %2d %6g %6g %6g\n", 
 			cp, j, i, MAT_ELT(mI, cp-1, i, maxcp), fG(i, j), z);
 #endif
-		if(z<zmin) {
+	     if(z<zmin) {
 		  zmin = z;
 		  imin = i;
-		} /* if z */
-	      } /* if finite */
+	     } /* if z */
 	  } /* for i */	  
 	  MAT_ELT(mI, cp,   j, maxcp  ) = zmin;
 	  MAT_ELT(mt, cp-1, j, maxcp-1) = imin;
@@ -170,7 +177,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
    G : numeric matrix (cost matrix)
    maxcp: integer scalar (maximum number of segments
 ------------------------------------------------------------------*/
-SEXP findsegments(SEXP _G, SEXP _maxcp) 
+SEXP findsegments(SEXP _G, SEXP _maxcp, SEXP _verbose) 
 {
   SEXP dimG;  /* dimensions of G */
   SEXP res;   /* return value    */
@@ -191,6 +198,10 @@ SEXP findsegments(SEXP _G, SEXP _maxcp)
       error("'_maxcp' must be integer of length 1.");
   maxcp = INTEGER(_maxcp)[0];
   
+  if(!isInteger(_verbose) | length(_verbose)!=1)
+      error("'_verbose' must be integer of length 1.");
+  verbose = INTEGER(_verbose)[0];
+
   /* J */
   PROTECT(J   = allocVector(REALSXP, maxcp));
 
@@ -200,9 +211,8 @@ SEXP findsegments(SEXP _G, SEXP _maxcp)
   INTEGER(dimth)[0] = INTEGER(dimth)[1] = maxcp;
   setAttrib(th, R_DimSymbol, dimth);
 
-#ifdef VERBOSE 
-  Rprintf("In findsegments, maxk=%d, n=%d, maxcp=%d\n", maxk, n, maxcp);
-#endif
+  if(verbose>=2)
+    Rprintf("In C code now, maxk=%d, n=%d, maxcp=%d\n", maxk, n, maxcp);
 
   findsegments_dp(REAL(J), INTEGER(th), maxcp);
 
@@ -226,8 +236,8 @@ extern void R_unload_tilingArray( DllInfo *info );
 
 /* Registration information for DLL */
 static R_CallMethodDef callMethods[] = {
-    { "findsegments", ( DL_FUNC ) &findsegments, 2,
-        /* { REALSXP, REALSXP } */ },
+    { "findsegments", ( DL_FUNC ) &findsegments, 3,
+        /* { REALSXP, INTSXP, INTSXP } */ },
     { NULL, NULL, 0 }
 };
 
