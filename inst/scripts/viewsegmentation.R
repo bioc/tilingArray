@@ -5,11 +5,10 @@ library("arrayMagic")   ## for write.htmltable
 library("geneplotter")  ## for savetiff
 
 source("colorRamp.R") ## can go with R 2.1
-source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
-source("~/madman/Rpacks/arrayMagic/R/write.htmltable.R")
+## source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 
 if(!exists("gff"))
-  load("gff.rda")
+  load("probeAnno.rda")
 
 indir  = "segmentation-050209v4"
 outdir = file.path(indir, "viz")

@@ -50,9 +50,6 @@ if(!exists("s")) {
   cat("\n")
 } ## if
 
-if(!exists("gff"))
-  load("gff.rda")
-
 pos.min = function(x) { x=x[x>=0]; if(length(x)>0) {min(x)} else {as.numeric(NA)} }
 abs.min = function(x) { i = which.min(abs(x)); x[i]  }
 

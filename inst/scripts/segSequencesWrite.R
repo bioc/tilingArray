@@ -28,6 +28,20 @@ if(!exists("fsa")) {
   }
 }
 
+
+### Check if the sequence lengths found here coincide with the end of
+## the telomere in the GFF table. If yes, all is well!
+
+chrLengths = sapply(fsa, nchar)
+chrLengths = chrLengths[order(as.numeric(names(chrLengths)))]
+
+sgff = gff[ gff$feature=="telomere", ]
+for(i in 1:16) {
+  w = which(sgff$seqname==chrSeqname[i])
+  stopifnot(length(w)==2)
+  cat(i, chrLengths[i] -  sgff$end[w[2]], "\n")
+}
+
 ## We want to distnguish three groups: annotated transcripts,
 ## not annotated transcripts, and not annotated not transcribed
 ## sequences.

@@ -5,7 +5,7 @@
 ##  S96 strain.
 
 ## x: affyBatch or name of celfiles
-qualityReport <- function(x, normRef=NULL, compress = TRUE,
+qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
                          selectGenes,
                          gff, probeAnno, 
                          output    = "HTML",
@@ -35,6 +35,10 @@ qualityReport <- function(x, normRef=NULL, compress = TRUE,
   if(!is(x, "AffyBatch"))
     stop("'x' must be an AffyBatch")
 
+  if(length(hybeType)!=nrow(pData(x)) || !all(hybeType %in% c("Direct", "Reverse")))
+    stop(paste("'hybeType' must have same length as the number of arrays, and be",
+               "either 'Direct' or 'Reverse'."))
+  
   ## log2
   exprs(x) = log(exprs(x), 2)
 
@@ -88,11 +92,12 @@ qualityReport <- function(x, normRef=NULL, compress = TRUE,
     } ## for i
 
     ## calculate scores
-    nsc = calcScores(exprs(x), probeAnno$probe)
+    probe = get(paste("probe", hybeType, sep=""), probeAnno)
+    nsc = calcScores(exprs(x), probe)
 
     ## compare with unnomalized score (if applicable)
     if(!is.null(normRef)) {
-      usc = calcScores(exprs(xu), probeAnno$probe)
+      usc = calcScores(exprs(xu), probe)
 
       myplot=function(x, y, ...) {
         axlim = quantile(c(x,y), c(0.01,0.99))
