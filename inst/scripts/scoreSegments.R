@@ -54,6 +54,7 @@ if(!exists("gff"))
   load("gff.rda")
 
 pos.min = function(x) { x=x[x>=0]; if(length(x)>0) {min(x)} else {as.numeric(NA)} }
+abs.min = function(x) { i = which.min(abs(x)); x[i]  }
 
 segScore = data.frame(
   chr                 = integer(totcp),
@@ -132,8 +133,8 @@ for(chr in chrs) {
         } else {  
           segScore[js, p("feature")] = as.character(NA)
           segScore[js, p("overlap")] = 0
-          segScore[js, p("dist.start2feat")] = pos.min(segScore$start[js] - sgff$end)
-          segScore[js, p("dist.end2feat")]   = pos.min(sgff$start - segScore$end[js])
+          segScore[js, p("dist.start2feat")] = abs.min(segScore$start[js] - sgff$end)
+          segScore[js, p("dist.end2feat")]   = abs.min(sgff$start - segScore$end[js])
         }
       }
     }

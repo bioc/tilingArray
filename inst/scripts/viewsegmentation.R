@@ -53,7 +53,7 @@ sel = which(is.na(segScore$same.feature) & (segScore$frac.dup < 0.2)
 ord = order(segScore$level[sel], decreasing=TRUE)
 sel = sel[ord]
 
-outtab = cbind(plot=I(paste('<a href="', sel, '.tiff">plot</a>', sep="")),
+outtab = cbind(plot=I(paste('<a href="', sel, '.tiff">', sel, '</a>', sep="")),
                segScore[sel, 1:4],
                length=as.integer(segScore$end[sel]-segScore$start[sel]+1),
                segScore[sel, 5:ncol(segScore)])
