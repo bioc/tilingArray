@@ -104,7 +104,7 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore, scoreShow,
   }
 
   if(scoreShow %in% colnames(segScore)) {
-    colo  = rep("white", length(x))
+    colo  = rep("white", length(segSel))
     val   = deckel(segScore[segSel, scoreShow])
     colo[!is.na(val)] = colorRamp(brewer.pal(9, "Blues")[-9])(val[!is.na(val)])
   } else {
@@ -185,11 +185,9 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore, scoreShow,
   } ## if
   
   notDealtWith = setdiff(names(featsp), c(rownames(featDraw), "gene", "intron"))
-  if(length(notDealtWith)>0) {
-    warning(paste("The following feature(s) were not displayed:",
-                  paste(notDealtWith, collapse=", ")))
-  }
-  
+  if(length(notDealtWith)>0)
+    cat("Not displayed:", paste(notDealtWith, collapse=", "), "\n")
+   
   popViewport()
 }
 

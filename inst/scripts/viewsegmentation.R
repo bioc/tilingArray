@@ -1,10 +1,8 @@
-options(error=recover)
+options(error=recover, warn=2)
 
-## detach("package:tilingArray")
 library("tilingArray")
 source("colorRamp.R")
 source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
-
 
 if(!exists("gff"))
   load("gff.rda")
@@ -17,19 +15,18 @@ if(!exists("segRes")) {
   cat("Loading ")
   for(chr in chrs) {
     for(strand in c("+", "-")) {
-      fn = file.path(indir, paste(chr, strand, "rda", sep="."))
-      cat("Loading ", fn, "\n")
-      load(fn)  
+      fn = paste(chr, strand, "rda", sep=".")
+      cat(fn, "")
+      load(file.path(indir, fn))  
       assign(paste(chr, strand, "seg", sep="."), seg, envir=segRes)
       assign(paste(chr, strand, "dat", sep="."), dat, envir=segRes)
     }
   } ## for chr
-
   load(file.path(indir, "segScore.rda"))
 } ## if
+cat("\n")
 
 
-grid.newpage()
 
 #### Generic plot
 ##plotAlongChrom2(chr=1, coord = c(0, 230)*1e3, segRes = segRes,
@@ -39,7 +36,7 @@ grid.newpage()
 
 ## antisense segments:
 sel = which(is.na(segScore$same.feature) & (segScore$frac.dup < .2)
-         & !is.na(segScore$oppo.feature))
+         & !is.na(segScore$oppo.feature) & (segScore$chr != 17) )
 
 ## not annotated
 ##sel = which(is.na(segScore$same.feature))
@@ -49,13 +46,14 @@ ord = order(segScore$pt[sel])
 sel = sel[ord]
 
 for(s in sel) {
-  cat(s, segScore$strand[s], segScore$start[s], segScore$end[s], "\n")
+  cat(segScore$chr[s], segScore$strand[s], "  ",
+      segScore$start[s], "...", segScore$end[s], "\n", sep="")
   grid.newpage()
   plotAlongChrom2(chr=as.numeric(segScore$chr[s]),
-##                  coord=c(max(segScore$start[s]-2e4, 0),
-##                          segScore$end[s]+2e4), 
+                  coord=c(max(segScore$start[s]-2e4, 0),
+                          segScore$end[s]+2e4), 
                   segRes = segRes,
                   segScore = segScore, gff = gff)
   ## locator(n=1)
-  cat("Type ctrl-d"); readLines()
+  readline("Type <enter>") 
 }

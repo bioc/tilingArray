@@ -18,8 +18,8 @@ findsegments(x, maxcp, maxk, verbose=0)
     value, various diagnostic output is printed.}
 }
 \details{The complexity of the algorithm is 
-\Robject{length(x)*maxk} in memory and
-\Robject{length(x)*maxk*maxcp} in time.}
+\code{length(x)*maxk} in memory and
+\code{length(x)*maxk*maxcp} in time.}
 
 \value{
   A list with two elements \code{J} and \code{th}. See the vignette, and

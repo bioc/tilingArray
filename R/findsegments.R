@@ -1,4 +1,4 @@
-findsegments <- function(x, maxcp, maxk, verbose=0) {
+findsegments = function(x, maxcp, maxk, verbose=0) {
   maxcp   = as.integer(maxcp)
   maxk    = as.integer(maxk)
   verbose = as.integer(verbose)

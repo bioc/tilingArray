@@ -191,18 +191,18 @@ SEXP findsegments(SEXP _G, SEXP _maxcp, SEXP _verbose)
   /* check input arguments */
   PROTECT(dimG = getAttrib(_G, R_DimSymbol));
  
-  if((!isReal(_G)) | isNull(dimG) | (LENGTH(dimG)!=2))
+  if((!isReal(_G)) || isNull(dimG) || (LENGTH(dimG)!=2))
     error("Invalid argument '_G', must be a real matrix."); 
   G    = REAL(_G);
   maxk = INTEGER(dimG)[0];
   n    = INTEGER(dimG)[1];
   UNPROTECT(1);  /* done with dimG */
 
-  if(!isInteger(_maxcp) | length(_maxcp)!=1)
+  if(!isInteger(_maxcp) || length(_maxcp)!=1)
       error("'_maxcp' must be integer of length 1.");
   maxcp = INTEGER(_maxcp)[0];
   
-  if(!isInteger(_verbose) | length(_verbose)!=1)
+  if(!isInteger(_verbose) || length(_verbose)!=1)
       error("'_verbose' must be integer of length 1.");
   verbose = INTEGER(_verbose)[0];
 
