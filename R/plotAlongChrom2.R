@@ -31,7 +31,6 @@ plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, cp, gff)
       sgs = segScore
     }
   
-    ## plotSegmentation(x=dat$x, y=dat$y, coord=coord, segScore=sgs,
     plotSegmentation(x=dat$x, y=dat$y, coord=coord, uniq=dat$unique,
                      segScore=sgs,
                      gff=gff, chr=chr, chrSeqname=chrSeqname, strand=strand,
@@ -78,8 +77,9 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore,
   pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=theViewports[sprintf("expr%d", istrand)]))
 
-  colo = ifelse(uniq, c("#33A02C", "#1F78B4")[istrand], "grey")
-  grid.points(x, y, pch=16, gp=gpar(col=colo, cex=0.3))
+  ord  = order(uniq)
+  colo = ifelse(uniq[ord], c("#33A02C", "#1F78B4")[istrand], "grey")
+  grid.points(x[ord], y[ord], pch=16, size=unit(0.0016, "npc"), gp=gpar(col=colo))
 
   segSel   = which(segScore$chr==chr & segScore$strand==strand)
   segstart = segScore$start[segSel]
