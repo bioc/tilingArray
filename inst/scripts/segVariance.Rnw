@@ -61,7 +61,7 @@ calcStat = function(e, j, nrBasePerSeg = 1500) {
 indir = "segmentation-3polyA"
 ## indir = "segmentation-050209v4"
 
-nrchr = 3
+nrchr = 4
 js    = paste(rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "rda", sep=".")
 
 if(!exists("s")) {
@@ -199,6 +199,9 @@ for(j in seq(along=js)) {
 }
 matplot(nrbps, fdr, xlab='average number of bases per segment',
   ylab='false discovery rate', type='b')
+
+plot(c(230208/64, 230208/60, 813178/232, 813178/257, 316616/88, 316616/107),
+     c(1700, 1700, 2200, 1700, 2200, 1700))
 @ 
 \myincfig{segVariance-fdr}{0.7\textwidth}{False discovery rates 
 as a function of the parameter \Robject{nrBasePerSeg}, the 
