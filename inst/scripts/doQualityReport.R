@@ -18,9 +18,10 @@ files = file.path("Celfiles",
     "041203_S96_polyAx1_RH6.cel.gz",
     "050218_polyA-RNA_RH6_4x15min.cel.gz",
     "05242_totRNA_15ugS96_dir#3.cel.gz",
-    "030505_totcDNA_15ug_affy.cel.gz"))[4]
+    "030505_totcDNA_15ug_affy.cel.gz",
+    "041123_S96polyA_cDNA_noRNase_tiling.cel.gz"))[6]
 
-hybeType=c("Reverse", "Reverse", "Reverse", "Direct", "Reverse")[4]
+hybeType=c("Reverse", "Reverse", "Reverse", "Direct", "Reverse", "Reverse")[6]
 
 if(!exists("x"))
   x = read.affybatch(filenames=files, compress=TRUE, verbose=TRUE)
