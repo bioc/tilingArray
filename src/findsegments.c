@@ -70,15 +70,14 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
     vs = (long) maxcp * (long) n;
-    /* Rprintf("vs=%ld\n", vs);  */
-    /* currently R_alloc will not work for vs*sizeof() > 2 GB
-       because of bug */
+    Rprintf("vs1=%ld\n", vs);
+    /* currently R_alloc will not work for vs*sizeof() > 2 GB */
     /* mI = (double*) R_alloc(vs, sizeof(double)); */
     PROTECT(v1 = allocVector(REALSXP, vs)); 
     mI = REAL(v1);
 
     vs = (long) (maxcp-1) * (long) n;
-    /* Rprintf("vs=%ld\n", vs); */
+    Rprintf("vs2=%ld\n", vs); 
     /* mt = (int*) R_alloc(vs, sizeof(int)); */
     PROTECT(v2 = allocVector(INTSXP, vs)); 
     mt = INTEGER(v2);
