@@ -86,19 +86,20 @@ sp = split(whPM, list(chr=chrNo[whPM], strand=strand[whPM]))
 ##--------------------------------------------------
 ## The along-chromosome data in 'probeAnno'
 ##--------------------------------------------------
-cat("Making probeanno: ")
-probeAnno = new.env()
-for(i in seq(along=sp)) {
-  whc = sp[[i]]
-  nm  = names(sp)[i]
-  cat(nm, "")
-  PMindex = blastRes[[1]][whc]
-  assign(paste(nm, "start", sep="."),  cstart[whc], envir=probeAnno)
-  assign(paste(nm, "index", sep="."),  PMindex, envir=probeAnno)
-  assign(paste(nm, "unique", sep="."), !(PMindex %in% dupProbes), envir=probeAnno)
+if(!exists("probeAnno")) {
+  cat("Making probeanno: ")
+  probeAnno = new.env()
+  for(i in seq(along=sp)) {
+    whc = sp[[i]]
+    nm  = names(sp)[i]
+    cat(nm, "")
+    PMindex = blastRes[[1]][whc]
+    assign(paste(nm, "start", sep="."),  cstart[whc], envir=probeAnno)
+    assign(paste(nm, "index", sep="."),  PMindex, envir=probeAnno)
+    assign(paste(nm, "unique", sep="."), !(PMindex %in% dupProbes), envir=probeAnno)
+  }
+  cat("\n")
 }
-cat("\n")
-
 
 ##--------------------------------------------------
 ## gff
@@ -136,7 +137,8 @@ stopifnot(all(sgff$strand %in% c("+", "-")))
 mseq = match(sgff$seqname, chrSeqname)
 stopifnot(!any(is.na(mseq)), !any(mseq<1), !any(mseq>17))
 
-for(hybeType in c("Reverse", "Direct")) {
+## for(hybeType in c("Reverse", "Direct")) {
+for(hybeType in c("Direct")) {
   cat("-----", hybeType, "-----\n")
   p = lapply(featNames, function(i) character(nrProbes))
   names(p) = featNames
@@ -154,14 +156,20 @@ for(hybeType in c("Reverse", "Direct")) {
 
       pas = switch(hybeType,
         Reverse = s,
-        Direct  = otherstrand(s)
+        Direct  = otherStrand(s)
       )
       sta = get(paste(chr, pas, "start", sep="."), envir=probeAnno)
       ind = get(paste(chr, pas, "index", sep="."), envir=probeAnno)
-      pp  = sta + (probeLength-1)/2
+      sel = isWithinInterval(sta+(probeLength-1)/2, k1, k2)
+      wh  = which(colSums(sel)==0)
+      ## if(length(wh)>0) {
+      ##	cat("\nNo probes for i=", ifeat[wh], "\n")
+      ##	print(sgff[ifeat[wh], 1:8])
+      ## }
+      ## print(table(rowSums(sel)))
+       
       for(i in seq(along=ifeat)) {
-	fi  = ifeat[i]
-	sel = (k1[i]<=pp) & (pp<=k2[i])
+	fi = ifeat[i]
 	p[[as.character(sgff$feature[fi])]] [ind[sel[, i]]]  = Name[i]
       } ## for i
     } ## for s
