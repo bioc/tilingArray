@@ -99,17 +99,18 @@ We see that the \Sexpr{nrcp}-th row of the matrix \Robject{seg\$th}
 exactly reconstructs the change points \Robject{gd\$cp} that were 
 used in the simulation.
 
-The parameters \Robject{maxcp} and \Robject{maxk} are the maximum number
-of segments and the maximum length per segment. The algorithm finds for each
+The parameters \Robject{maxcp} and \Robject{maxk} are the maximum number of
+segments and the maximum length per segment. The algorithm finds for each
 value of $k$ from \Robject{1} to \Robject{maxcp} the best segmentation under
-the restriction that no individual segment be longer than \Robject{maxk}.
-In the original paper of Picard et al.~\cite{Picard} and in their software, \Robject{maxk}
-is implicitely set to the number of data points \Robject{length(x)}. I have
-introduced this parameter to reduce the algorithm's complexity. The complexity of
-Picard's software is  \Robject{length(x)*length(x)*maxcp}, the complexity of
-the \Rfunction{findsegments} function is \Robject{length(x)*maxk*maxcp}. As I
-am envisaging applications with  \Robject{length(x)} $\approx 10^5$ and 
-\Robject{maxk} $\approx 250$, the difference can be quite dramatic.
+the restriction that no individual segment be longer than \Robject{maxk}.  In
+the original paper of Picard et al.~\cite{Picard} and in their software,
+\Robject{maxk} is implicitely set to the number of data points
+\Robject{length(x)}. I have introduced this parameter to reduce the
+algorithm's complexity. The complexity of Picard's software is
+\Robject{length(x)*length(x)}, the complexity of the
+\Rfunction{findsegments} function is \Robject{length(x)*maxk}. As I am
+envisaging applications with \Robject{length(x)} $\approx 10^5$ and
+\Robject{maxk} $\approx 250$, the difference can be substantial.
 
 %--------------------------------------------------
 \section{How to choose the number of segments?}

@@ -16,7 +16,7 @@ findsegments(x, maxcp, maxk)
   \item{maxk}{Integer (length 1): maximum length of a segment.}
 }
 \details{The complexity of the algorithm is 
-  \code{length(x) * maxcp * maxk}.
+  \code{length(x) * maxk}.
 }
 
 \value{
