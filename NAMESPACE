@@ -1,6 +1,6 @@
 useDynLib(tilingArray)
 
-export("findSegments", "scoreSegments", "Gmean", "plot.segmentation", 
+export("findSegments", "scoreSegments", "costMatrix", "plot.segmentation", 
        "isWithinInterval", "posMin", "getAttributeField", "otherStrand", 
        "qualityReport", "plotAlongChrom", "plotAlongChrom2")
 
