@@ -2,11 +2,6 @@
  * Copyright W. Huber 2005, all rights reserved
  */
  
-/* 
- * Most of this code was written on Detroit airport waiting for 
- * a delayed Northwest flight connection to Columbus.
- */
-
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
@@ -61,6 +56,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
     double z, zmin;
     double *mI;
     int * mt;
+    SEXP v1, v2;    
 
     if(verbose>=2)
 	Rprintf("In findsegments_dp: cp=      ");
@@ -78,12 +74,14 @@ void findsegments_dp(double* J, int* th, int maxcp) {
     /* currently R_alloc will not work for vs*sizeof() > 2 GB
        because of bug */
     /* mI = (double*) R_alloc(vs, sizeof(double)); */
-    mI = (double*) malloc(vs * (long) sizeof(double)); /* see 'free below' */
+    PROTECT(v1 = allocVector(REALSXP, vs)); 
+    mI = REAL(v1);
 
     vs = (long) (maxcp-1) * (long) n;
     /* Rprintf("vs=%ld\n", vs); */
     /* mt = (int*) R_alloc(vs, sizeof(int)); */
-    mt = (int*) malloc(vs * (long) sizeof(int)); /* see 'free below' */
+    PROTECT(v2 = allocVector(INTSXP, vs)); 
+    mt = INTEGER(v2);
 
     /* initialize for cp=0: mI[k, 0] is simply G[k, 0] */
     for(k=0; k<maxk; k++)
@@ -163,8 +161,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 	}
     }
 
-    free(mI);
-    free(mt);
+    UNPROTECT(2);
 
     /* add 1 to all elements of th since in R array indices start at 1,
        while here they were from 0 */
