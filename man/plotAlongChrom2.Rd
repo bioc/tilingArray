@@ -9,11 +9,17 @@
 \arguments{
   \item{chr}{integer of length 1 with the number of the chromosome for
     which to make the plot.}
-  \item{coord}{integer of length 2 with start and end coordinates of the plot.}
+  \item{coord}{integer of length 2 with start and end coordinates of the
+    plot.}
+  \item{highlight}{optional, list with two elements: a single numeric value
+    \code{coord} and a character \code{strand}. If present, this
+    position is marked by a vertical red bar on the coordinate axis.}
   \item{segRes}{environment containing microarray intensities in
     along-chromosome order and segmentation results, see details.}
   \item{segScore}{dataframe with segmentation scores, see details. Can
     be missing iff \code{nrBasesPerSeg} is present.}
+  \item{scoreShow}{character, name of a column in \code{segScore} that
+    is to be used for the coloring of the segments.}
   \item{nrBasesPerSeg}{numeric of length 1 with the average number of
     nucleotide bases per segment. Can
     be missing iff \code{segScore} is present.}

@@ -1,4 +1,4 @@
-plotAlongChrom2 = function(chr, coord, segRes, segScore, scoreShow="pt", nrBasesPerSeg, gff) {
+plotAlongChrom2 = function(chr, coord, highlight, segRes, segScore, scoreShow="pt", nrBasesPerSeg, gff) {
                    
   pushViewport(viewport(width=0.9, height=0.95)) ## plot margin
   pushViewport(viewport(layout=grid.layout(9, 1, height=c(0.2, 5, 0.4,1,1,1,0.4,5,0.4))))
@@ -38,13 +38,21 @@ plotAlongChrom2 = function(chr, coord, segRes, segScore, scoreShow="pt", nrBases
   }
 
   ## chromosomal coordinates
-  pushViewport(dataViewport(xData=coord, yscale=c(-.3,0.8), extension=0, 
+  pushViewport(dataViewport(xData=coord, yscale=c(-0.4,0.8), extension=0, 
                             layout.pos.col=1, layout.pos.row=theViewports["coord"]))
   grid.lines(coord, c(0,0), default.units = "native")
   tck= alongChromTicks(coord)
   grid.text(label=formatC(tck, format="d"), x = tck, y = 0.2, 
             just = c("centre", "bottom"), gp = gpar(cex=.6), default.units = "native")
   grid.segments(x0 = tck, x1 = tck, y0 = -0.17, y1 = 0.17,  default.units = "native")
+  if(!missing(highlight)){
+    mt = (match(highlight$strand, c("-", "+"))-1.5)*2
+    co = highlight$coord
+    if(is.na(mt) || !is.numeric(co))
+      stop("Invalid parameter 'highlight'.")
+    grid.lines(x=c(1,1)*co, y=c(0, 0.4)*mt, default.units = "native", gp=gpar(col="red", lwd=2))
+  }
+  
   popViewport()
 
   ## title
@@ -211,20 +219,23 @@ alongChromTicks = function(x){
 ##------------------------------------------------------------
 plotAlongChromLegend = function(vpr) {
   featDraw = featureDrawing()
-  dx       = 1/nrow(featDraw)
+
+  featDraw = featDraw[rownames(featDraw)!="transposable_element_gene", ]
+  dx       = 1/(1+nrow(featDraw))
   i        = 1:nrow(featDraw)
 
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=vpr))
 
   grid.lines(c(0,1), c(1,1), default.units = "npc")
 
+  
   grid.rect(x     = (i-1)*dx,
             y     = 0.4,
             width = dx*0.3,
             height= 0.8, 
             default.units = "npc", just  = c("left", "center"),
             gp    = do.call("gpar", featDraw))
-  
+
   grid.text(label = rownames(featDraw),
             x     = (i-0.65)*dx,
             y     = 0.4,
@@ -275,8 +286,11 @@ plotDuplication = function(coord, chr, strand, probeAnno, theViewports) {
 ##------------------------------------------------------------
 featureDrawing = function() {
   res = data.frame(
-    col      = I(c("#c6dbef", "#d94801", "#005a32", "#fc4e2a", "#707070")),
-    fill     = I(c("#deebf7", "#fd8d3c", "#41ab5d", "#feb24c", "#e0e0e0")))
-  rownames(res) =   c("CDS",     "ncRNA",   "tRNA",    "snoRNA",  "pseudogene")
+    col      = I(c("#c6dbef", "#d94801", "#005a32", "#fc4e2a", "#707070",
+                   "#A65628", "#A65628")),
+    fill     = I(c("#deebf7", "#fd8d3c", "#41ab5d", "#feb24c", "#e0e0e0",
+                   "#BF5B17", "#BF5B17")))
+  rownames(res) =   c("CDS",     "ncRNA",   "tRNA",    "snoRNA",  "pseudogene",
+            "transposable_element", "transposable_element_gene")
   return(res)
 }

@@ -111,7 +111,7 @@ for(chr in chrs) {
 
       ## matchProbes2Feats is a matrix of probes (dat$x) times features
       ## and a matrix element [p,j] is TRUE iff probe p is part of feature
-      matchProbes2Feats = isWithinInterval(dat$x, sgff$start, sgff$end-probeLength+1)
+      matchProbes2Feats = isWithinInterval(dat$x+probeLength/2, sgff$start, sgff$end)
 
       p = function(x) paste(wgff, x, sep=".")
       for(j in 1:cp) {
