@@ -17,21 +17,23 @@ plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, cp, gff)
   for(i in 1:2) {
     strand = c("+", "-")[i]
     seg = get(paste(chr, strand, "seg", sep="."), segRes)
-    app = get(paste(chr, strand, "app", sep="."), segRes)
+    dat = get(paste(chr, strand, "dat", sep="."), segRes)
     
     if(missing(segScore)) {
-      cp = round(max(app$x)/nrBasesPerSeg)
+      cp = round(max(dat$x)/nrBasesPerSeg)
       th=c(1, seg$th[cp, 1:cp])
       sgs = data.frame(
         chr    = I(rep(chr, cp)),
         strand = I(rep(strand, cp)),
-        start  = app$x[th[-length(th)]],
-        end    = app$x[th[-1]]-1)
+        start  = dat$x[th[-length(th)]],
+        end    = dat$x[th[-1]]-1)
     } else {
       sgs = segScore
     }
   
-    plotSegmentation(x=app$x, y=app$y, coord=coord, segScore=sgs,
+    ## plotSegmentation(x=dat$x, y=dat$y, coord=coord, segScore=sgs,
+    plotSegmentation(x=dat$x, y=dat$y, coord=coord, uniq=dat$unique,
+                     segScore=sgs,
                      gff=gff, chr=chr, chrSeqname=chrSeqname, strand=strand,
                      theViewports)
     
@@ -58,7 +60,8 @@ plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, cp, gff)
 
 ## gff and chrSeqname into an environment or object?
 
-plotSegmentation = function(x, y, coord=range(x), segScore, gff, chr, chrSeqname, strand, theViewports) {
+plotSegmentation = function(x, y, coord=range(x), uniq, segScore,
+  gff, chr, chrSeqname, strand, theViewports) {
   stopifnot(length(x)==length(y))
 
   istrand = match(strand, c("+", "-"))
@@ -74,8 +77,9 @@ plotSegmentation = function(x, y, coord=range(x), segScore, gff, chr, chrSeqname
   
   pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=theViewports[sprintf("expr%d", istrand)]))
-  
-  grid.points(x, y, pch=".", gp=gpar(col=c("#33A02C", "#1F78B4")[istrand]))
+
+  colo = ifelse(uniq, c("#33A02C", "#1F78B4")[istrand], "grey")
+  grid.points(x, y, pch=16, gp=gpar(col=colo, cex=0.3))
 
   segSel   = which(segScore$chr==chr & segScore$strand==strand)
   segstart = segScore$start[segSel]
