@@ -181,8 +181,8 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore, scoreShow,
                     y1 = c(1, -1)[istrand]*0.95,
                     default.units = "native",
                     gp = gpar(col="black"))
-    cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
-  }
+    ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
+  } ## if
   
   notDealtWith = setdiff(names(featsp), c(rownames(featDraw), "gene", "intron"))
   if(length(notDealtWith)>0) {
@@ -218,16 +218,18 @@ plotAlongChromLegend = function(vpr) {
 
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=vpr))
 
+  grid.lines(c(0,1), c(1,1), default.units = "npc")
+
   grid.rect(x     = (i-1)*dx,
-            y     = 0.5,
+            y     = 0.4,
             width = dx*0.3,
-            height= 1, 
+            height= 0.8, 
             default.units = "npc", just  = c("left", "center"),
             gp    = do.call("gpar", featDraw))
   
   grid.text(label = rownames(featDraw),
             x     = (i-0.65)*dx,
-            y     = 0.5,
+            y     = 0.4,
             default.units = "npc", just  = c("left", "center"),
             gp    = gpar(cex=1))
 
