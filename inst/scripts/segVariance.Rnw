@@ -27,10 +27,10 @@ options(error=recover, warn=2)
 library("tilingArray")
 
 indir = "segmentation-3polyA"
+## indir = "segmentation-050209v4"
 
 nrchr = 1
-## js = paste(rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "rda", sep=".")
-js = "1.+.rda"
+js = paste(rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "rda", sep=".")
 
 if(!exists("s")) {
   s  = new.env()
@@ -60,11 +60,12 @@ calcStat = function(e, nrBasePerSeg = 1500) {
   ## note: dat$y is a matrix with length(ct) rows. The recycling rule
   ## works in our favour here!
   sp = split(dat$y, ct)
+  d  = ncol(dat$y)
 
   v    = sapply(sp, var)
   m    = sapply(sp, mean)
   n    = listLen(sp)
-  res  = sapply(sp, function(x) {x-mean(x)}) ## residuals
+  res  = sapply(sp, function(x) {rowMeans(matrix(x, ncol=d))-mean(x)}) ## residuals
     
   if(TRUE){
     t = numeric(length(sp))
