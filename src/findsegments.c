@@ -74,11 +74,16 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
     vs = (long) maxcp * (long) n;
-    /* Rprintf("vs=%ld\n", vs); */
-    mI = (double*) R_alloc(vs, sizeof(double));
+    /* Rprintf("vs=%ld\n", vs);  */
+    /* currently R_alloc will not work for vs*sizeof() > 2 GB
+       because of bug */
+    /* mI = (double*) R_alloc(vs, sizeof(double)); */
+    mI = (double*) malloc(vs * (long) sizeof(double)); /* see 'free below' */
+
     vs = (long) (maxcp-1) * (long) n;
     /* Rprintf("vs=%ld\n", vs); */
-    mt = (int*) R_alloc(vs, sizeof(int));
+    /* mt = (int*) R_alloc(vs, sizeof(int)); */
+    mt = (int*) malloc(vs * (long) sizeof(int)); /* see 'free below' */
 
     /* initialize for cp=0: mI[k, 0] is simply G[k, 0] */
     for(k=0; k<maxk; k++)
@@ -157,6 +162,9 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 	    MAT_ELT(th, cp, j, maxcp) = i = MAT_ELT(mt, i-1, j, n);
 	}
     }
+
+    free(mI);
+    free(mt);
 
     /* add 1 to all elements of th since in R array indices start at 1,
        while here they were from 0 */
