@@ -1,3 +1,0 @@
-# The following flag is necessary to prevent getting floating point exceptions 
-# on DEC alpha. The C code uses +Inf and does calculatons on that.
-PKG_CFLAGS=-mieee

@@ -74,7 +74,7 @@ static R_INLINE double fG(int i, int j) {
 -----------------------------------------------------------------*/
 void findsegments_dp(double* J, int* th, int maxcp) {
     int i, imin, cp, j;
-    double z, zmin;
+    double z, zmin, z1, z2;
     double *mI;
     int * mt;
     
@@ -100,15 +100,23 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 	  imin = j;
           /* find the best change point between 0 and j-1 */ 
 	  for (i=1; i<j; i++) { 
-	      z = MAT_ELT(mI, cp-1, i, maxcp) + fG(i, j);
+              /* Instead of the code below, we could just write 
+	         z = MAT_ELT(mI, cp-1, i, maxcp) + fG(i, j);
+		 but this would lead to floating point exceptions with DEC 
+		 alpha processors */
+	      z1 = fG(i, j);
+	      z2 = MAT_ELT(mI, cp-1, i, maxcp);
+              if(finite(z1) && finite(z2)){
+		z = z1+z2;
 #ifdef VERBOSE              
-              Rprintf("%2d %2d %2d %6g %6g %6g\n", 
-		 cp, j, i, MAT_ELT(mI, cp-1, i, maxcp), fG(i, j), z);
+		Rprintf("%2d %2d %2d %6g %6g %6g\n", 
+			cp, j, i, MAT_ELT(mI, cp-1, i, maxcp), fG(i, j), z);
 #endif
-	      if(z<zmin) {
+		if(z<zmin) {
 		  zmin = z;
 		  imin = i;
-              }
+		} /* if z */
+	      } /* if finite */
 	  } /* for i */	  
 	  MAT_ELT(mI, cp,   j, maxcp  ) = zmin;
 	  MAT_ELT(mt, cp-1, j, maxcp-1) = imin;
@@ -124,8 +132,9 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        the cp change points; element cp has value n, which corresponds
        to a changepoint at the rightmost point */
     for(cp=0;  cp<maxcp; cp++) {
-	/* Calculate J, the log-likelihood. TO DO: constant factors, sqrt(2*pi) */
-	J[cp] = -log(MAT_ELT(mI, cp, n-1, maxcp) / n);
+        /* Calculate J, the log-likelihood. TO DO: constant factors, sqrt(2*pi) */
+        z = MAT_ELT(mI, cp, n-1, maxcp);
+	J[cp] = finite(z) ? -log(z/n) : R_NegInf;
 
 	for(j=cp+1; j<maxcp; j++)
 	    MAT_ELT(th, cp, j, maxcp) = -1;
