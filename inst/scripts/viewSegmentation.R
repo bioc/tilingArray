@@ -41,11 +41,13 @@ cat("\n")
 
 
 
-## antisense segments:
-sel = which(is.na(segScore$same.feature) & (segScore$frac.dup < 0.2) 
-     ##    & !is.na(segScore$oppo.feature)
-           & (segScore$end-segScore$start > 200) 
-           & (segScore$chr != 17) & (segScore$pt < 1e-10))
+## new transcripts:
+sel = which( (segScore$same.feature=="") &
+             (segScore$frac.dup < 0.2) &
+     ##      !is.na(segScore$oppo.feature)
+             (segScore$length > 200) & 
+             (segScore$chr != 17) &
+             (segScore$pt < 1e-10) )
 
 
 ## order by level
