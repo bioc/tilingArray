@@ -1,7 +1,7 @@
 
 ## gff and chrSeqname into an environment or object?
 
-plotRegion = function(y, chr, from, to, extend=0, gff, chrSeqname, probeAnno) {
+plotAlongChrom = function(y, chr, from, to, extend=0, gff, chrSeqname, probeAnno) {
   if(is.character(chr)) {
     chr = match(chr, chrSeqname)
     stopifnot(!is.na(chr))

@@ -60,7 +60,7 @@ simulated data:
 <<defGenData>>=
 genData = function(lenx, nrcp, stddev=0.1) {
   x  = numeric(lenx)
-  cp = c(1, sort(sample(1:floor(lenx/6), nrcp-1) * 6), lenx+1)
+  cp = c(1, sort(sample(1:floor(lenx/15), nrcp-1) * 15), lenx+1)
   s  = 0
   for (j in 2:length(cp)) {
     sel = cp[j-1]:(cp[j]-1)
