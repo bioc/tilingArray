@@ -19,10 +19,9 @@ for(i in 1:100){
   }
   seg  = findsegments(x, maxk=maxk, maxcp=maxcp)
 
-  stopifnot(all(seg$th[nrcp, 1:nrcp] == cp[-1]))
   plot(x, pch=".")
   abline(v=seg$th[nrcp,], col="red")
-   locator(n=1)
+  stopifnot(all(seg$th[nrcp, 1:nrcp] == cp[-1]))
 }
 
 
