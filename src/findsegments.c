@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 #define DEBUG
-#define VERBOSE
+#undef VERBOSE
 
 #define MAT_ELT(x, i, j, nrow) x[(long)(i)+(long)(j)*(long)(nrow)]
 
@@ -74,10 +74,10 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
     vs = (long) maxcp * (long) n;
-	Rprintf("vs=%ld\n", vs);
+    /* Rprintf("vs=%ld\n", vs); */
     mI = (double*) R_alloc(vs, sizeof(double));
     vs = (long) (maxcp-1) * (long) n;
-	Rprintf("vs=%ld\n", vs);
+    /* Rprintf("vs=%ld\n", vs); */
     mt = (int*) R_alloc(vs, sizeof(int));
 
     /* initialize for cp=0: mI[k, 0] is simply G[k, 0] */
