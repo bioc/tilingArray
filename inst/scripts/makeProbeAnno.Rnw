@@ -6,6 +6,7 @@
 ##   index: index (1...6553600) of the PM on the chip (integer) 
 ##   unique: whether the probe hits multiple places (logical)
 ##--------------------------------------------------------------------------------
+library("tilingArray")
 options(error=recover)
 
 probeLength = 25
@@ -143,7 +144,7 @@ for(hybeType in c("Reverse", "Direct")) {
   for(chr in 1:length(chrSeqname)) {
     for(s in c("+", "-")) {
       ifeat  = which(sgff$strand == s & mseq == chr)
-      cat(chr, s, ": ", length(ifeat), "features\n", sep="")
+      cat(chr, s, ": ", length(ifeat), " features\n", sep="")
 
       k1 = sgff$start[ifeat]
       k2 = sgff$end[ifeat]
@@ -159,11 +160,11 @@ for(hybeType in c("Reverse", "Direct")) {
       ind = get(paste(chr, pas, "index", sep="."), envir=probeAnno)
       sel = isWithinInterval(sta+(probeLength-1)/2, k1, k2)
       wh  = which(colSums(sel)==0)
-      if(length(wh)>0) {
-	cat("\nNo probes for i=", ifeat[wh], "\n")
-	print(sgff[ifeat[wh], 1:8])
-      }
-      print(table(rowSums(sel)))
+      ## if(length(wh)>0) {
+      ##	cat("\nNo probes for i=", ifeat[wh], "\n")
+      ##	print(sgff[ifeat[wh], 1:8])
+      ## }
+      ## print(table(rowSums(sel)))
        
       for(i in seq(along=ifeat)) {
 	fi = ifeat[i]
