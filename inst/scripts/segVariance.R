@@ -50,11 +50,17 @@ calcStat = function(e, nrBasePerSeg = 1500) {
   return(list(statistic=t, n=n))
 }
 
+graphics.off(); x11()
 j = js[3]
 
 segs = get(sub("rda", "seg", j), envir=s)
 segr = get(sub("rda", "seg", j), envir=r)
-plot(segs$J, segr$J)
+par(mfrow=c(2,2))
+plot(segr$J, segs$J)
+plot(2*seq(along=segs$J), segs$J, main="data")
+plot(2*seq(along=segr$J), segr$J, main="random")
+ddJ = diff(segs$J) ## diff(diff(segs$J))
+plot(2*seq(along=ddJ), ddJ, ylim=quantile(ddJ, c(0.01, .99), na.rm=TRUE), main="data")
 stop()
 
 
@@ -62,7 +68,6 @@ ts = calcStat(s)
 tr = calcStat(r)
 
 
-graphics.off(); x11()
 par(mfrow=c(3,2))
 hist(ts$statistic, col="lightblue", breaks=50)
 hist(tr$statistic, col="orange", breaks=50)
