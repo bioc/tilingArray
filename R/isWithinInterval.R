@@ -11,17 +11,9 @@ isWithinInterval = function(x, start, end) {
     stop(paste("'start' and 'end' must be numeric vectors of the",
          "same length > 0, and with same names."))
 
-  if(!require("SparseM")) {
-    warning(paste("Package 'SparseM' could not be loaded, reverting",
-        "to normal matrices (this maybe rather memory inefficient)."))
-   
-    mx  = matrix(x, nrow=n, ncol=m)
-    res = ((mx >= matrix(start, nrow=n, ncol=m, byrow=TRUE)) &
-           (mx <= matrix(end,   nrow=n, ncol=m, byrow=TRUE)))
-  } else {
-
-    
-  }
+  mx  = matrix(x, nrow=n, ncol=m)
+  res = ((mx >= matrix(start, nrow=n, ncol=m, byrow=TRUE)) &
+         (mx <= matrix(end,   nrow=n, ncol=m, byrow=TRUE)))
   
   rownames(res)=names(x)
   colnames(res)=names(start)

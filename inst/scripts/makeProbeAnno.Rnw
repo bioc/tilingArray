@@ -158,16 +158,10 @@ for(hybeType in c("Reverse", "Direct")) {
       )
       sta = get(paste(chr, pas, "start", sep="."), envir=probeAnno)
       ind = get(paste(chr, pas, "index", sep="."), envir=probeAnno)
-      sel = isWithinInterval(sta+(probeLength-1)/2, k1, k2)
-      wh  = which(colSums(sel)==0)
-      ## if(length(wh)>0) {
-      ##	cat("\nNo probes for i=", ifeat[wh], "\n")
-      ##	print(sgff[ifeat[wh], 1:8])
-      ## }
-      ## print(table(rowSums(sel)))
-       
+      pp  = sta + (probeLength-1)/2
       for(i in seq(along=ifeat)) {
-	fi = ifeat[i]
+	fi  = ifeat[i]
+	sel = (k1[i]<=pp) & (pp<=k2[i])
 	p[[as.character(sgff$feature[fi])]] [ind[sel[, i]]]  = Name[i]
       } ## for i
     } ## for s
