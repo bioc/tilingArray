@@ -131,7 +131,8 @@ Here is a little for-loop that generates data using random parameters
 and checks whether \Rfunction{findsegments} can reconstruct them. 
 The purpose of this is for checking the validity of the code. 
 <<testing>>=
-for(i in 1:10){
+set.seed(4711)
+for(i in 1:20){
   gd  = genData(lenx, nrcp)
   seg = findsegments(gd$x, maxk=maxk, maxcp=maxcp)
   stopifnot(seg$th[nrcp, 1:nrcp] == gd$cp)

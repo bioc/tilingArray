@@ -61,7 +61,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
     int * mt;
 
     if(verbose>=2)
-	Rprintf("In findsegments_dp: ");
+	Rprintf("In findsegments_dp: cp=");
 
     /* G[k, i] is the cost of segment from i to i+k, including these 
        endpoints */
@@ -82,7 +82,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 
     for (cp=1; cp<maxcp; cp++) {	
       if(verbose>=2)
-	Rprintf("cp=%d ", cp);
+	Rprintf("%d ", cp);
       /*  Best segmentation with cp change points from 0 to j 
       is found from considering best segmentations from 0 to j-k-1
       with cp-1 segments, plus cost of segment from j-k to j. */
@@ -114,6 +114,9 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 	  MAT_ELT(mt, j, cp-1, n) = imin;
       } /* for j */
     } /* for cp */
+
+    if(verbose>=2)
+	Rprintf("\n");
 
 #ifdef VERBOSE              
        print_matrix_double(mI, n, maxcp, "mI");
