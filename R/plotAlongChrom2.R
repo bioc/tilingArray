@@ -1,11 +1,11 @@
-plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, gff) {
+plotAlongChrom2 = function(chr, coord, segRes, segScore, scoreShow="pt", nrBasesPerSeg, gff) {
                    
   pushViewport(viewport(width=0.9, height=0.95)) ## plot margin
-  pushViewport(viewport(layout=grid.layout(8, 1, height=c(0.2,5,0.4,1,1,1,0.4,5))))
+  pushViewport(viewport(layout=grid.layout(9, 1, height=c(0.2, 5, 0.4,1,1,1,0.4,5,0.4))))
 
   ## name the viewports otherwise it gets too confusing:
-  theViewports=1:10
-  names(theViewports)=c("title", "expr1", "z1", "gff1", "coord", "gff2", "z2", "expr2")
+  theViewports=1:9
+  names(theViewports)=c("title", "expr1", "z1", "gff1", "coord", "gff2", "z2", "expr2", "legend")
 
   if(!xor(missing(nrBasesPerSeg), missing(segScore)))
     stop("Please specify either 'segScore' or 'nrBasesPerSeg'")
@@ -14,7 +14,7 @@ plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, gff) {
     strand = c("+", "-")[i]
     seg = get(paste(chr, strand, "seg", sep="."), segRes)
     dat = get(paste(chr, strand, "dat", sep="."), segRes)
-    
+
     if(missing(segScore)) {
       cp = round(max(dat$x)/nrBasesPerSeg)
       th=c(1, seg$th[cp, 1:cp])
@@ -27,8 +27,11 @@ plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, gff) {
       sgs = segScore
     }
   
+    if(missing(coord))
+      coord = range(dat$x)
+
     plotSegmentation(x=dat$x, y=dat$y, coord=coord, uniq=dat$unique,
-                     segScore=sgs,
+                     segScore=sgs, scoreShow=scoreShow,
                      gff=gff, chr=chr, chrSeqname=chrSeqname, strand=strand,
                      theViewports)
     
@@ -50,12 +53,15 @@ plotAlongChrom2 = function(chr, coord, segRes, segScore, nrBasesPerSeg, gff) {
             just = "centre", gp = gpar(cex=1))
   popViewport()
 
+  ## legend
+  plotAlongChromLegend(theViewports["legend"])
+  
   popViewport(2)
 }
 
 ## gff and chrSeqname into an environment or object?
 
-plotSegmentation = function(x, y, coord=range(x), uniq, segScore,
+plotSegmentation = function(x, y, coord=range(x), uniq, segScore, scoreShow,
   gff, chr, chrSeqname, strand, theViewports) {
   stopifnot(length(x)==length(y))
 
@@ -73,7 +79,7 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore,
   pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=theViewports[sprintf("expr%d", istrand)]))
 
-  ord  = order(uniq)
+  ord  = c(which(!uniq), which(uniq))
   colo = ifelse(uniq[ord], c("#33A02C", "#1F78B4")[istrand], "grey")
   grid.points(x[ord], y[ord], pch=16, size=unit(0.0016, "npc"), gp=gpar(col=colo))
 
@@ -91,14 +97,16 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore,
     layout.pos.col=1, layout.pos.row=theViewports[sprintf("z%d", istrand)]))
 
 
-  deckel = function(s, smin=0, smax=30) {
-    s[s<smin]=smin
-    s[s>smax]=smax
-    sqrt(s/smax)
+  deckel = function(p, pmax=10) {
+    p = -log(p, 10)
+    p[p>pmax] = pmax
+    sqrt(p/pmax)
   }
 
-  if("tscore" %in% colnames(segScore)) {
-    colo = colorRamp(brewer.pal(9, "Blues")[-9])(deckel(segScore$tscore[segSel]))
+  if(scoreShow %in% colnames(segScore)) {
+    colo  = rep("white", length(x))
+    val   = deckel(segScore[segSel, scoreShow])
+    colo[!is.na(val)] = colorRamp(brewer.pal(9, "Blues")[-9])(val[!is.na(val)])
   } else {
     colo = "#f0f0f0"
   }
@@ -133,19 +141,15 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore,
     ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
   }
   
-  ### CDS, ncRNA, tRNA, snoRNA ###
-  feattypes = c("CDS",     "ncRNA",   "tRNA",    "snoRNA",  "pseudogene")
-  colors    = c("#c6dbef", "#d94801", "#005a32", "#fc4e2a", "#707070")
-  fill      = c("#deebf7", "#fd8d3c", "#41ab5d", "#feb24c", "#e0e0e0")
-  ##             lightblue    brown     green    orange     light grey
-  names(colors) = names(fill) = feattypes
+  featDraw = featureDrawing()
 
-  ll = listLen(featsp[feattypes])
+  sfeatsp = featsp[rownames(featDraw)]
+  ll      = listLen(sfeatsp)
   if(any(ll>0)) {
-    i      = unlist(featsp[feattypes])
+    i      = unlist(sfeatsp)
     ord    = order(gff$start[sel[i]])
-    colors = rep(colors, ll)[ord]
-    fill   = rep(fill,   ll)[ord]
+    gp     = gpar(col = rep(featDraw$col,  ll)[ord],
+                 fill = rep(featDraw$fill, ll)[ord])
     i      = i[ord]
     s      = sel[i]
     
@@ -155,7 +159,7 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore,
               height= 2,
               default.units = "native",
               just  = c("left", "center"),
-              gp    = gpar(col=colors, fill=fill))
+              gp    = gp)
     grid.text(label = featnam[i],
               x     = (gff$start[s]+gff$end[s])/2,
               y     = (seq(along=s)%%3-1)*.7,
@@ -180,7 +184,7 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore,
     cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
   }
   
-  notDealtWith = setdiff(names(featsp), c(feattypes, "gene", "intron"))
+  notDealtWith = setdiff(names(featsp), c(rownames(featDraw), "gene", "intron"))
   if(length(notDealtWith)>0) {
     warning(paste("The following feature(s) were not displayed:",
                   paste(notDealtWith, collapse=", ")))
@@ -189,21 +193,51 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore,
   popViewport()
 }
 
+##------------------------------------------------------------
+##
+##------------------------------------------------------------
+alongChromTicks = function(x){
+  rx = range(x)
+  lz = log((rx[2]-rx[1])/5, 10)
+  fl = floor(lz)
+  if( lz-fl > log(5, 10))
+    fl = fl +  log(5, 10)
+  tw = round(10^fl)
+  i0 = floor(rx[1]/tw)
+  i1 = ceiling(rx[2]/tw)
+  seq(i0, i1)*tw
+}
+
+##------------------------------------------------------------
+## legend
+##------------------------------------------------------------
+plotAlongChromLegend = function(vpr) {
+  featDraw = featureDrawing()
+  dx       = 1/nrow(featDraw)
+  i        = 1:nrow(featDraw)
+
+  pushViewport(viewport(layout.pos.col=1, layout.pos.row=vpr))
+
+  grid.rect(x     = (i-1)*dx,
+            y     = 0.5,
+            width = dx*0.3,
+            height= 1, 
+            default.units = "npc", just  = c("left", "center"),
+            gp    = do.call("gpar", featDraw))
+  
+  grid.text(label = rownames(featDraw),
+            x     = (i-0.65)*dx,
+            y     = 0.5,
+            default.units = "npc", just  = c("left", "center"),
+            gp    = gpar(cex=1))
+
+  popViewport()
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+##------------------------------------------------------------
+## plotDuplication
+##------------------------------------------------------------
 plotDuplication = function(coord, chr, strand, probeAnno, theViewports) { 
 
   istrand = match(strand, c("+", "-"))
@@ -231,20 +265,18 @@ plotDuplication = function(coord, chr, strand, probeAnno, theViewports) {
     layout.pos.col=1, layout.pos.row=theViewports[sprintf("dup%d", istrand)]))
 
   grid.segments(x0=sta[x0], x1=sta[x1], y0=0, y1=0, default.units = "native",
-                gp=gpar(lwd=3, col="#606060")) #  "#FE9929"
-  ## browser()
+                gp=gpar(lwd=3, col="#606060")) 
   popViewport()
 }
 
 
-alongChromTicks = function(x){
-  rx = range(x)
-  lz = log((rx[2]-rx[1])/5, 10)
-  fl = floor(lz)
-  if( lz-fl > log(5, 10))
-    fl = fl +  log(5, 10)
-  tw = round(10^fl)
-  i0 = floor(rx[1]/tw)
-  i1 = ceiling(rx[2]/tw)
-  seq(i0, i1)*tw
+##------------------------------------------------------------
+## featureDrawing
+##------------------------------------------------------------
+featureDrawing = function() {
+  res = data.frame(
+    col      = I(c("#c6dbef", "#d94801", "#005a32", "#fc4e2a", "#707070")),
+    fill     = I(c("#deebf7", "#fd8d3c", "#41ab5d", "#feb24c", "#e0e0e0")))
+  rownames(res) =   c("CDS",     "ncRNA",   "tRNA",    "snoRNA",  "pseudogene")
+  return(res)
 }
