@@ -80,7 +80,7 @@ for(i in seq(along=sel)) {
   plotAlongChrom2(chr=as.numeric(segScore$chr[s]),
                   coord=c(max(segScore$start[s]-2e4, 0),
                           segScore$end[s]+2e4),
-                  highlight= list(coord=(segScore$start[s]+segScore$end[s])/2,
+                  highlight= list(coord=c(segScore$start[s], segScore$end[s]),
                                   strand=segScore$strand[s]),
                   segRes = segRes,
                   segScore = segScore, gff = gff)

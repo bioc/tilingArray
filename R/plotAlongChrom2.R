@@ -51,7 +51,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, segScore,
     co = highlight$coord
     if(is.na(mt) || !is.numeric(co))
       stop("Invalid parameter 'highlight'.")
-    grid.lines(x=c(1,1)*co, y=c(0, 0.4)*mt, default.units = "native", gp=gpar(col="red", lwd=2))
+    grid.segments(x0=co, x1=co, y0=c(0,0), y1=c(0.4,0.4)*mt, default.units = "native", gp=gpar(col="red", lwd=2))
   }
   
   popViewport()
