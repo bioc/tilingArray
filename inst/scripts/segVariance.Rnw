@@ -43,7 +43,8 @@ calcStat = function(e, j, nrBasePerSeg = 1500) {
   v    = sapply(sp, var)
   m    = sapply(sp, mean)
   n    = listLen(sp)
-  res  = sapply(sp, function(x) {rowMeans(matrix(x, ncol=d))-mean(x)}) ## residuals
+  ## residuals
+  res  = sapply(sp, function(x) {rowMeans(matrix(x, ncol=d))-mean(x)}) 
     
   t = numeric(length(sp))
   for (z in 2:length(sp)) {
@@ -86,7 +87,7 @@ if(!exists("s")) {
 First we have a look at the autocorrelation of the residuals.
 %
 <<acf, fig=TRUE, include=FALSE, eps=FALSE>>=
-j  = "2.+.rda"
+j  = "1.+.rda"
 ts = calcStat(s, j)
 acf(unlist(ts$res), lag.max=50, main="autocorrelation of residuals")
 @
@@ -196,7 +197,12 @@ for(j in seq(along=js)) {
     fdr[i, j] =  mean(abs(ts$statistic) < max(abs(tr$statistic)))
   }
 }
+matplot(nrbps, fdr, xlab='average number of bases per segment',
+  ylab='false discovery rate', type='b')
 @ 
+\myincfig{segVariance-fdr}{0.7\textwidth}{False discovery rates 
+as a function of the parameter \Robject{nrBasePerSeg}, the 
+average number of bases per segment.}
 
 
 %--------------------------------------------------
