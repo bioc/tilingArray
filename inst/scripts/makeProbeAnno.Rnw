@@ -1,10 +1,9 @@
 ##--------------------------------------------------------------------------------
-## 24.2.2005
+## 26.3.2005
 ## Use the output from the BLAST of all probes on chip vs genome to construct
 ## a datastructure for along-chromosome analyses
 ## - coord: coordinate (integer) 
-##   indPM: index (1...6553600) of the PM on the chip (integer) 
-##   indMM: index (1...6553600) of the MM on the chip (integer) 
+##   index: index (1...6553600) of the PM on the chip (integer) 
 ##   unique: whether the probe hits multiple places (logical)
 ##--------------------------------------------------------------------------------
 options(error=recover)
@@ -104,84 +103,80 @@ cat("\n")
 ##--------------------------------------------------
 if(!exists("gff")) {
   gffFile="SGD/saccharomyces_cerevisiae.gff"
-  if(FALSE) {
-    cat("Reading gff: ")
-    ## GFF Files
-    gff = read.table(gffFile, sep="\t", as.is=TRUE, quote="", header=FALSE, comment.char="#",
-      colClasses=c("factor", "factor", "factor", "integer", "integer",
-        "factor", "factor", "factor", "character"))
-    colnames(gff) = c("seqname", "source", "feature", "start", "end",
-              "score", "strand", "frame", "attributes")
-    cat("found", nrow(gff), "rows with classes", paste(sapply(gff, class), collapse=" "), ".\n")
-    stopifnot(!any(is.na(gff$start)), !any(is.na(gff$end)))
-
-    chrSeqname = 
-      c("chrI", "chrII", "chrIII", "chrIV",
-        "chrV", "chrVI", "chrVII", "chrVIII", "chrIX",
-        "chrX", "chrXI", "chrXII", "chrXIII", "chrXIV",
-        "chrXV","chrXVI", "chrMito")
-    save(gff, chrSeqname, file="gff.rda", compress=TRUE)
-  } else {
-    load("gff.rda")
-  }
+  cat("Reading gff: ")
+  ## GFF Files
+  gff = read.table(gffFile, sep="\t", as.is=TRUE, quote="", header=FALSE, comment.char="#",
+    colClasses=c("factor", "factor", "factor", "integer", "integer",
+      "factor", "factor", "factor", "character"))
+  colnames(gff) = c("seqname", "source", "feature", "start", "end",
+            "score", "strand", "frame", "attributes")
+  cat("found", nrow(gff), "rows with classes", paste(sapply(gff, class), collapse=" "), ".\n")
+  stopifnot(!any(is.na(gff$start)), !any(is.na(gff$end)))
+  
+  chrSeqname = 
+    c("chrI", "chrII", "chrIII", "chrIV",
+      "chrV", "chrVI", "chrVII", "chrVIII", "chrIX",
+      "chrX", "chrXI", "chrXII", "chrXIII", "chrXIV",
+      "chrXV","chrXVI", "chrMito")
 }
-
 
 ##--------------------------------------------------
 ## The per-probe data in 'probeAnno'
 ##--------------------------------------------------
 featNames = c("no_feature", "CDS", "ncRNA", "nc_primary_transcript",
               "rRNA", "snRNA", "snoRNA", "tRNA")
-selGff  = which(gff$feature %in% featNames)
+selGff  = which(gff$feature %in% featNames)  ##
 sgff    = gff[selGff, ]
 
 stopifnot(nrow(sgff)>1000)
-stopifnot(all(sgff$strand %in% c("+", "-")))
-
-probe = lapply(featNames, function(i) character(nrProbes))
-names(probe) = featNames
-
+stopifnot(all(sgff$strand %in% c("+", "-")))  ##
 
 mseq = match(sgff$seqname, chrSeqname)
 stopifnot(!any(is.na(mseq)), !any(mseq<1), !any(mseq>17))
 
-for(chr in 1:length(chrSeqname)) {
-  for(s in c("+", "-")) {
-    ifeat  = which(sgff$strand == s & mseq == chr)
-    cat("chr=", chr, "\ts=", s,
-        "\tno.features=", length(ifeat), "\n", sep="")
+hybeTypes = c("Reverse", "Direct")
+probeReverse = probeDirect = lapply(featNames, function(i) character(nrProbes))
+names(probeReverse) = names(probeDirect) = featNames
+
+for() {
+
+  for(chr in 1:length(chrSeqname)) {
+    for(s in c("+", "-")) {
+      ifeat  = which(sgff$strand == s & mseq == chr)
+      cat("chr=", chr, "\ts=", s,
+      "\tno.features=", length(ifeat), "\n", sep="")
   
-    k1 = sgff$start[ifeat]
-    k2 = sgff$end[ifeat]
-    stopifnot(all(k1<=k2))
+      k1 = sgff$start[ifeat]
+      k2 = sgff$end[ifeat]
+      stopifnot(all(k1<=k2))
 
-    p  = get(paste(chr, s, "start", sep="."), envir=probeAnno)
-    k1 = matrix(k1, nrow=length(p), ncol=length(ifeat), byrow=TRUE)
-    k2 = matrix(k2, nrow=length(p), ncol=length(ifeat), byrow=TRUE)
+      p  = get(paste(chr, s, "start", sep="."), envir=probeAnno)
+      k1 = matrix(k1, nrow=length(p), ncol=length(ifeat), byrow=TRUE)
+      k2 = matrix(k2, nrow=length(p), ncol=length(ifeat), byrow=TRUE)
 
-    ## sel is a logical matrix with as many rows as probes in p,
-    ##   and as many columns as features in ifeat
-    sel = (p>=k1 & p+(probeLength-1)<=k2)
-    wh = which(colSums(sel)==0)
-    if(length(wh)>0) {
-      cat("\nNo probes for i=", ifeat[wh], "\n")
-      print(sgff[ifeat[wh], 1:8])
-    }
-  
-    print(table(rowSums(sel)))
- 
-    ind = get(paste(chr, s, "index", sep="."), envir=probeAnno)
-    
-    for(i in seq(along=ifeat)) {
-      fi = ifeat[i]
-      attrs = strsplit(sgff[fi, "attributes"], split=";")[[1]]
-      g = grep("Name=", attrs)
-      stopifnot(length(g)==1)
-      probe[[as.character(sgff$feature[fi])]] [ind[sel[, i]]]  = sub("Name=", "", attrs[g])
-    } ## for i
-  } ## for s
-} ## for chr
-
+      ## sel is a logical matrix with as many rows as probes in p,
+      ##   and as many columns as features in ifeat
+      sel = (p>=k1 & p+(probeLength-1)<=k2)
+      wh = which(colSums(sel)==0)
+      if(length(wh)>0) {
+	cat("\nNo probes for i=", ifeat[wh], "\n")
+	print(sgff[ifeat[wh], 1:8])
+      }
+      
+      print(table(rowSums(sel)))
+      
+      ind = get(paste(chr, s, "index", sep="."), envir=probeAnno)
+      
+      for(i in seq(along=ifeat)) {
+	fi = ifeat[i]
+	attrs = strsplit(sgff[fi, "attributes"], split=";")[[1]]
+	g = grep("Name=", attrs)
+	stopifnot(length(g)==1)
+	probe[[as.character(sgff$feature[fi])]] [ind[sel[, i]]]  = sub("Name=", "", attrs[g])
+      } ## for i
+    } ## for s
+  } ## for chr
+} ## for hybetype
 
 ## now set 'no_feature' to all PMs that are not something else:
 anyFeature = which(0 < rowSums(sapply(probe, function(s) s!="")))
@@ -202,6 +197,5 @@ assign("probe", probe, envir=probeAnno)
 cat("\n")
 
 
-
-save(probeAnno, MMIndexFromPM, file="probeAnno.rda", compress=TRUE)
+save(probeAnno, MMIndexFromPM, gff, chrSeqname, file="probeAnno.rda", compress=TRUE)
 cat("Finished.\n")
