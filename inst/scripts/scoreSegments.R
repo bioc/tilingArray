@@ -24,7 +24,7 @@ probeLength  = 25
 
 ## For the definition of pseudogenes at SGD, see Docs/PseudogenesAtSGD.pdf
 knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
-                  "rRNA", "repeat_region", "snRNA", "snoRNA", 
+                  "rRNA", "snRNA", "snoRNA", 
                   "tRNA", "transposable_element", "transposable_element_gene")
 
 options(error=recover, warn=2)
