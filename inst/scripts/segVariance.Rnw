@@ -26,11 +26,42 @@
 options(error=recover, warn=2)
 library("tilingArray")
 
+calcStat = function(e, j, nrBasePerSeg = 1500) {
+  dat = get(sub("rda", "dat", j), envir=e)
+  seg = get(sub("rda", "seg", j), envir=e)
+  if(is.vector(dat$y))
+    dim(dat$y)=c(length(dat$y), 1)
+  stopifnot(nrow(dat$y)==length(dat$x))
+  cp = floor(max(dat$x)/nrBasePerSeg)
+  th = c(1, seg$th[cp, 1:cp])
+  ct = cut(1:nrow(dat$y), breaks=th-1)
+  ## note: dat$y is a matrix with length(ct) rows. The recycling rule
+  ## works in our favour here!
+  sp = split(dat$y, ct)
+  d  = ncol(dat$y)
+
+  v    = sapply(sp, var)
+  m    = sapply(sp, mean)
+  n    = listLen(sp)
+  res  = sapply(sp, function(x) {rowMeans(matrix(x, ncol=d))-mean(x)}) ## residuals
+    
+  t = numeric(length(sp))
+  for (z in 2:length(sp)) {
+    sdev = sqrt(  ((n[z-1]-1)*v[z-1]+(n[z]-1)*v[z]) / (n[z]+n[z-1]-2) )
+    t[z] = (m[z]-m[z-1]) / (sdev*sqrt(1/n[z]+1/n[z-1]))
+  }
+  z = sample(2:length(sp), 1)
+  stopifnot(abs(t[z] - t.test(sp[[z]], sp[[z-1]], var.equal=TRUE)$statistic) < 1e-9)
+  
+  return(list(statistic=t, n=n, res=res))
+}
+
+
 indir = "segmentation-3polyA"
 ## indir = "segmentation-050209v4"
 
-nrchr = 1
-js = paste(rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "rda", sep=".")
+nrchr = 3
+js    = paste(rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "rda", sep=".")
 
 if(!exists("s")) {
   s  = new.env()
@@ -47,42 +78,6 @@ if(!exists("s")) {
   }
   cat("\n")
 }
-
-calcStat = function(e, nrBasePerSeg = 1500) {
-  dat = get(sub("rda", "dat", j), envir=e)
-  seg = get(sub("rda", "seg", j), envir=e)
-  if(is.vector(dat$y))
-    dim(dat$y)=c(length(dat$y), 1)
-  stopifnot(nrow(dat$y)==length(dat$x))
-  cp = round(max(dat$x)/nrBasePerSeg)
-  th = c(1, seg$th[cp, 1:cp])
-  ct = cut(1:nrow(dat$y), breaks=th-1)
-  ## note: dat$y is a matrix with length(ct) rows. The recycling rule
-  ## works in our favour here!
-  sp = split(dat$y, ct)
-  d  = ncol(dat$y)
-
-  v    = sapply(sp, var)
-  m    = sapply(sp, mean)
-  n    = listLen(sp)
-  res  = sapply(sp, function(x) {rowMeans(matrix(x, ncol=d))-mean(x)}) ## residuals
-    
-  if(TRUE){
-    t = numeric(length(sp))
-    for (z in 2:length(sp)) {
-      sdev = sqrt(  ((n[z-1]-1)*v[z-1]+(n[z]-1)*v[z]) / (n[z]+n[z-1]-2) )
-      t[z] = (m[z]-m[z-1]) / (sdev*sqrt(1/n[z]+1/n[z-1]))
-    }
-    z = sample(2:length(sp), 1)
-    stopifnot(abs(t[z] - t.test(sp[[z]], sp[[z-1]], var.equal=TRUE)$statistic) < 1e-9)
-  }
-
-  if(FALSE)
-    t=c(0, diff(m))
-  
-  return(list(statistic=t, n=n, res=res))
-}
-j = js[1]
 @ 
 
 %--------------------------------------------------
@@ -91,7 +86,8 @@ j = js[1]
 First we have a look at the autocorrelation of the residuals.
 %
 <<acf, fig=TRUE, include=FALSE, eps=FALSE>>=
-ts = calcStat(s)
+j  = "2.+.rda"
+ts = calcStat(s, j)
 acf(unlist(ts$res), lag.max=50, main="autocorrelation of residuals")
 @
 % 
@@ -133,7 +129,6 @@ log-likelihood} to the log-likelihood. \Robject{J[n]} is the
 log-likelihood of the best model with \Robject{n} segments.
 %
 <<likelihood, fig=TRUE, include=FALSE, eps=FALSE>>=
-j
 segs = get(sub("rda", "seg", j), envir=s)
 segr = get(sub("rda", "seg", j), envir=r)
 par(mfrow=c(2,2))
@@ -165,8 +160,8 @@ distribution of these and the comparison with the situation for randomized
 data is made in the following code and plots.
 %
 <<tstat, fig=TRUE, include=FALSE, eps=FALSE>>=
-ts = calcStat(s)
-tr = calcStat(r)
+ts = calcStat(s, j)
+tr = calcStat(r, j)
 par(mfrow=c(3,2))
 hist(ts$statistic, col="lightblue", breaks=50,
    main="t-statistic (data)")
@@ -187,6 +182,22 @@ data. However, the $t$-values for the actual data (light blue) are much more
 extreme. Comparison of the two distributions could be used to calculate a 
 false discovery rate (FDR).}
 The result is shown in Figure~\ref{segVariance-tstat}.
+
+%--------------------------------------------------
+\section{FDR}
+%--------------------------------------------------
+<<fdr, fig=TRUE, include=FALSE, eps=FALSE>>=
+nrbps = seq(1000, 3000, by=200)
+fdr   = matrix(NA, nrow=length(nrbps), ncol=length(js))
+for(j in seq(along=js)) {
+  for(i in seq(along=nrbps)) {
+    ts = calcStat(s, js[j], nrBasePerSeg = nrbps[i]) 
+    tr = calcStat(r, js[j], nrBasePerSeg = nrbps[i])
+    fdr[i, j] =  mean(abs(ts$statistic) < max(abs(tr$statistic)))
+  }
+}
+@ 
+
 
 %--------------------------------------------------
 \section{Next step}
