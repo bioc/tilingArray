@@ -10,8 +10,10 @@ if(!exists("probeAnno"))
 
 normalize = function(fn, x) {
   k    = match(fn, x$File)
-  jref = which(x$Hybe %in% c(12,23,24))
-  stopifnot(length(jref)==3, !any(is.na(k)))
+  jref = match(c("09_11_04_S96_genDNA_16hrs_45C_noDMSO.cel.gz",
+                 "041119_S96genDNA_re-hybe.cel.gz",
+                 "041120_S96genDNA_re-hybe.cel.gz"), x$File)
+  stopifnot(!any(is.na(k)), !any(is.na(k)))
   return(log(exprs(x)[,k,drop=FALSE], 2) - rowMeans(log(exprs(x)[,jref], 2)))
 }
 

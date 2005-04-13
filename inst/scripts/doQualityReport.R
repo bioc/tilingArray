@@ -14,9 +14,7 @@ normRefFiles = file.path("Celfiles",
     "041120_S96genDNA_re-hybe.cel.gz"))
 
 files = file.path("Celfiles",
-  c("050411_totcDNA_20ug_affy.cel.gz",
-    "050411_totcDNA_20ug_prok.cel.gz",
-    "05_04_12_polyA#23_2x_4.5in300.cel.gz"))
+  c("041120_S96genDNA_re-hybe.cel.gz"))
 
 hybeType=c(rep("Reverse", 3))  ## "Direct"
 

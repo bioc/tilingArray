@@ -18,14 +18,14 @@ if(compress) {
   pat = ".cel$"
 }
 
-## get the filenames in the directory
-dirFiles = dir(celdir, pattern=pat)
-stopifnot(all(pd$File %in% dirFiles))
-
 stopifnot(all(pd$use %in% c("no", "yes")))
 fpd = pd[ pd$use=="yes", ]
 cat("Table contains", nrow(pData(pd)), "rows, using",
     nrow(pData(fpd)), "\n")
+
+## get the filenames in the directory
+dirFiles = dir(celdir, pattern=pat)
+stopifnot(all(fpd$File %in% dirFiles))
 
 a=read.affybatch(filenames=file.path(celdir, fpd$File), 
                  phenoData=fpd, verbose=TRUE, compress=compress)

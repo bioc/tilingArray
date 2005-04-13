@@ -10,7 +10,7 @@ if(!exists("probeAnno"))
 
 normalize = function(fn, x) {
   k    = match(fn, x$File)
-  jref = which(x$Hybe %in% c(12,23,24))
+  FIXME !!!! jref = which(x$Hybe %in% c(12,23,24))
   stopifnot(length(jref)==3, !any(is.na(k)))
   return(log(exprs(x)[,k,drop=FALSE], 2) - rowMeans(log(exprs(x)[,jref], 2)))
 }
