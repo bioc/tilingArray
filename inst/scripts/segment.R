@@ -8,13 +8,6 @@ options(error=recover, warn=2)
 if(!exists("probeAnno"))
   load("probeAnno.rda")
 
-normalize = function(fn, x) {
-  k    = match(fn, x$File)
-  FIXME !!!! jref = which(x$Hybe %in% c(12,23,24))
-  stopifnot(length(jref)==3, !any(is.na(k)))
-  return(log(exprs(x)[,k,drop=FALSE], 2) - rowMeans(log(exprs(x)[,jref], 2)))
-}
-
 if(!exists("lxj")) {
   load("x.Rdata")
   ## lxj = normalize("030505_totcDNA_15ug_affy.cel.gz", x)
