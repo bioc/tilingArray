@@ -21,21 +21,22 @@ cat("Table contains", nrow(pData(pd)), "rows, using",
 dirFiles = dir(celdir, pattern=pat)
 stopifnot(all(fpd$File %in% dirFiles))
 
-stop()
-
-a = read.affybatch(filenames=file.path(celdir, fpd$File), 
-                 phenoData=fpd, verbose=TRUE, compress=compress)
+a = ReadAffy(filenames=fpd$File, celfile.path=celdir,  
+  phenoData=fpd, verbose=TRUE, compress=TRUE)
 
 a = new("exprSet", exprs=intensity(a), phenoData=phenoData(a))
-save(a, file="a.Rdata", compress=TRUE)
+save(a, file="a.rda", compress=TRUE)
 
 ## Normalize
-jref = which(x$Hybe %in% c(12,23,24))
-  stopifnot(length(jref)==3, !any(is.na(k)))
-  return(log(exprs(x)[,k,drop=FALSE], 2) - rowMeans(log(exprs(x)[,jref], 2)))
-}
+jref = which(a$NucleicAcid == "DNA")
+stopifnot(length(jref)==3)
 
+normfac = rowMeans(log(exprs(a)[, jref, drop=FALSE], 2))
+normfac[normfac<8] = NA
 
-x =  
-save(x, file="x.Rdata", compress=TRUE)
+x = a
+x = new("exprSet",
+  exprs = log(exprs(a)[,-jref, drop=FALSE], 2) - normfac,
+  phenoData = phenoData(a)[, -jref])
+save(x, file="x.rda", compress=TRUE)
 
