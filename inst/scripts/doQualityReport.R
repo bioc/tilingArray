@@ -1,8 +1,6 @@
 library("tilingArray")
 library("affy")
 
-source("/home/huber/madman/Rpacks/tilingArray/R/qualityReport.R")
-source("/home/huber/madman/Rpacks/tilingArray/R/plotAlongChrom.R")
 options(error=recover)
 
 if(!exists("probeAnno"))
@@ -14,9 +12,10 @@ normRefFiles = file.path("Celfiles",
     "041120_S96genDNA_re-hybe.cel.gz"))
 
 files = file.path("Celfiles",
-  c("041120_S96genDNA_re-hybe.cel.gz"))
+  c("050415_totcDNA_20ug_Affy11.cel.gz",
+    "050415_totcDNA_20ug_Prok16.cel.gz"))
 
-hybeType=c(rep("Reverse", 3))  ## "Direct"
+hybeType=c(rep("Reverse", 2))  ## "Direct"
 
 if(!exists("x"))
   x = read.affybatch(filenames=files, compress=TRUE, verbose=TRUE)

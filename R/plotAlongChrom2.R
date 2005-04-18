@@ -1,56 +1,50 @@
 plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno, 
   segScore, scoreShow="pt", nrBasesPerSeg, gff, haveLegend=TRUE) {
 
-  VP = data.frame(id=1:9,
-                  height=c(0.2, 5, 0.4, 1, 1, 1, 0.4, 5, 0.4))
-  rownames(VP) = c("title", "expr1", "z1", "gff1", "coord", "gff2", "z2", "expr2", "legend")
+  VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
 
   if(!haveLegend)
-    VP = VP[-which(rownames(VP)=="legend"), ]
+    VP = VP[-which(names(VP)=="legend")]
   
   if(!missing(y)) {
     if(missing(probeAnno))
       stop("If 'y' is specified, 'probeAnno' must also be specified.")
     if(!missing(segRes))
       stop("If 'y' is specified, 'segRes' must not be specified.")
-    VP = VP[-which(rownames(VP) %in% c("z1", "z2")), ]
-    dataMode = "y"
+    VP = VP[-which(names(VP) %in% c("z1", "z2"))]
   } else {
     if(missing(segRes))
       stop("Please specify either 'y' or 'segRes'")
     if(!xor(missing(nrBasesPerSeg), missing(segScore)))
       stop("Please specify either 'segScore' or 'nrBasesPerSeg'")
-    dataMode = "segRes"
   }
 
   pushViewport(viewport(width=0.9, height=0.95)) ## plot margin
-  pushViewport(viewport(layout=grid.layout(nrow(VP), 1, height=VP$height)))
-  
+  pushViewport(viewport(layout=grid.layout(length(VP), 1, height=VP)))
   for(i in 1:2) {
     strand = c("+", "-")[i]
 
-    switch(dataMode,
-       y = {
-         dat = list(start  = get(paste(chr, strand, "start", sep="."), envir=probeAnno),
-                    yraw   = y[get(paste(chr, strand, "index", sep="."), envir=probeAnno)],
-                    unique = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
-         sgs = NULL     
-       },
-       segRes = {
-         dat = get(paste(chr, strand, "dat", sep="."), segRes)
-         if(missing(segScore)) {
-           seg = get(paste(chr, strand, "seg", sep="."), segRes)
-           cp = round(max(dat$x)/nrBasesPerSeg)
-           th=c(1, seg$th[cp, 1:cp])
-           sgs = data.frame(
-             chr    = I(rep(chr, cp)),
-             strand = I(rep(strand, cp)),
-             start  = dat$x[th[-length(th)]],
-             end    = dat$x[th[-1]]-1)
-         } else {
-           sgs = segScore
-         }
-       } )
+    if(!missing(y)) {
+      index = get(paste(chr, strand, "index", sep="."), envir=probeAnno)
+      dat = list(start  = get(paste(chr, strand, "start", sep="."), envir=probeAnno),
+                 yraw   = y[index],
+                 unique = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
+      sgs = NULL     
+    } else {
+      dat = get(paste(chr, strand, "dat", sep="."), segRes)
+      if(missing(segScore)) {
+        seg = get(paste(chr, strand, "seg", sep="."), segRes)
+        cp = round(max(dat$x)/nrBasesPerSeg)
+        th=c(1, seg$th[cp, 1:cp])
+        sgs = data.frame(
+          chr    = I(rep(chr, cp)),
+          strand = I(rep(strand, cp)),
+          start  = dat$x[th[-length(th)]],
+          end    = dat$x[th[-1]]-1)
+      } else {
+        sgs = segScore
+      }
+    } 
     
     if(missing(coord))
       coord = range(dat$start)
@@ -64,7 +58,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
 
   ## chromosomal coordinates
   pushViewport(dataViewport(xData=coord, yscale=c(-0.4,0.8), extension=0, 
-                            layout.pos.col=1, layout.pos.row=VP["coord", "id"]))
+                            layout.pos.col=1, layout.pos.row=which(names(VP)=="coord")))
   grid.lines(coord, c(0,0), default.units = "native")
   tck= alongChromTicks(coord)
   grid.text(label=formatC(tck, format="d"), x = tck, y = 0.2, 
@@ -81,29 +75,38 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
   popViewport()
 
   ## title
-  pushViewport(viewport(layout.pos.col=1, layout.pos.row=VP["title", "id"]))
+  pushViewport(viewport(layout.pos.col=1, layout.pos.row=which(names(VP)=="title")))
   grid.text(label=paste("Chromosome", chr), x = 0.5, y = 0.5, 
             just = "centre", gp = gpar(cex=1))
   popViewport()
 
   ## legend
   if(haveLegend)
-    plotAlongChromLegend(VP["legend", "id"])
+    plotAlongChromLegend(which(names(VP)=="legend"))
   
   popViewport(2)
 }
 
 ## gff and chrSeqname into an environment or object?
 
-plotSegmentation = function(x, y, coord=range(x), uniq, segScore, scoreShow,
+plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
   gff, chr, chrSeqname, strand, VP) {
 
   ## could this be done better?
   if(is.matrix(y))
     y = rowMeans(y)
     
-  stopifnot(length(x)==length(y))
+  stopifnot(length(x)==length(y), length(x)==length(uniq))
 
+  if(missing(coord)) {
+    coord=range(x)
+  } else {
+    sel = (x>=coord[1])&(x<=coord[2])
+    x = x[sel]
+    y = y[sel]
+    uniq = uniq[sel]
+  }
+  
   istrand = match(strand, c("+", "-"))
   stopifnot(length(strand)==1, !is.na(istrand))
   chrName = chrSeqname[chr]
@@ -111,12 +114,13 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore, scoreShow,
 
   ## the expression data. use two viewports for different clipping behavior
   rgy = range(y, na.rm=TRUE)
+  vpr = which(names(VP)==sprintf("expr%d", istrand))
   pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="off",
-    layout.pos.col=1, layout.pos.row=VP[sprintf("expr%d", istrand), "id"]))
+    layout.pos.col=1, layout.pos.row=vpr))
   grid.yaxis()
   
   pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="on",
-    layout.pos.col=1, layout.pos.row=VP[sprintf("expr%d", istrand), "id"]))
+    layout.pos.col=1, layout.pos.row=vpr))
 
   ord  = c(which(!uniq), which(uniq))
   colo = ifelse(uniq[ord], c("#33A02C", "#1F78B4")[istrand], "grey")
@@ -135,7 +139,7 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore, scoreShow,
 
   if(!is.null(segScore)) {
     pushViewport(dataViewport(xData=coord, yscale=c(0,2), extension=0, clip="on",
-       layout.pos.col=1, layout.pos.row=VP[sprintf("z%d", istrand), "id"]))
+       layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("z%d", istrand))))
 
     deckel = function(p, pmax=10) {
       p = -log(p, 10)
@@ -160,7 +164,7 @@ plotSegmentation = function(x, y, coord=range(x), uniq, segScore, scoreShow,
   }
   
   pushViewport(dataViewport(xData=coord, yscale=c(-1.2,1.2),  extension=0, 
-    layout.pos.col=1, layout.pos.row=VP[sprintf("gff%d", istrand), "id"]))
+    layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("gff%d", istrand))))
 
   stopifnot(all(gff$start <= gff$end))
   sel = which(gff$seqname == chrName &
@@ -304,7 +308,7 @@ plotDuplication = function(coord, chr, strand, probeAnno, VP) {
   stopifnot(all(x1>x0))
   
   pushViewport(dataViewport(xData=coord, yscale=c(-1,1),  extension=0,  clip="on",
-    layout.pos.col=1, layout.pos.row=VP[sprintf("dup%d", istrand), "id"]))
+    layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("dup%d", istrand), "id")))
 
   grid.segments(x0=sta[x0], x1=sta[x1], y0=0, y1=0, default.units = "native",
                 gp=gpar(lwd=3, col="#606060")) 

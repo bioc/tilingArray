@@ -1,5 +1,5 @@
 celdir = "Celfiles"
-pdfile = "tilingBook-050413.txt"
+pdfile = "tilingBook-050417.txt"
 
 library(affy)
 
@@ -25,6 +25,8 @@ a = ReadAffy(filenames=fpd$File, celfile.path=celdir,
   phenoData=fpd, verbose=TRUE, compress=TRUE)
 
 a = new("exprSet", exprs=intensity(a), phenoData=phenoData(a))
+colnames(exprs(a)) = a$File
+
 save(a, file="a.rda", compress=TRUE)
 
 ## Normalize
@@ -37,6 +39,8 @@ normfac[normfac<8] = NA
 x = a
 x = new("exprSet",
   exprs = log(exprs(a)[,-jref, drop=FALSE], 2) - normfac,
-  phenoData = phenoData(a)[, -jref])
+  phenoData = phenoData(a)[-jref,])
+colnames(exprs(x)) = x$File
+
 save(x, file="x.rda", compress=TRUE)
 
