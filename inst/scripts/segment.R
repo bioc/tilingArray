@@ -8,23 +8,34 @@ options(error=recover, warn=2)
 if(!exists("probeAnno"))
   load("probeAnno.rda")
 
-if(!exists("lxj")) {
-  load("x.Rdata")
-  ## lxj = normalize("030505_totcDNA_15ug_affy.cel.gz", x)
-  ## outdir = "segmentation-050305"
-  ## lxj = normalize("050209_mRNAx4_30min_re-hybe_RH6.cel.gz", x)
-  ## outdir = "segmentation-050209v4"
-  lxj = normalize(c("041203_S96_polyAx1_RH6.cel.gz",
-                    "050209_mRNAx4_30min_re-hybe_RH6.cel.gz",
-                    "050218_polyA-RNA_RH6_4x15min.cel.gz"), x)
-  outdir   = "segmentation-3polyA"
-  hybeType = "Reverse"
-  rm(x)
-  gc()
-}
+if(!exists("x")) 
+  load("x.rda")
+
+what = c("polyA", "tot")[1]
+
+switch(what,
+  "polyA" = {
+    fn = c("041203_S96_polyAx1_RH6.cel.gz",
+      "050209_mRNAx4_30min_re-hybe_RH6.cel.gz",
+      "050218_polyA-RNA_RH6_4x15min.cel.gz")
+    outdir = "seg-polyA-050418"
+  },
+  "tot"    = {
+    fn = c("050409_totcDNA_14ug_no52.cel.gz",
+      "030505_totcDNA_15ug_affy.cel.gz",
+      "050415_totcDNA_20ug_Affy11.cel.gz")
+    outdir = "seg-tot-050418"
+  },
+  stop(paste("Bummer:", what))
+)
+
+lxj = exprs(x)[, fn]
+stopifnot(ncol(lxj)==3)
+
+hybeType = "Reverse"
 
 igvalues = lxj[get(paste("probe", hybeType, sep=""), envir=probeAnno)$no_feature == "no", ]
-baseline = shorth(igvalues)
+baseline = shorth(igvalues, na.rm=TRUE)
 if(interactive())
   hist(igvalues, col="orange", breaks=100, main=sprintf("baseline=%3.1f", baseline))
 
@@ -52,11 +63,6 @@ for(chr in chrstr) {
     uni = get(paste(chr, "unique", sep="."), probeAnno)
 
     yraw = lxj[ind, ]-baseline
-    
-    ## average identical probes
-    ## tm = tapply(yraw, sta, mean)
-    ## mt = match(names(tm), paste(sta))
-    ## stopifnot(!any(is.na(mt)))
 
     ## use approx
     dat = list(x=seq(min(sta), max(sta), by=8))
@@ -71,7 +77,7 @@ for(chr in chrstr) {
     ## 15k bases long, corresponding to about 2000 consecutive probes
     maxk  = 1500
     maxcp = round(diff(range(dat$x)) / nrBasesPerSeg)
-
+    
     seg = findSegments(dat$y, maxk=maxk, maxcp=maxcp, verbose=99)
       
     save(seg, dat, file=datfn, compress=TRUE)
