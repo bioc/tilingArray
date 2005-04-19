@@ -1,3 +1,6 @@
+
+%% Stangle("segVariance.Rnw"); source("segVariance.R")
+
 \documentclass[11pt]{article}
 \newcommand{\Robject}[1]{\texttt{#1}}
 \newcommand{\Rpackage}[1]{\textit{#1}}
@@ -57,11 +60,12 @@ calcStat = function(e, j, nrBasePerSeg = 1500) {
   return(list(statistic=t, n=n, res=res))
 }
 
+indir = "seg-polyA-050418"
 
 indir = "segmentation-3polyA"
 ## indir = "segmentation-050209v4"
 
-nrchr = 4
+nrchr = 16
 js    = paste(rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "rda", sep=".")
 
 if(!exists("s")) {
@@ -200,8 +204,6 @@ for(j in seq(along=js)) {
 matplot(nrbps, fdr, xlab='average number of bases per segment',
   ylab='false discovery rate', type='b')
 
-plot(c(230208/64, 230208/60, 813178/232, 813178/257, 316616/88, 316616/107),
-     c(1700, 1700, 2200, 1700, 2200, 1700))
 @ 
 \myincfig{segVariance-fdr}{0.7\textwidth}{False discovery rates 
 as a function of the parameter \Robject{nrBasePerSeg}, the 
@@ -221,12 +223,38 @@ produce a set of $n'$ segments, with $n'\ll n$ and the false discovery rate
 ## see whether variance depends on position along chromosome
 ## (it doesn't seem to)
 par(mfrow=c(4,4), mai=c(0.3, 0.4, 0.4, 0.01))
-for(j in js[17:32]) {
+for(j in js) {
   dat = get(sub("rda", "dat", j), envir=s)
   dy  = diff(dat$y)
   dy  = dy[abs(dy)<=2]
   smoothScatter(seq(along=dy), dy, pch=".", main=j)
 }
 @
+
+
+<<signs, fig=TRUE, include=FALSE, eps=FALSE>>=
+nrbps = seq(1000, 3000, by=200)
+sis   = matrix(NA, nrow=length(nrbps), ncol=length(js))
+for(j in seq(along=js)) {
+  dat = get(sub("rda", "dat", js[j]), envir=s)
+  seg = get(sub("rda", "seg", js[j]), envir=s)
+  n   = length(dat$x)
+  for(i in seq(along=nrbps)) {
+    cp = floor(max(dat$x)/nrbps[i])
+    th = seg$th[cp[i], 1:cp[i]]
+    theCut = cut(1:n, breaks=c(0, th-1))
+    stopifnot(th[length(th)]==n+1)
+    ms = tapply(rowMeans(dat$y), theCut, mean)
+    ## sign(diff(ms)) are the signs of the jumps from one segment to another.
+    ## if they are alternating, sg is +2/-2, if they are in the same direction,
+    ## they are 0.
+    sg = diff(sign(diff(ms)))
+    sis[i, j] = sum(sg==0)
+  }
+}
+
+
+matplot(nrbps, sis, xlab='average number of bases per segment',
+  ylab='sign statistic', type='b')
 
 \end{document}

@@ -1,10 +1,11 @@
 options(error=recover, warn=2)
 library("tilingArray")
+source("/home/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 
 if(!exists("gff"))
   load("probeAnno.rda")
 
-indir = "segmentation-050209v4"
+indir = "segmentation-3polyA"
 chrs = 1:17
 
 if(!exists("s")) {
@@ -23,7 +24,9 @@ if(!exists("s")) {
 } ## if
 
 ## For the definition of pseudogenes at SGD, see Docs/PseudogenesAtSGD.pdf
-segScore = scoreSegments(s, gff=gff)
 
-save(segScore, file=file.path(indir, "segScore.rda"), compress=TRUE)
-    
+for(nrbps in c(1500, 1750, 2000, 2250)) {
+  segScore = scoreSegments(s, gff=gff, nrBasePerSeg=nrbps)
+  save(segScore, file=file.path(indir, sprintf("segScore-%d-NEW.rda", as.integer(nrbps))),
+                   compress=TRUE)
+}  

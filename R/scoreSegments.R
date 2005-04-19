@@ -26,8 +26,8 @@ scoreSegments = function(x, gff,
         start                 = integer(cp),
         end                   = integer(cp),
         length                = integer(cp),
-        level                 = numeric(cp),
-        pt                    = numeric(cp),
+        level                 = rep(as.numeric(NA), cp),
+        pt                    = rep(as.numeric(NA), cp),
         frac.dup              = numeric(cp),
         same.feature          = I(character(cp)),
         same.overlap          = numeric(cp),
@@ -65,41 +65,39 @@ scoreSegments = function(x, gff,
           gff$strand  == gffstrand &
           gff$feature %in% knownFeatures, ]
         sgff$Name = getAttributeField(sgff$attributes, "Name")
+        sgff$length = sgff$end - sgff$start +1
         if(verbose)
           cat(wgff, ": ", nrow(sgff), "  ", sep="")
-        
-        ## matchProbes2Feats is a matrix of probes (dat$x) times features
-        ## and a matrix element [p,j] is TRUE iff probe p is part of
-        ## feature j. A probe is considered part of a feature if its 13th
-        ## nucleotide falls into it. That's an arbitrary rule, which is
-        ## intended to err on the side of assigning probes to features.
-        matchProbes2Feats = isWithinInterval(dat$x+probeMiddle, sgff$start, sgff$end)
+
         
         p = function(x) paste(wgff, x, sep=".")
+        
         for(j in 1:cp) {
-          ## this matrix has as many rows are there are probes in the segment,
-          ## and as many columns as there as features
-          matchSeg2Feats = matchProbes2Feats[i1[j]:i2[j], ]
-          ## features that have overlap with this segment:
-          whf = which(colSums(matchSeg2Feats) > 0)
+          segStart = segScore$start[idx[j]]+probeMiddle
+          segEnd   = segScore$end[idx[j]]+probeMiddle
+
+          overlap = (pmin(segEnd, sgff$end) - pmax(segStart, sgff$start) + 1) / sgff$length
+          
+          whf = which(overlap>0)
           segScore[j, p("feature")] = paste(unique(sgff$Name[whf]), collapse=", ")
-          ## fraction of probes that have overlap with any feature:
-          segScore[j, p("overlap")] = mean(rowSums(matchSeg2Feats) > 0)
-          ## see man page!
-          sp  = segScore$start[j] + probeMiddle
-          whs = which(matchSeg2Feats[1, ])
+          
+          ## fraction of overlap with features
+          segScore[j, p("overlap")] = max(overlap, 0)
+            
+          ## Please see also man page:
+          ## whs = all features that contain start of this segment:
+          whs = which(segStart >= sgff$start & segStart < sgff$end)
           if(length(whs)>0) {
-            segScore[j, p("dist.start2feat")] = min(sp - sgff$start[whs])
+            segScore[j, p("dist.start2feat")] = min(segStart - sgff$start[whs])
           } else {
-            segScore[j, p("dist.start2feat")] = posMin(sp - sgff$end)
+            segScore[j, p("dist.start2feat")] = posMin(segStart - sgff$end)
           }
-          ## see man page!
-          sp  = segScore$end[j] + probeMiddle
-          whe = which(matchSeg2Feats[nrow(matchSeg2Feats), ])
+          ## whe = all features that contain end of this segment:
+          whe = which(segEnd >= sgff$start & segEnd < sgff$end)
           if(length(whe)>0) {
-            segScore[j, p("dist.end2feat")] = min(sgff$end[whe] - sp)
+            segScore[j, p("dist.end2feat")] = min(sgff$end[whe] - segEnd)
           } else {
-            segScore[j, p("dist.end2feat")] = posMin(sgff$start - sp)
+            segScore[j, p("dist.end2feat")] = posMin(sgff$start - segEnd)
           }
         } ## for j
       } ## for wgff
@@ -115,8 +113,8 @@ scoreSegments = function(x, gff,
       sds    = sapply(ys, sd)
       p      = pt(means/sds*sqrt(lls), df=lls-1, lower.tail=FALSE)
       
-      ## there might not be data for all cut levels, since some have been dropped for being
-      ## duplicated
+      ## there might not be data for all cut levels, since some have been
+      ## dropped for being duplicated
       mt = match(names(means), levels(theCut))
       stopifnot(identical(names(means), names(sds)),
                 identical(names(means), names(p)), !any(is.na(mt)))

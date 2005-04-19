@@ -34,13 +34,10 @@ jref = which(a$NucleicAcid == "DNA")
 stopifnot(length(jref)==3)
 
 normfac = rowMeans(log(exprs(a)[, jref, drop=FALSE], 2))
-normfac[normfac<8] = NA
 
-x = a
 x = new("exprSet",
   exprs = log(exprs(a)[,-jref, drop=FALSE], 2) - normfac,
   phenoData = phenoData(a)[-jref,])
-colnames(exprs(x)) = x$File
 
 save(x, file="x.rda", compress=TRUE)
 
