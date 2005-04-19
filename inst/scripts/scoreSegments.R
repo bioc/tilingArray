@@ -27,6 +27,6 @@ if(!exists("s")) {
 
 for(nrbps in c(1500, 1750, 2000, 2250)) {
   segScore = scoreSegments(s, gff=gff, nrBasePerSeg=nrbps)
-  save(segScore, file=file.path(indir, sprintf("segScore-%d-NEW.rda", as.integer(nrbps))),
+  save(segScore, file=file.path(indir, sprintf("segScore-%d.rda", as.integer(nrbps))),
                    compress=TRUE)
 }  
