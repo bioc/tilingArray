@@ -1,11 +1,14 @@
 options(error=recover, warn=2)
 library("tilingArray")
-source("/home/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
+## source("/home/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
+
+indir = c("segmentation-3polyA", "seg-tot-050418")[1]
+cat(indir, "\n")
 
 if(!exists("gff"))
   load("probeAnno.rda")
 
-indir = "segmentation-3polyA"
+
 chrs = 1:17
 
 if(!exists("s")) {

@@ -150,7 +150,9 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
     if(scoreShow %in% colnames(segScore)) {
       colo  = rep("white", length(segSel))
       val   = deckel(segScore[segSel, scoreShow])
-      colo[!is.na(val)] = colorRamp(brewer.pal(9, "Blues")[-9])(val[!is.na(val)])
+      isa   = !is.na(val)
+      tmp   = colorRamp(brewer.pal(9, "Blues")[-9])(val[isa]) / 256
+      colo[!is.na(val)] = rgb(tmp[,1], tmp[,2], tmp[,3])
     } else {
       colo = "#f0f0f0"
     }

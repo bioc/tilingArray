@@ -7,6 +7,7 @@ scoreSegments = function(x, gff,
   knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
         "rRNA", "snRNA", "snoRNA", "tRNA",
         "transposable_element", "transposable_element_gene"),
+  minOverlap = 0.8,
   verbose = TRUE) {
 
   probeMiddle = (probeLength-1)/2
@@ -78,7 +79,7 @@ scoreSegments = function(x, gff,
 
           overlap = (pmin(segEnd, sgff$end) - pmax(segStart, sgff$start) + 1) / sgff$length
           
-          whf = which(overlap>0)
+          whf = which(overlap > minOverlap)
           segScore[j, p("feature")] = paste(unique(sgff$Name[whf]), collapse=", ")
           
           ## fraction of overlap with features
