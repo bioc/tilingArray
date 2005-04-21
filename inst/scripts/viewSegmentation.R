@@ -1,4 +1,4 @@
-options(error=recover, warn=2)
+options(error=recover, warn=0)
 
 library("tilingArray")
 library("arrayMagic")   ## for write.htmltable

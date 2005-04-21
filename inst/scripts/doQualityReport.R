@@ -12,10 +12,9 @@ normRefFiles = file.path("Celfiles",
     "041120_S96genDNA_re-hybe.cel.gz"))
 
 files = file.path("Celfiles",
-  c("050415_totcDNA_20ug_Affy11.cel.gz",
-    "050415_totcDNA_20ug_Prok16.cel.gz"))
+  c("05_04_20_2xpolyA_NAP_2to1.cel.gz"))
 
-hybeType=c(rep("Reverse", 2))  ## "Direct"
+hybeType=c(rep("Reverse", length(files)))  ## "Direct"
 
 if(!exists("x"))
   x = read.affybatch(filenames=files, compress=TRUE, verbose=TRUE)

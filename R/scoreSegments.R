@@ -10,34 +10,47 @@ scoreSegments = function(x, gff,
   minOverlap = 0.8,
   verbose = TRUE) {
 
+  gff$Name   = getAttributeField(gff$attributes, "Name")
+  gff$length = gff$end - gff$start +1
+
   probeMiddle = (probeLength-1)/2
   rv = NULL
   for(chr in chrs) {
     for(strand in c("+", "-")) {
+      switch(strand,
+        "+" = {
+          distleft="dist5"; distright="dist3"
+        },
+        "-" = {
+          distleft="dist3"; distright="dist5"
+        },
+        stop("Sapperlot"))
+      
       dat  = get(paste(chr, strand, "dat", sep="."), s)
       seg  = get(paste(chr, strand, "seg", sep="."), s)
       cp   = round(max(dat$x)/nrBasePerSeg)
+
       if(verbose)
         cat(chr, ".", strand, ": ", paste(range(dat$x), collapse="..."),
             ", ", cp, " segments. ", sep="")
 
       segScore = data.frame(
-        chr                   = integer(cp),
+        chr                   = rep(as.integer(NA), cp),
         strand                = I(character(cp)),
-        start                 = integer(cp),
-        end                   = integer(cp),
-        length                = integer(cp),
+        start                 = rep(as.integer(NA), cp),
+        end                   = rep(as.integer(NA), cp),
+        length                = rep(as.integer(NA), cp),
         level                 = rep(as.numeric(NA), cp),
         pt                    = rep(as.numeric(NA), cp),
-        frac.dup              = numeric(cp),
+        frac.dup              = rep(as.numeric(NA), cp),
         same.feature          = I(character(cp)),
-        same.overlap          = numeric(cp),
-        same.dist.start2feat  = integer(cp),
-        same.dist.end2feat    = integer(cp),
+        same.overlap          = rep(as.numeric(NA), cp),
+        same.dist5            = rep(as.integer(NA), cp),
+        same.dist3            = rep(as.integer(NA), cp),
         oppo.feature          = I(character(cp)),
-        oppo.overlap          = numeric(cp),
-        oppo.dist.start2feat  = integer(cp),
-        oppo.dist.end2feat    = integer(cp))
+        oppo.overlap          = rep(as.numeric(NA), cp),
+        oppo.dist5            = rep(as.integer(NA), cp),
+        oppo.dist3            = rep(as.integer(NA), cp))
       
       ## th[i] is 1 + (end point of segment i) which is the same as
       ## the start point of segment (i-1).
@@ -57,6 +70,9 @@ scoreSegments = function(x, gff,
         1-sum(z)/length(z)
       }, i1, i2)
       
+      segStart = segScore$start[idx]+probeMiddle
+      segEnd   = segScore$end[idx]+probeMiddle
+
       for(wgff in c("same", "oppo")) {
         gffstrand = switch(wgff,
           same = strand,
@@ -65,42 +81,43 @@ scoreSegments = function(x, gff,
         sgff = gff[ gff$seqname == chrSeqname[chr] &
           gff$strand  == gffstrand &
           gff$feature %in% knownFeatures, ]
-        sgff$Name = getAttributeField(sgff$attributes, "Name")
-        sgff$length = sgff$end - sgff$start +1
         if(verbose)
           cat(wgff, ": ", nrow(sgff), "  ", sep="")
-
         
         p = function(x) paste(wgff, x, sep=".")
+
+        ov = rep(as.numeric(NA), cp)        
+        dl = dr = rep(as.integer(NA), cp)   
+        ft = character(cp)  
         
         for(j in 1:cp) {
-          segStart = segScore$start[idx[j]]+probeMiddle
-          segEnd   = segScore$end[idx[j]]+probeMiddle
+          ssj = segStart[j]
+          sej = segEnd[j]
 
-          overlap = (pmin(segEnd, sgff$end) - pmax(segStart, sgff$start) + 1) / sgff$length
-          
+          ## this is the overlap (between 0 and 1) of every feature with the current segment
+          overlap = (pmin(sej, sgff$end) - pmax(ssj, sgff$start) + 1) / sgff$length
           whf = which(overlap > minOverlap)
-          segScore[j, p("feature")] = paste(unique(sgff$Name[whf]), collapse=", ")
-          
-          ## fraction of overlap with features
-          segScore[j, p("overlap")] = max(overlap, 0)
-            
-          ## Please see also man page:
-          ## whs = all features that contain start of this segment:
-          whs = which(segStart >= sgff$start & segStart < sgff$end)
-          if(length(whs)>0) {
-            segScore[j, p("dist.start2feat")] = min(segStart - sgff$start[whs])
+          if(length(whf)>0) {
+            ## The segment contains one or more features:
+            ft[j] = paste(unique(sgff$Name[whf]), collapse=", ")
+            ## one number measuring overlap: from start of leftmost feature in whf to end of
+            ## rightmost one:
+            leftStart = min(sgff$start[whf])
+            rightEnd  = max(sgff$end[whf])
+            ov[j] = (min(sej, rightEnd)-max(ssj, leftStart)+1) / (rightEnd-leftStart+1)
+            dl[j] = leftStart-ssj+1
+            dr[j] = sej-rightEnd+1
           } else {
-            segScore[j, p("dist.start2feat")] = posMin(segStart - sgff$end)
-          }
-          ## whe = all features that contain end of this segment:
-          whe = which(segEnd >= sgff$start & segEnd < sgff$end)
-          if(length(whe)>0) {
-            segScore[j, p("dist.end2feat")] = min(sgff$end[whe] - segEnd)
-          } else {
-            segScore[j, p("dist.end2feat")] = posMin(sgff$start - segEnd)
+            ## The segment contains no features:
+            ## distance to next features on the left and on the right:
+            dl[j] = posMin(ssj - sgff$end)
+            dr[j] = posMin(sgff$start - sej)
           }
         } ## for j
+        segScore[idx, p("overlap")] = ov
+        segScore[idx, p(distleft)]  = dl
+        segScore[idx, p(distright)] = dr
+        segScore[idx, p("feature")] = ft
       } ## for wgff
       if(verbose)
         cat("\n")
