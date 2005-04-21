@@ -75,7 +75,7 @@ if(!exists("res"))
   })
 
 
-out = stdout()
+out = file("fig_norm.txt", open="wt")
 cat("Normalization:\n", file=out)
 
 par(mfrow=c(2,1))
@@ -117,6 +117,6 @@ for(rt in seq(along=fn)) {
   }
 }
 
-
+close(out)
 dev.copy(pdf, file="fig_norm.pdf", width=6, height=7); dev.off()
 

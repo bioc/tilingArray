@@ -39,7 +39,7 @@ categorizeSegments = function(name) {
 
 
 if(!exists("mt")) {
-  graphics.off(); x11(width=8, height=6)
+  graphics.off(); x11(width=9, height=5)
   par(mfrow=c(2,1))
   
   countDisjoint =function(sel) {sum(diff(sel)>1)}
@@ -62,7 +62,7 @@ if(!exists("mt")) {
     mt[[rt]] = categorizeSegments(s$same.feature[transcribed])
   }
 
-  dev.copy(pdf, "tableSegments-thresh.pdf", width=12, height=8); dev.off()
+  dev.copy(pdf, "tableSegments-thresh.pdf", width=14, height=6); dev.off()
 }
 
 par(mfrow=c(1,2))
