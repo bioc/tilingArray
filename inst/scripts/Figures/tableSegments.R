@@ -1,10 +1,10 @@
 library("tilingArray")
-source("readSegments.R") 
+source("Figures/readSegments.R") 
 
 categorizeSegments = function(name) {
   stopifnot(!any(is.na(name)))
   
-  care = c("gene (verif.)", "gene (unchar.)", "gene (dubious)",
+  care = c("verified", "uncharacterized", "dubious",
            "other ncRNA", "unannotated")
 
   mt = matrix(0, nrow=length(name), ncol=length(care))
@@ -14,18 +14,21 @@ categorizeSegments = function(name) {
   pat = strsplit(name,  split=", ")
   pat[listLen(pat)==0] = "Unannotated"
   
+  nrInGenome = integer(length(care))
+  names(nrInGenome) = care
   for(f in care) {
     theseNames = switch(f,
-      "other ncRNA"    = gff$Name[gff$feature %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA")],
       ## orf_classification: applies to "gene", "CDS", and "intron"
-      "gene (verif.)" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Verified"],
-      "gene (unchar.)" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Uncharacterized"],
-      "gene (dubious)" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Dubious"],
-      "unannotated"    = "Unannotated",
+      "verified"        = gff$Name[gff$feature=="gene" & gff$orf_classification=="Verified"],
+      "uncharacterized" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Uncharacterized"],
+      "other ncRNA"     = gff$Name[gff$feature %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA")],
+      "dubious"         = gff$Name[gff$feature=="gene" & gff$orf_classification=="Dubious"],
+      "unannotated"     = "Unannotated",
       stop("Zapperlot")
       )
     stopifnot(!is.null(theseNames))
-
+    nrInGenome[f] = length(unique(theseNames))
+    
     mt[, f] = sapply(pat, function(x) 
       !all(is.na(match(x, theseNames))))
   }
@@ -34,11 +37,11 @@ categorizeSegments = function(name) {
     mt[ mt[,i]>0, (i+1):ncol(mt) ] = 0 
     
   stopifnot(all(rowSums(mt)==1))
-  mt
+  list(mt=mt, nrInGenome=nrInGenome)
 }
 
 
-if(!exists("mt")) {
+if(!exists("tab")) {
   graphics.off(); x11(width=9, height=5)
   par(mfrow=c(2,1))
   
@@ -46,8 +49,8 @@ if(!exists("mt")) {
   minOverlap=0.8
   maxDuplicated=0.5
   
-  mt = vector(mode="list", length=length(rnaTypes))
-  names(mt)=rnaTypes
+  tab = vector(mode="list", length=length(rnaTypes))
+  names(tab)=rnaTypes
   
   for(rt in rnaTypes) {
     s = get("segScore", get(rt))
@@ -59,7 +62,7 @@ if(!exists("mt")) {
     cat("thresh=", signif(thresh, 2), "\n")
 
     transcribed = (select & (s$level>=thresh))
-    mt[[rt]] = categorizeSegments(s$same.feature[transcribed])
+    tab[[rt]] = categorizeSegments(s$same.feature[transcribed])
   }
 
   dev.copy(pdf, "tableSegments-thresh.pdf", width=14, height=6); dev.off()
@@ -67,21 +70,23 @@ if(!exists("mt")) {
 
 par(mfrow=c(1,2))
 out = file("tableSegments.txt", open="wt")
-for (i in seq(along=mt)) {
+for (i in seq(along=tab)) {
   cat("=========", rnaTypes[i], "==========\n", file=out)
-  stopifnot(all(mt[[i]] %in% 0:1))
-  freq = colSums(mt[[i]])
-  nr   = nrow(mt[[i]])
-  for(f in colnames(mt[[i]])) {
-    cat(sprintf("%24s: %5d (%4.1f)\n", f,
+  mt = tab[[i]]$mt
+  
+  stopifnot(all(mt %in% 0:1))
+  freq = colSums(mt)
+  nr   = nrow(mt)
+  for(f in colnames(mt)) {
+    cat(sprintf("%14s: %5d (%4.1f percent) -- in genome: %5d\n", f,
                 as.integer(freq[f]),
-                100*freq[f]/nr), file=out)
+                100*freq[f]/nr, tab[[i]]$nrInGenome[f]), file=out)
   }
-  cat(sprintf("%24s: %5d (%4.1f)\n", "total",
+  cat(sprintf("%14s: %5d (%4.1f)\n", "total",
                 nr, 100), file=out)
 
   ord = c(4, 1:3, 5)
-  pie(freq[ord], main=c(polyA="poly-A RNA", tot="total RNA")[names(mt)[i]],
+  pie(freq[ord], main=c(polyA="poly-A RNA", tot="total RNA")[names(tab)[i]],
       col=c(brewer.pal(9, "Pastel1")[c(2:5, 1)])[ord],
       labels=paste(names(freq), " (", freq, ")", sep="")[ord])
 }
