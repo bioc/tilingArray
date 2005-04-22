@@ -19,14 +19,15 @@ X11(); grid.newpage()
 e = get(rt)
 
 stopifnot("Name" %in% names(gff))
-w = which(gff$Name=="YPL088W" & gff$feature=="gene")
+w = which(gff$Name=="YAL058W" & gff$feature=="gene")
 stopifnot(length(w)==1)
 
-if(FALSE)
+if(TRUE)
   plotAlongChrom2(which(gff$seqname[w]==chrSeqname), coord = c(gff$start[w]-1e4, gff$end[w]+1e4),
-                nrBasesPerSeg=1000, segRes = e,
+                nrBasesPerSeg=1500, segRes = e,
                 ## segScore = get("segScore", e), 
                 gff = gff, highlight= list(coord=c(142621, 143365),strand="+"))
+stop()
 
 if(!exists("a"))load("a.rda")
 if(!exists("probeAnno"))load("probeAnno.rda")
@@ -34,14 +35,13 @@ plotAlongChrom2(which(gff$seqname[w]==chrSeqname), coord = c(gff$start[w]-1e4, g
                 nrBasesPerSeg=1000, y = log(exprs(a)[, "05242_totRNA_15ugS96_dir#3.cel.gz"], 2),
                 probeAnno = probeAnno,
                 gff = gff, highlight= list(coord=c(142621, 143365),strand="+"))
-stop()
 
 ## new transcripts:sel = which( (segScore$same.feature=="") &
-             (segScore$frac.dup < 0.2) &
+##             (segScore$frac.dup < 0.2) &
      ##      !is.na(segScore$oppo.feature)
-             (segScore$length > 200) & 
-             (segScore$chr != 17) &
-             (segScore$pt < 1e-10) )
+ ##            (segScore$length > 200) & 
+ ##            (segScore$chr != 17) &
+ ##            (segScore$pt < 1e-10) 
 
 
 ## order by level

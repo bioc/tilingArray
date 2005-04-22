@@ -245,9 +245,10 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
     ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
   } ## if
   
-  notDealtWith = setdiff(names(featsp), c(rownames(featDraw), "gene", "intron"))
-  if(length(notDealtWith)>0)
-    cat("Not displayed:", paste(notDealtWith, collapse=", "), "\n")
+
+  ##notDealtWith = setdiff(names(featsp), c(rownames(featDraw), "gene", "intron"))
+  ##if(length(notDealtWith)>0)
+  ##  cat("Not displayed:", paste(notDealtWith, collapse=", "), "\n")
    
   popViewport()
 }

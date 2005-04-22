@@ -65,7 +65,7 @@ if(!exists("tab")) {
     tab[[rt]] = categorizeSegments(s$same.feature[transcribed])
   }
 
-  dev.copy(pdf, "tableSegments-thresh.pdf", width=12, height=6); dev.off()
+  dev.copy(pdf, "tableSegments-thresh.pdf", width=11, height=8); dev.off()
 }
 
 par(mfrow=c(1,2))
