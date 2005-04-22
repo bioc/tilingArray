@@ -2,7 +2,7 @@ options(error=recover, warn=2)
 library("tilingArray")
 source("/home/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 
-indir = c("segmentation-3polyA", "seg-tot-050418")[2]
+indir = c("segmentation-3polyA", "seg-tot-050421")[2]
 cat(indir, "\n")
 
 if(!exists("gff"))

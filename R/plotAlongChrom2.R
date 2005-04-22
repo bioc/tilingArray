@@ -174,7 +174,9 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
               gff$start <= coord[2] &
               gff$end   >= coord[1])
 
+  nam1    = getAttributeField(gff$attributes[sel], "gene")
   featnam = getAttributeField(gff$attributes[sel], "Name")
+  featnam[!is.na(nam1)] = nam1[!is.na(nam1)]
   featsp  = split(seq(along=sel), gff$feature[sel])
 
   ### gene ###
@@ -205,11 +207,25 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
               default.units = "native",
               just  = c("left", "center"),
               gp    = gp)
-    grid.text(label = featnam[i],
-              x     = (gff$start[s]+gff$end[s])/2,
-              y     = (seq(along=s)%%3-1)*.7,
-              default.units = "native",
-              gp    = gpar(cex=.6))
+
+    txtcex = 0.7
+    strw   = convertWidth(stringWidth(featnam[i]), "native", valueOnly=TRUE)*txtcex
+    txtx   = (gff$start[s]+gff$end[s])/2
+    rightB = txtx[1] + 0.5*strw[1]
+    doText = rep(TRUE, length(i))
+    if(length(i)>1) {
+      for(k in 2:length(i)) {
+        leftB = txtx[k] - 0.5*strw[k]
+        if(leftB > rightB) {
+          rightB = txtx[k] + 0.5*strw[k]
+        } else {
+          doText[k] = FALSE
+        }
+      }
+    }
+    grid.text(label = featnam[i][doText],
+              x = txtx[doText], y = 0, gp=gpar(cex=txtcex), 
+              default.units = "native")
     ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
   } ## if
   

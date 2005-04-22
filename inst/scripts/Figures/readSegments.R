@@ -6,10 +6,11 @@ if(!exists("gff")) {
   theID   = getAttributeField(gff$attributes, "ID")
   stopifnot(all(gff$Name == theID, na.rm=TRUE))
   gff$orf_classification = getAttributeField(gff$attributes, "orf_classification")
+  gff$gene = getAttributeField(gff$attributes, "gene")
 }
 
 rnaTypes = c("polyA", "tot")
-indir = c("segmentation-3polyA", "seg-tot-050418")
+indir = c("segmentation-3polyA", "seg-tot-050421")
 names(indir) = rnaTypes
 
 for(rt in rnaTypes) {

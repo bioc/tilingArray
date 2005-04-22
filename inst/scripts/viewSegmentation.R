@@ -4,12 +4,11 @@ library("tilingArray")
 library("arrayMagic")   ## for write.htmltable
 library("geneplotter")  ## for savetiff
 
-source("readSegments.R")
+source("Figures/readSegments.R")
 source("colorRamp.R") ## can go with R 2.1
-source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
+## source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 
-rt = "tot"
-
+rt = "polyA"
 outdir = file.path(indir[rt], "viz")
 
 if(!file.exists(outdir) || !file.info(outdir)$isdir)
@@ -18,13 +17,26 @@ if(!file.exists(outdir) || !file.info(outdir)$isdir)
 #### Generic plot
 X11(); grid.newpage()
 e = get(rt)
-plotAlongChrom2(chr=3, coord = c(130, 150)*1e3, segRes = e, segScore = get("segScore", e), 
-     gff = gff) # , nrBasesPerSeg = 2000)
 
+stopifnot("Name" %in% names(gff))
+w = which(gff$Name=="YPL088W" & gff$feature=="gene")
+stopifnot(length(w)==1)
+
+if(FALSE)
+  plotAlongChrom2(which(gff$seqname[w]==chrSeqname), coord = c(gff$start[w]-1e4, gff$end[w]+1e4),
+                nrBasesPerSeg=1000, segRes = e,
+                ## segScore = get("segScore", e), 
+                gff = gff, highlight= list(coord=c(142621, 143365),strand="+"))
+
+if(!exists("a"))load("a.rda")
+if(!exists("probeAnno"))load("probeAnno.rda")
+plotAlongChrom2(which(gff$seqname[w]==chrSeqname), coord = c(gff$start[w]-1e4, gff$end[w]+1e4),
+                nrBasesPerSeg=1000, y = log(exprs(a)[, "05242_totRNA_15ugS96_dir#3.cel.gz"], 2),
+                probeAnno = probeAnno,
+                gff = gff, highlight= list(coord=c(142621, 143365),strand="+"))
 stop()
 
-## new transcripts:
-sel = which( (segScore$same.feature=="") &
+## new transcripts:sel = which( (segScore$same.feature=="") &
              (segScore$frac.dup < 0.2) &
      ##      !is.na(segScore$oppo.feature)
              (segScore$length > 200) & 
