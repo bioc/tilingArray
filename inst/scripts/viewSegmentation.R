@@ -19,7 +19,7 @@ X11(); grid.newpage()
 e = get(rt)
 
 stopifnot("Name" %in% names(gff))
-w = which(gff$Name=="YAL058W" & gff$feature=="gene")
+w = which(gff$Name=="YOR239W" & gff$feature=="gene")
 stopifnot(length(w)==1)
 
 if(TRUE)

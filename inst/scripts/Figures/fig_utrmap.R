@@ -1,5 +1,23 @@
+## 5 plots:
+## a) distribution of 5' UTR lengths
+## b) distribution of 3' UTR lengths
+## c) scatterplot 5' vs 3' UTR lengths
+## d) scatterplot mean level vs 5' UTR length
+## e) scatterplot mean level vs 3' UTR length
+## The poly-A version is for the paper,
+## the total RNA version is for the supplement.
+##
+## Criteria for good gene-containing segments:
+## a. contains less than 50% (maxDuplicated) multiple-hit probes
+## b. contains exactly one gene, fully (minOverlap): isOneGene 
+## c. the gene is not spliced, and it is Validated or Uncharacterized (not Dubious): isGoodGene
+## d. the mean level is above threshold
+## e. on both flanks level is down
+## f. moving average of 3 probes should not deviate too far to below
+
 library("tilingArray")
-library("prada"); source("colorRamp.R")
+library("prada")
+source("colorRamp.R")
 source("Figures/readSegments.R") 
 
 graphics.off();
@@ -11,22 +29,30 @@ maxDuplicated=0.5
 
 cols = brewer.pal(12, "Paired")
 
+## For criterion c
 goodGenes = gff$Name[gff$feature=="gene" &
   gff$orf_classification %in% c("Uncharacterized", "Verified")]
+
+splicedGenes1 = sort(gff$Name[gff$feature=="intron"])
+splicedGenes2 = names(which(table(gff$Name[gff$feature=="CDS"])>=2))
+goodGenes = setdiff(goodGenes1, union(splicedGenes1, splicedGenes2))
 
 utr = vector(mode="list", length=length(rnaTypes))
 names(utr)=rnaTypes
       
 for(rt in rnaTypes) {
   s        = get("segScore", get(rt))
-  isUnique = (s$frac.dup < maxDuplicated) 
+  isUnique = (s$frac.dup < maxDuplicated)        ## a
   isUnanno = (s$same.feature=="")
   thresh   = calcThreshold(s$level, sel=isUnique&isUnanno, main=rt)
   cat(rt, ": thresh=", signif(thresh, 2), "\n", sep="")
 
-  isAnno     = (listLen(strsplit(s$same.feature, split=", "))==1) & (s$same.overlap >= minOverlap)
-  isGoodGene = s$same.feature %in% goodGenes
-  isTranscribed = (s$level>=thresh)
+  isOneGene  = (listLen(strsplit(s$same.feature, split=", "))==1) & (s$same.overlap >= minOverlap) ## b
+  isGoodGene = (s$same.feature %in% goodGenes)   ## c
+
+  k = 2:(nrow(s)-1)  ## d+e
+  isTranscribed = rep(FALSE, nrow(s))
+  isTranscribed[k] = (s$level[k]>=thresh) & (s$level[k-1]<thresh) & (s$level[k+1]<thresh)
 
   sel = isUnique & isAnno & isGoodGene & isTranscribed
 

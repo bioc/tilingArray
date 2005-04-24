@@ -1,15 +1,38 @@
 ##------------------------------------------------------------
 ## Copyright (2005) Wolfgang Huber
 ##------------------------------------------------------------
-scoreSegments = function(x, gff, 
+
+isGoodUTRMappingCandidate = function(xleft, x, xright) {
+  sl = sx = sr = ex = mx = px = as.numeric(NA)
+  stopifnot(is.matrix(xleft), is.matrix(x), is.matrix(xright))
+  if(nrow(xleft)>=6)
+    sl = sqrt(sum(apply(xleft[length(xleft)-(0:5), ], 2, sd)))
+  if(nrow(xright)>=6)
+    sr = sqrt(sum(apply(xright[1:6, ], 2, sd)))
+  x  = matrix(colMeans(x), ncol=ncol(x), nrow=nrow(x), byrow=TRUE) - x
+  if(nrow(x)>=6) {
+    k  = 3:nrow(x)
+    sx = sqrt(sum(apply(x, 2, sd)))
+    mx = mean(x)
+    ex = max(rowMeans(x[k-2, ]+x[k-1, ]+x[k, ])) / 3
+    n  = length(x)-ncol(x)
+    px = pt(mx/sx*sqrt(n), df=n-1, lower.tail=FALSE)
+  }
+  return(c(sl, sx, sr, mx, px, ex))
+}
+
+scoreSegments = function(s, gff, 
   nrBasePerSeg = 1500, 
   probeLength  = 25,
   knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
         "rRNA", "snRNA", "snoRNA", "tRNA",
         "transposable_element", "transposable_element_gene"),
-  minOverlap = 0.8,
+  params = c(minOverlapFractionSame = 0.8, minOverlapBasesOppo = 40),
   verbose = TRUE) {
 
+  ## minOverlapFractionSame: minimal overlap fraction (between 0 and 1) of a feature
+  ##   with the current segment
+  
   gff$Name   = getAttributeField(gff$attributes, "Name")
   gff$length = gff$end - gff$start +1
 
@@ -29,7 +52,14 @@ scoreSegments = function(x, gff,
       dat  = get(paste(chr, strand, "dat", sep="."), s)
       seg  = get(paste(chr, strand, "seg", sep="."), s)
       cp   = round(max(dat$x)/nrBasePerSeg)
-
+      dzz  = cp - nrow(seg$th)
+      if(dzz>0) {
+        if(dzz<=2) {
+           cp = nrow(seg$th)
+         } else {
+           stop("'nrBasePerSeg' is too small for 's'")
+         }
+      }
       if(verbose)
         cat(chr, ".", strand, ": ", paste(range(dat$x), collapse="..."),
             ", ", cp, " segments. ", sep="")
@@ -42,6 +72,10 @@ scoreSegments = function(x, gff,
         length                = rep(as.integer(NA), cp),
         level                 = rep(as.numeric(NA), cp),
         pt                    = rep(as.numeric(NA), cp),
+        excurse               = rep(as.numeric(NA), cp),
+        sdLeft                = rep(as.numeric(NA), cp),
+        sdThis                = rep(as.numeric(NA), cp),
+        sdRight               = rep(as.numeric(NA), cp),
         frac.dup              = rep(as.numeric(NA), cp),
         same.feature          = I(character(cp)),
         same.overlap          = rep(as.numeric(NA), cp),
@@ -93,10 +127,16 @@ scoreSegments = function(x, gff,
         for(j in 1:cp) {
           ssj = segStart[j]
           sej = segEnd[j]
-
-          ## this is the overlap (between 0 and 1) of every feature with the current segment
-          overlap = (pmin(sej, sgff$end) - pmax(ssj, sgff$start) + 1) / sgff$length
-          whf = which(overlap > minOverlap)
+          overlap = (pmin(sej, sgff$end) - pmax(ssj, sgff$start) + 1) 
+          whf = switch(wgff,
+            same = {
+              which(overlap/sgff$length > params["minOverlapFractionSame"])
+            },
+            oppo = {
+              which(overlap > params["minOverlapBasesOppo"])
+            },
+            stop("Zapperlot"))
+          
           if(length(whf)>0) {
             ## The segment contains one or more features:
             ft[j] = paste(unique(sgff$Name[whf]), collapse=", ")
@@ -121,27 +161,41 @@ scoreSegments = function(x, gff,
       } ## for wgff
       if(verbose)
         cat("\n")
-      
+
+      vars = matrix(as.numeric(NA), nrow=6, ncol=cp)
+      stopifnot(all(diff(dat$x)>=0))
+      for(j in 1:cp) {
+        yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) & (dat$x<=dat$x[i2[j]]+50), , drop=FALSE]
+        yl = dat$y[dat$xunique & (dat$x <  dat$x[i1[j]]) & (dat$x>=dat$x[i1[j]]-50), , drop=FALSE]
+        ym = dat$y[dat$xunique & (dat$x >= dat$x[i1[j]]) & (dat$x<=dat$x[i2[j]])   , , drop=FALSE]
+        vars[, j] = isGoodUTRMappingCandidate(yl, ym, yr)
+      }
+
+      ### --- This is redudant with above: it is faster but less flexible:    
       theCut = cut(seq(along=dat$y), th-1, labels=paste("<=", th[-1]-1, sep=""))
-      
       ## use only the non-duplicated probes!
       ys     = split(dat$y[dat$xunique], theCut[dat$xunique])
-      lls    = listLen(ys)
       means  = sapply(ys, mean)
-      sds    = sapply(ys, sd)
-      p      = pt(means/sds*sqrt(lls), df=lls-1, lower.tail=FALSE)
-      
+
       ## there might not be data for all cut levels, since some have been
       ## dropped for being duplicated
       mt = match(names(means), levels(theCut))
-      stopifnot(identical(names(means), names(sds)),
-                identical(names(means), names(p)), !any(is.na(mt)))
-      segScore$level[idx[mt]]  = means
-      segScore$pt[idx[mt]]     = p
+      stopifnot(!any(is.na(mt)))
+
+      names(lev)=levels(theCut)
+      stopifnot(all(lev[names(means)] == means))
+      ### --- end of redundant code
+
+      segScore$sdLeft[idx]  = vars[1,]
+      segScore$sdThis[idx]  = vars[2,]
+      segScore$sdRight[idx] = vars[3,]
+      segScore$level[idx]   = vars[4,]
+      segScore$pt[idx]      = vars[5,]
+      segScore$excurse[idx] = vars[6,]
       
       ## just check
       ri = sample(which(listLen(ys) > 5), size=1)
-      stopifnot(abs(p[ri] - t.test(ys[[ri]], alternative="greater")$p.value) < 1e-10)
+      stopifnot(abs(pval[ri] - t.test(ys[[ri]], alternative="greater")$p.value) < 1e-10)
       
       rv = rbind(rv, segScore)
     } ## for strand
