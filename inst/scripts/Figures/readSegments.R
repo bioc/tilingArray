@@ -27,7 +27,7 @@ for(rt in rnaTypes) {
         assign(paste(chr, strand, "dat", sep="."), dat, envir=get(rt))
       }
     } ## for chr
-    fn="segScore-2000.rda"
+    fn="segScore-1500.rda"
     cat(fn, "\n")
     load(file.path(indir[rt], fn), envir=get(rt))
   } ## if

@@ -35,7 +35,7 @@ goodGenes = gff$Name[gff$feature=="gene" &
 
 splicedGenes1 = sort(gff$Name[gff$feature=="intron"])
 splicedGenes2 = names(which(table(gff$Name[gff$feature=="CDS"])>=2))
-goodGenes = setdiff(goodGenes1, union(splicedGenes1, splicedGenes2))
+goodGenes = setdiff(goodGenes, union(splicedGenes1, splicedGenes2))
 
 utr = vector(mode="list", length=length(rnaTypes))
 names(utr)=rnaTypes
