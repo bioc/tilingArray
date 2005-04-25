@@ -1,24 +1,23 @@
 ##------------------------------------------------------------
 ## Copyright (2005) Wolfgang Huber
 ##------------------------------------------------------------
+vectornorm = function(x) sqrt(mean(x*x))
 
-isGoodUTRMappingCandidate = function(xleft, x, xright) {
+isGoodUTRMappingCandidate = function(xleft, x, xright, minN=5) {
   sl = sx = sr = ex = mx = px = as.numeric(NA)
   stopifnot(is.matrix(xleft), is.matrix(x), is.matrix(xright))
-  if(nrow(xleft)>=6)
-    sl = sqrt(sum(apply(xleft[length(xleft)-(0:5), ], 2, sd)))
-  if(nrow(xright)>=6)
-    sr = sqrt(sum(apply(xright[1:6, ], 2, sd)))
-  x  = matrix(colMeans(x), ncol=ncol(x), nrow=nrow(x), byrow=TRUE) - x
-  if(nrow(x)>=6) {
-    k  = 3:nrow(x)
-    sx = sqrt(sum(apply(x, 2, sd)))
+  if(nrow(xleft)>=minN)
+    sl = vectornorm(sd(xleft[nrow(xleft)-(0:(minN-1)), ]))
+  if(nrow(xright)>=minN)
+    sr = vectornorm(sd(xright[1:minN, ]))
+  if(nrow(x)>=minN) {
+    sx = vectornorm(sd(x))
     mx = mean(x)
+    k  = 3:nrow(x)
+    x  = matrix(colMeans(x), ncol=ncol(x), nrow=nrow(x), byrow=TRUE) - x
     ex = max(rowMeans(x[k-2, ]+x[k-1, ]+x[k, ])) / 3
-    n  = length(x)-ncol(x)
-    px = pt(mx/sx*sqrt(n), df=n-1, lower.tail=FALSE)
   }
-  return(c(sl, sx, sr, mx, px, ex))
+  return(c(sl, sx, sr, mx, ex))
 }
 
 scoreSegments = function(s, gff, 
@@ -32,9 +31,11 @@ scoreSegments = function(s, gff,
 
   ## minOverlapFractionSame: minimal overlap fraction (between 0 and 1) of a feature
   ##   with the current segment
-  
-  gff$Name   = getAttributeField(gff$attributes, "Name")
-  gff$length = gff$end - gff$start +1
+
+  if(!"Name" %in% names(gff))
+    gff$Name   = getAttributeField(gff$attributes, "Name")
+  if(!"length" %in% names(gff))
+    gff$length = gff$end - gff$start +1
 
   probeMiddle = (probeLength-1)/2
   rv = NULL
@@ -71,7 +72,6 @@ scoreSegments = function(s, gff,
         end                   = rep(as.integer(NA), cp),
         length                = rep(as.integer(NA), cp),
         level                 = rep(as.numeric(NA), cp),
-        pt                    = rep(as.numeric(NA), cp),
         excurse               = rep(as.numeric(NA), cp),
         sdLeft                = rep(as.numeric(NA), cp),
         sdThis                = rep(as.numeric(NA), cp),
@@ -115,9 +115,6 @@ scoreSegments = function(s, gff,
         sgff = gff[ gff$seqname == chrSeqname[chr] &
           gff$strand  == gffstrand &
           gff$feature %in% knownFeatures, ]
-        if(verbose)
-          cat(wgff, ": ", nrow(sgff), "  ", sep="")
-        
         p = function(x) paste(wgff, x, sep=".")
 
         ov = rep(as.numeric(NA), cp)        
@@ -162,7 +159,7 @@ scoreSegments = function(s, gff,
       if(verbose)
         cat("\n")
 
-      vars = matrix(as.numeric(NA), nrow=6, ncol=cp)
+      vars = matrix(as.numeric(NA), nrow=5, ncol=cp)
       stopifnot(all(diff(dat$x)>=0))
       for(j in 1:cp) {
         yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) & (dat$x<=dat$x[i2[j]]+50), , drop=FALSE]
@@ -171,32 +168,11 @@ scoreSegments = function(s, gff,
         vars[, j] = isGoodUTRMappingCandidate(yl, ym, yr)
       }
 
-      ### --- This is redudant with above: it is faster but less flexible:    
-      theCut = cut(seq(along=dat$y), th-1, labels=paste("<=", th[-1]-1, sep=""))
-      ## use only the non-duplicated probes!
-      ys     = split(dat$y[dat$xunique], theCut[dat$xunique])
-      means  = sapply(ys, mean)
-
-      ## there might not be data for all cut levels, since some have been
-      ## dropped for being duplicated
-      mt = match(names(means), levels(theCut))
-      stopifnot(!any(is.na(mt)))
-
-      names(lev)=levels(theCut)
-      stopifnot(all(lev[names(means)] == means))
-      ### --- end of redundant code
-
       segScore$sdLeft[idx]  = vars[1,]
       segScore$sdThis[idx]  = vars[2,]
       segScore$sdRight[idx] = vars[3,]
       segScore$level[idx]   = vars[4,]
-      segScore$pt[idx]      = vars[5,]
-      segScore$excurse[idx] = vars[6,]
-      
-      ## just check
-      ri = sample(which(listLen(ys) > 5), size=1)
-      stopifnot(abs(pval[ri] - t.test(ys[[ri]], alternative="greater")$p.value) < 1e-10)
-      
+      segScore$excurse[idx] = vars[5,]
       rv = rbind(rv, segScore)
     } ## for strand
   } ## for chr

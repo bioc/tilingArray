@@ -2,7 +2,12 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
   segScore, scoreShow="pt", nrBasesPerSeg, gff, haveLegend=TRUE) {
 
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
-
+  colors = c("+" = "#33A02C", 
+             "-" = "#1F78B4",
+             "duplicated" = "grey",
+             "cp" = "#101010",
+             "highlight" = "red")
+  
   if(!haveLegend)
     VP = VP[-which(names(VP)=="legend")]
   
@@ -52,7 +57,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
     plotSegmentation(x=dat$start, y=dat$yraw, coord=coord, uniq=dat$unique,
                      segScore=sgs, scoreShow=scoreShow,
                      gff=gff, chr=chr, chrSeqname=chrSeqname, strand=strand,
-                     VP)
+                     VP=VP, colors=colors)
     
   }
 
@@ -69,7 +74,8 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
     co = highlight$coord
     if(is.na(mt) || !is.numeric(co))
       stop("Invalid parameter 'highlight'.")
-    grid.segments(x0=co, x1=co, y0=c(0,0), y1=c(0.4,0.4)*mt, default.units = "native", gp=gpar(col="red", lwd=2))
+    grid.segments(x0=co, x1=co, y0=c(0,0), y1=c(0.4,0.4)*mt, default.units = "native",
+                  gp=gpar(col=colors["highlight"], lwd=2))
   }
   
   popViewport()
@@ -90,7 +96,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
 ## gff and chrSeqname into an environment or object?
 
 plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
-  gff, chr, chrSeqname, strand, VP) {
+  gff, chr, chrSeqname, strand, VP, colors) {
 
   ## could this be done better?
   if(is.matrix(y))
@@ -123,7 +129,7 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
     layout.pos.col=1, layout.pos.row=vpr))
 
   ord  = c(which(!uniq), which(uniq))
-  colo = ifelse(uniq[ord], c("#33A02C", "#1F78B4")[istrand], "grey")
+  colo = ifelse(uniq[ord], colors[strand], colors["duplicated"])
   grid.points(x[ord], y[ord], pch=16, size=unit(0.0016, "npc"), gp=gpar(col=colo))
 
   if(!is.null(segScore)) {
@@ -133,7 +139,7 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
     stopifnot(all(segstart[-1] > segend[-length(segend)]))
     grid.segments(x0 = unit(segstart, "native"), x1 = unit(segstart, "native"),
                   y0 = unit(0.1, "npc"),      y1 = unit(0.9, "npc"),
-                  gp = gpar(col="#d0d0d0"))
+                  gp = gpar(col=colors["cp"]))
   }
   popViewport(2)
 
@@ -209,8 +215,10 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
               gp    = gp)
 
     txtcex = 0.7
+    txtdy  = 0.7
     strw   = convertWidth(stringWidth(featnam[i]), "native", valueOnly=TRUE)*txtcex
     txtx   = (gff$start[s]+gff$end[s])/2
+    txty   = numeric(length(s))
     rightB = txtx[1] + 0.5*strw[1]
     doText = rep(TRUE, length(i))
     if(length(i)>1) {
@@ -218,13 +226,17 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
         leftB = txtx[k] - 0.5*strw[k]
         if(leftB > rightB) {
           rightB = txtx[k] + 0.5*strw[k]
+        } else if(txty[k-1]!= txtdy) {
+          txty[k]= txtdy
+        } else if(txty[k-1] != -txtdy) {
+          txty[k]= -txtdy
         } else {
           doText[k] = FALSE
         }
-      }
+      } ## for
     }
     grid.text(label = featnam[i][doText],
-              x = txtx[doText], y = 0, gp=gpar(cex=txtcex), 
+              x = txtx[doText], y = txty, gp=gpar(cex=txtcex), 
               default.units = "native")
     ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
   } ## if
@@ -340,7 +352,7 @@ plotDuplication = function(coord, chr, strand, probeAnno, VP) {
 ##------------------------------------------------------------
 featureDrawing = function() {
   res = data.frame(
-    col      = I(c("#c6dbef", "#d94801", "#005a32", "#fc4e2a", "#707070",
+    col      = I(c("#404040", "#d94801", "#005a32", "#fc4e2a", "#707070",
                    "#A65628", "#A65628")),
     fill     = I(c("#deebf7", "#fd8d3c", "#41ab5d", "#feb24c", "#e0e0e0",
                    "#BF5B17", "#BF5B17")))

@@ -10,18 +10,22 @@ chrs = 1:16
 for(indir in c("segmentation-3polyA", "seg-tot-050421")) {
   cat(indir, "\n")
 
-  s  = new.env()
-  cat("Loading ")
-  for(chr in chrs) {
-    for(strand in c("+", "-")) {
-      fn = file.path(indir, paste(chr, strand, "rda", sep="."))
-      cat(chr, ".", strand, " ", sep="")
-      load(fn)
-      assign(paste(chr, strand, "seg", sep="."), seg, envir=s)
-      assign(paste(chr, strand, "dat", sep="."), dat, envir=s)
-    }
-  } ## for chr
-  cat("\n")
+  if(TRUE) {
+    s  = new.env()
+    cat("Loading ")
+    for(chr in chrs) {
+      for(strand in c("+", "-")) {
+        fn = file.path(indir, paste(chr, strand, "rda", sep="."))
+        cat(chr, ".", strand, " ", sep="")
+        load(fn)
+        assign(paste(chr, strand, "seg", sep="."), seg, envir=s)
+        assign(paste(chr, strand, "dat", sep="."), dat, envir=s)
+      }
+    } ## for chr
+    cat("\n")
+  } else {
+    cat("NOT LOADING DATA FILES!\n")
+  }
   
   ## For the definition of pseudogenes at SGD, see Docs/PseudogenesAtSGD.pdf
   for(nrbps in c(1000, 1500, 2000)) {

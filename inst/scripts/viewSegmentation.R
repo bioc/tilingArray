@@ -5,17 +5,13 @@ library("arrayMagic")   ## for write.htmltable
 library("geneplotter")  ## for savetiff
 
 source("Figures/readSegments.R")
-source("colorRamp.R") ## can go with R 2.1
-## source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
+source("colorRamp.R")  ## can go with R 2.1
+source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 
 rt = "polyA"
-outdir = file.path(indir[rt], "viz")
-
-if(!file.exists(outdir) || !file.info(outdir)$isdir)
-  stop(paste("Output directory", outdir, "does not exist."))
 
 #### Generic plot
-X11(); grid.newpage()
+graphics.off(); X11(width=15, height=8); grid.newpage()
 e = get(rt)
 
 stopifnot("Name" %in% names(gff))
@@ -42,6 +38,11 @@ plotAlongChrom2(which(gff$seqname[w]==chrSeqname), coord = c(gff$start[w]-1e4, g
  ##            (segScore$length > 200) & 
  ##            (segScore$chr != 17) &
  ##            (segScore$pt < 1e-10) 
+
+outdir = file.path(indir[rt], "viz")
+
+if(!file.exists(outdir) || !file.info(outdir)$isdir)
+  stop(paste("Output directory", outdir, "does not exist."))
 
 
 ## order by level
