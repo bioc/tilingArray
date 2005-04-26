@@ -18,46 +18,24 @@
 library("tilingArray")
 library("prada")
 source("colorRamp.R")
-source("Figures/readSegments.R") 
+source("readSegments.R") 
+source("categorizeSegments.R") 
 
 graphics.off();
 x11(width=14, height=9)
 par(mfrow=c(2,3))
   
-minOverlap=1
-maxDuplicated=0.5
-
 cols = brewer.pal(12, "Paired")
-
-## For criterion c
-goodGenes = gff$Name[gff$feature=="gene" &
-  gff$orf_classification %in% c("Uncharacterized", "Verified")]
-
-splicedGenes1 = sort(gff$Name[gff$feature=="intron"])
-splicedGenes2 = names(which(table(gff$Name[gff$feature=="CDS"])>=2))
-goodGenes = setdiff(goodGenes, union(splicedGenes1, splicedGenes2))
 
 utr = vector(mode="list", length=length(rnaTypes))
 names(utr)=rnaTypes
       
 for(rt in rnaTypes) {
-  s        = get("segScore", get(rt))
-  isUnique = (s$frac.dup < maxDuplicated)        ## a
-  isUnanno = (s$same.feature=="")
-  thresh   = calcThreshold(s$level, sel=isUnique&isUnanno, main=rt)
-  cat(rt, ": thresh=", signif(thresh, 2), "\n", sep="")
+  s = get("segScore", get(rt))
+  s$category = categorizeSegments(s)
 
-  isOneGene  = (listLen(strsplit(s$same.feature, split=", "))==1) & (s$same.overlap >= minOverlap) ## b
-  isGoodGene = (s$same.feature %in% goodGenes)   ## c
-
-  k = 2:(nrow(s)-1)  ## d+e
-  isTranscribed = rep(FALSE, nrow(s))
-  isTranscribed[k] = (s$level[k]>=thresh) & (s$level[k-1]<thresh) & (s$level[k+1]<thresh)
-
-  sel = isUnique & isAnno & isGoodGene & isTranscribed
-
-  utr5 = s$same.dist5[sel]
-  utr3 = s$same.dist3[sel]
+  utr5 = s$same.dist5[ s$category==1 ]
+  utr3 = s$same.dist3[ s$category==l ]
 
   z = cbind(utr5, utr3)
   rownames(z) = s$same.feature[sel]

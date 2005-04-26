@@ -5,13 +5,17 @@ options(error=recover)
 library("tilingArray")
 
 indir  = "segmentation-3polyA"
+blastResultFiles = c("Sbay_contigs.out")
 
-if(!exists("blastres"))
-  blastres = read.table(file.path(indir, "fasta", "segments.out"),
-    sep="\t", as.is=TRUE, header=FALSE)
+if(!exists("blastres")) {
+  blastres = lapply(blastResultFiles, function(f)
+	 read.table(file.path(indir, "fasta", f),
+              sep="\t", as.is=TRUE, header=FALSE))
+}	
 
 if(!exists("segScore"))
   load(file.path(indir, "segScore.rda"))
+
 ##  1  Identity of query sequence
 ##  2  Identity of subject sequence (matching sequence in database)
 ##  3  Percent identity
@@ -24,10 +28,6 @@ if(!exists("segScore"))
 ## 10  End of subject sequence
 ## 11  E-value
 ## 12  Bit-score
-
-## if(!file.exists(outdir) || !file.info(outdir)$isdir)
-##   stop(paste("Output directory", outdir, "does not exist."))
-
 
 ## We want to distnguish three groups: annotated transcripts,
 ## not annotated transcripts, and not annotated not transcribed

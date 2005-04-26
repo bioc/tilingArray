@@ -1,6 +1,5 @@
-source("Figures/calcThreshold.R") 
-
 if(!exists("gff")) {
+  cat("Loading probeAnno.rda\n")
   load("probeAnno.rda")
   gff$Name = getAttributeField(gff$attributes, "Name")
   theID   = getAttributeField(gff$attributes, "ID")
