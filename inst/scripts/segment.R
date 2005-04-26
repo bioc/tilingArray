@@ -11,7 +11,7 @@ if(!exists("probeAnno"))
 if(!exists("x")) 
   load("x.rda")
 
-what = c("polyA", "tot")[1]
+what = c("polyA", "tot")[2]
 
 switch(what,
   "polyA" = {
@@ -22,15 +22,15 @@ switch(what,
   },
   "tot"    = {
     fn = c("050409_totcDNA_14ug_no52.cel.gz",
-      "030505_totcDNA_15ug_affy.cel.gz",
-      "050415_totcDNA_20ug_Affy11.cel.gz")
-    outdir = "seg-tot-050418"
+      "030505_totcDNA_15ug_affy.cel.gz")
+      ##"050415_totcDNA_20ug_Affy11.cel.gz"
+    outdir = "seg-tot-050421"
   },
   stop(paste("Bummer:", what))
 )
 
 lxj = exprs(x)[, fn]
-stopifnot(ncol(lxj)==3)
+stopifnot(ncol(lxj) %in% c(2,3))
 
 hybeType = "Reverse"
 

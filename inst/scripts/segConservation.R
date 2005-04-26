@@ -1,7 +1,10 @@
+## This script uses as input the results produced via script 
+## blast_threefunghi.R
+
 options(error=recover)
 library("tilingArray")
 
-indir  = "segmentation-050209v4"
+indir  = "segmentation-3polyA"
 
 if(!exists("blastres"))
   blastres = read.table(file.path(indir, "fasta", "segments.out"),

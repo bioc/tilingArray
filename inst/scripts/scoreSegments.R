@@ -1,6 +1,6 @@
 options(error=recover, warn=2)
 library("tilingArray")
-source("/home/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
+## source("/homes/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 
 if(!exists("gff"))
   load("probeAnno.rda")
