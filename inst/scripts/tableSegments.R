@@ -4,8 +4,11 @@ source("scripts/calcThreshold.R")
 source("scripts/categorizeSegments.R") 
 
 options(error=recover, warn=0)
-## out = file("tableSegments.txt", open="wt")
-out = stdout()
+
+  doSink=FALSE
+
+if(doSink)
+  sink("tableSegments.txt")
 
 if(!exists("tab")) {
   graphics.off(); x11(width=9, height=5)
@@ -32,7 +35,6 @@ names(colors) =c("verified", "ncRNA", "uncharacterized", "dubious",
 ##
 if(0){
   par(mfrow=c(1,2))
-  sink(out)
   cat("Counting the found segments:\n",
       "============================\n", sep="")
   for(rt in rnaTypes) {
@@ -52,7 +54,6 @@ if(0){
         col=colors,
         labels=paste(names(px), " (", px, ")", sep=""))
   }
-  sink()
   dev.copy(pdf, "tableSegments-pie.pdf", width=14, height=4.8); dev.off()
 }
 
@@ -80,46 +81,52 @@ dev.copy(pdf, "tableSegments-lengths.pdf", width=14, height=6); dev.off()
 ## CONSERVATION
 ##
 
-blastResultFiles = c("Sbay_contigs.out", "Smik_contigs.out", "Spar_contigs.out", "Spom_all.out")
-names(blastResultFiles) = c("S.bayanus", "S.mikatae", "S.paradoxus", "S.pombe")
 if(!exists("blastres")) {
-  blastres = lapply(blastResultFiles, function(f)
-	 read.table(file.path(indir, "fasta", f),
-              sep="\t", as.is=TRUE, header=FALSE))
-}	
-sink(out)
+  blastResultFiles = c("Sbay_contigs.out", "Smik_contigs.out",
+    "Spar_contigs.out", "Spom_all.out")
+  names(blastResultFiles) = c("S.bayanus", "S.mikatae",
+         "S.paradoxus", "S.pombe")
+  names(rnaTypes)=rnaTypes
+  blastres = lapply(rnaTypes, function(rt)
+    lapply(blastResultFiles, function(f)
+	 read.table(file.path(indir[rt], "fasta", f),
+              sep="\t", as.is=TRUE, header=FALSE)))
+}
+
+ethresh = 1e-10
+
 cat("\n\nPercent of segments with BLAST-hit in other genome (E<",
-    ethresh, "):\n", "====================================================\n", sep="")
+    ethresh, "):\n",
+    "==========================================================\n", sep="")
 
 
-for(rt in rnaTypes[1]) {
+for(rt in rnaTypes) {
   s  = get("segScore", get(rt))
   ct = tab[[rt]]$category
   
   sp = split(seq(along=ct), ct)
 
-  levthresh = median(s$level, na.rm=TRUE)
-  sp = lapply(sp, function(i) i[s$level[i]>levthresh])
+  ## levthresh = median(s$level, na.rm=TRUE)
+  ## sp = lapply(sp, function(i) i[s$level[i]>levthresh])
   
   sp[[7]] = seq(along=ct)
   names(sp)[7] = "whole genome"
   
   hit = matrix(NA, nrow=length(sp), ncol=length(blastResultFiles))
-  ethresh = 1e-20
   rownames(hit) = names(sp)
   colnames(hit) = names(blastResultFiles)
-  for(b in seq(along=blastres)) {
-    br = blastres[[b]]
+  for(b in 1:ncol(hit)) {
+    br = blastres[[rt]][[b]]
     br = br[br[[11]]<ethresh, ]
+    stopifnot(!any(is.na(br[[1]])))
     hit[,b] = sapply(sp, function(x) mean(x %in% br[[1]]))
   }
   cat("\n", rt, "\n-----\n", sep="")
   print(signif(hit,2))
 }
+
+## does the hit rate depend on expression level?
+
+
+if(doSink)
   sink()
-
-
-is(!is(out, "terminal"))
-  close(out)
-
-

@@ -1,6 +1,8 @@
+
 ## S. paradoxus, S. mikatae, S. bayanus
 
-segdir = "segmentation-3polyA/fasta"
+segdir = c("segmentation-3polyA/fasta",
+  "seg-tot-050421/fasta")[2]
 
 
 theDir   = file.path("OtherSpecies", c("S.bayanus", "S.mikatae", "S.paradoxus", "S.pombe"))

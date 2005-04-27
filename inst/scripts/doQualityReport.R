@@ -1,3 +1,4 @@
+
 library("tilingArray")
 library("affy")
 
@@ -12,7 +13,7 @@ normRefFiles = file.path("Celfiles",
     "041120_S96genDNA_re-hybe.cel.gz"))
 
 files = file.path("Celfiles",
-  c("05_04_23_2xpolyA_ap.cel.gz"))
+  c("05_04_26_2xpolyA_NAP2.cel.gz"))
 
 hybeType=c(rep("Reverse", length(files)))  ## "Direct"
 
