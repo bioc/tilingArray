@@ -5,7 +5,8 @@ source("scripts/categorizeSegments.R")
 
 options(error=recover, warn=0)
 
-  doSink=FALSE
+doSink=TRUE
+what=c("pie", "length", "cons", "conswex")[1:4]
 
 if(doSink)
   sink("tableSegments.txt")
@@ -33,7 +34,7 @@ names(colors) =c("verified", "ncRNA", "uncharacterized", "dubious",
 ##
 ## PIE
 ##
-if(0){
+if("pie" %in% what){
   par(mfrow=c(1,2))
   cat("Counting the found segments:\n",
       "============================\n", sep="")
@@ -60,21 +61,20 @@ if(0){
 ##
 ## LENGTH DISTRIBUTIONS
 ##
-if(0){
-par(mfrow=c(2,5))
-maxlen=6000
-br = seq(0, maxlen, by=100)
-for(rt in rnaTypes) {
-  s  = get("segScore", get(rt))
-  ct = tab[[rt]]$category
-  for(lev in levels(ct)[c(1:3, 5:6)]) {
-    len = s$length[ct == lev]
-    len[len>maxlen]=maxlen
-    hist(len, breaks=br, col=colors[lev], main=paste(rt, lev))
+if("length" %in% what){
+  par(mfrow=c(2,5))
+  maxlen=5000
+  br = seq(0, maxlen, by=200)
+  for(rt in rnaTypes) {
+    s  = get("segScore", get(rt))
+    ct = tab[[rt]]$category
+    for(lev in levels(ct)[c(1:2, 4:6)]) {
+      len = s$length[ct == lev]
+      len[len>maxlen]=maxlen
+      hist(len, breaks=br, col=colors[lev], main=paste(rt, lev))
+    }
   }
-  
-}
-dev.copy(pdf, "tableSegments-lengths.pdf", width=14, height=6); dev.off()
+  dev.copy(pdf, "tableSegments-lengths.pdf", width=14, height=6); dev.off()
 }
 
 ##
@@ -92,41 +92,80 @@ if(!exists("blastres")) {
 	 read.table(file.path(indir[rt], "fasta", f),
               sep="\t", as.is=TRUE, header=FALSE)))
 }
-
-ethresh = 1e-10
-
-cat("\n\nPercent of segments with BLAST-hit in other genome (E<",
-    ethresh, "):\n",
-    "==========================================================\n", sep="")
-
-
-for(rt in rnaTypes) {
-  s  = get("segScore", get(rt))
-  ct = tab[[rt]]$category
-  
-  sp = split(seq(along=ct), ct)
-
-  ## levthresh = median(s$level, na.rm=TRUE)
-  ## sp = lapply(sp, function(i) i[s$level[i]>levthresh])
-  
-  sp[[7]] = seq(along=ct)
-  names(sp)[7] = "whole genome"
-  
+    
+calchit = function(sp, rt) {  
   hit = matrix(NA, nrow=length(sp), ncol=length(blastResultFiles))
   rownames(hit) = names(sp)
   colnames(hit) = names(blastResultFiles)
   for(b in 1:ncol(hit)) {
     br = blastres[[rt]][[b]]
-    br = br[br[[11]]<ethresh, ]
-    stopifnot(!any(is.na(br[[1]])))
-    hit[,b] = sapply(sp, function(x) mean(x %in% br[[1]]))
+    ## split by name of query sequence (1) and just keep the hit with the
+    ## highest sequence identity
+    ## numNucMatch = br[[3]]*br[[4]] ## 3=Percent identity, 4=Alignment length
+    numNucMatch = 100*br[[4]] ## 3=Percent identity, 4=Alignment length
+    spbyq = split(1:nrow(br), br[[1]]) ## 1=Identity of query sequence
+    theBest = sapply(spbyq, function(i) i[which.max(numNucMatch[i])])
+    
+    prcid = numeric(nrow(s))
+    prcid[  br[[1]][theBest] ] = numNucMatch[theBest]
+    prcid = prcid / s$length
+    
+    hit[,b] = sapply(sp, function(segments) {
+      mean( prcid[segments] )
+    })
   }
+  hit = cbind("no." = listLen(sp),  hit)
   cat("\n", rt, "\n-----\n", sep="")
-  print(signif(hit,2))
+  print(round(hit,1))
+  ## print(signif(hit,2))
+  hit
 }
 
-## does the hit rate depend on expression level?
 
+if("cons" %in% what){
+  cat("\n\nFraction of alignable sequence (percent):\n",
+      "=========================================\n",
+      sep="")
+  
+  for(rt in rnaTypes) {
+    s  = get("segScore", get(rt))
+    ct = tab[[rt]]$category
+    sp = split(seq(along=ct), ct)
+
+    stopifnot(length(sp)==7)
+    sp[[7]] = which(s$same.feature=="" & s$same.dist5 > 100 & s$same.dist3 > 100 &
+                 s$level <= quantile(s$level, 0.2, na.rm=TRUE))
+    sp[[8]] = seq(along=ct)
+    names(sp)[8] = "whole genome"
+    sp = lapply(sp, function(i) i[s$length[i]>=800 & s$length[i]<=1200])
+  
+    hit = calchit(sp, rt)
+  }
+ }
+
+
+## does the hit rate depend on expression level?
+if("conswex" %in% what){
+  cat("\n\nanI, grouped by expression levels\n(in 5 quantile groups of equal size):\n",
+      "=====================================\n",
+      sep="")
+  par(mfrow=c(1,2))
+  cols = 1:4
+  for(rt in rnaTypes) {
+    s  = get("segScore", get(rt))
+    ct = tab[[rt]]$category
+    wh = which(ct == "unI")
+    sp  = split(wh, cut(s$level[wh], breaks=quantile(s$level[wh], (0:5)/5)))
+    sp = lapply(sp, function(i) i[s$length[i]>=700 & s$length[i]<=1400])
+    hit = calchit(sp, rt)
+    matplot(hit[,-1], type="b", main=rt, lty=1, 
+            ylab="Fraction of alignable sequence", xlab="expression",
+            ylim=c(0,100), pch=16)
+    if(rt=="polyA")
+      legend(x=1, y=100, legend=colnames(hit)[-1], lty=1, pch=16, col=cols)
+  }
+  dev.copy(pdf, "tableSegments-conswex.pdf", width=12, height=6); dev.off()
+}
 
 if(doSink)
   sink()
