@@ -1,12 +1,10 @@
 options(error=recover, warn=0)
 
 library("tilingArray")
-library("arrayMagic")   ## for write.htmltable
-library("geneplotter")  ## for savetiff
 
-source("Figures/readSegments.R")
-source("colorRamp.R")  ## can go with R 2.1
-source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
+source("scripts/readSegments.R")
+## source("colorRamp.R")  ## can go with R 2.1
+## source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 
 rt = "polyA"
 
@@ -15,7 +13,7 @@ graphics.off(); X11(width=15, height=8); grid.newpage()
 e = get(rt)
 
 stopifnot("Name" %in% names(gff))
-w = which(gff$Name=="YOR239W" & gff$feature=="gene")
+w = which(gff$Name=="YAL003W" & gff$feature=="gene")
 stopifnot(length(w)==1)
 
 if(TRUE)
@@ -44,6 +42,8 @@ outdir = file.path(indir[rt], "viz")
 if(!file.exists(outdir) || !file.info(outdir)$isdir)
   stop(paste("Output directory", outdir, "does not exist."))
 
+library("geneplotter")  ## for savetiff
+library("arrayMagic")   ## for write.htmltable
 
 ## order by level
 ord = order(segScore$level[sel], decreasing=TRUE)

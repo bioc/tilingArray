@@ -5,7 +5,7 @@ if(!exists("gff")) {
   theID   = getAttributeField(gff$attributes, "ID")
   stopifnot(all(gff$Name == theID, na.rm=TRUE))
   gff$orf_classification = getAttributeField(gff$attributes, "orf_classification")
-  gff$gene = getAttributeField(gff$attributes, "gene")
+  gff$gene   = getAttributeField(gff$attributes, "gene")
 }
 
 rnaTypes = c("polyA", "tot")

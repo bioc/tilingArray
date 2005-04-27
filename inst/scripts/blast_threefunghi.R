@@ -3,12 +3,13 @@
 segdir = "segmentation-3polyA/fasta"
 
 
-theDir   = file.path("OtherSpecies", c("S.bayanus", "S.mikatae", "S.paradoxus"))
-theFiles = c("Sbay_contigs.fasta", "Smik_contigs.fasta", "Spar_contigs.fasta")
+theDir   = file.path("OtherSpecies", c("S.bayanus", "S.mikatae", "S.paradoxus", "S.pombe"))
+theFiles = c("Sbay_contigs.fasta", "Smik_contigs.fasta", "Spar_contigs.fasta", "Spom_all.fasta")
 
+
+cat("Please run:\n")
 for(i in seq(along=theDir)) {
-  cat("Please run:\n",
-      "cd", theDir[i], "\n",
+  cat("cd", theDir[i], "\n",
       "formatdb -p F -i", theFiles[i], "-o T\n",
       "cd -\n\n")
 }

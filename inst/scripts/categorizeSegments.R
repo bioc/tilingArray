@@ -14,8 +14,7 @@ categorizeSegmentsUTRmap = function(s, minOverlap=1, maxDuplicated=0.5) {
   isUnique = (s$frac.dup < maxDuplicated)        ## a
   isUnanno = (s$same.feature=="")
   thresh   = calcThreshold(s$level, sel=isUnique&isUnanno, main=rt)
-
-  ##  cat(rt, ": thresh=", signif(thresh, 2), "\n", sep="")
+  cat("thresh=", signif(thresh, 2), "\n")
 
   isOneGene  = (listLen(strsplit(s$same.feature, split=", "))==1) & (s$same.overlap >= minOverlap) ## b
   isGoodGene = (s$same.feature %in% goodGenes)   ## c
@@ -29,55 +28,77 @@ categorizeSegmentsUTRmap = function(s, minOverlap=1, maxDuplicated=0.5) {
 }
 
 ##
-## categorize segments for the Pie chart
+## categorize segments for the Pie chart and for the cross-species comparison
 ##
+## The factor 'category' contains for each segment an assignment.
+## The matrix 'count' contains the number of UNIQUE occurences. For genes and
+## ncRNA, uniqueness is defined by name. For unannotated segments, it is 
+## defined by non-consecutiveness.
 
-categorizeSegmentsPie = function(name, minOverlap=0.8, maxDuplicated=0.5) {
-  select = (s$frac.dup < maxDuplicated)
-  unanno = (s$same.feature=="" | s$same.overlap < minOverlap)  & select
-  thresh = calcThreshold(s$level, sel=unanno, showPlot=TRUE, main=rt)
-    
-  ## cat("=========", rt, "==========\n")
+categorizeSegmentsPie = function(s, minOverlap=0.8, maxDuplicated=0.5) {
+  isUnique = (s$frac.dup < maxDuplicated)
+  isUnanno = (s$same.feature=="" | s$same.overlap < minOverlap)  & isUnique
+  thresh = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
   cat("thresh=", signif(thresh, 2), "\n")
 
-  transcribed = (select & (s$level>=thresh))
-  name = s$same.feature[transcribed]
-  stopifnot(!any(is.na(name)))
+  isTranscribed = (isUnique & (s$level>=thresh))
+  wh       = which(isTranscribed)
+  name     = s$same.feature[wh]
+  nameOppo = s$oppo.feature[wh]
   
-  care = c("verified", "uncharacterized", "dubious",
-           "other ncRNA", "unannotated")
+  category = factor(rep(NA, nrow(s)), 
+    levels = c("verified", "uncharacterized", "dubious",
+               "ncRNA", "unA", "unI",
+               "not expressed"))
 
-  mt = matrix(0, nrow=length(name), ncol=length(care))
-  colnames(mt)=care
+  category[ -wh ] = "not expressed"
 
-  ## convert into regular expression
+  ## split
   pat = strsplit(name,  split=", ")
-  pat[listLen(pat)==0] = "Unannotated"
   
-  nrInGenome = integer(length(care))
-  names(nrInGenome) = care
-  for(f in care) {
-    theseNames = switch(f,
+  count           = matrix(NA, nrow=length(levels(category)), ncol=2)
+  rownames(count) = levels(category)
+  colnames(count) = c("observed", "in genome")
+  count = count[-which(rownames(count)=="not expressed"), ]
+  
+  for(categ in levels(category)[4:1]) {
+    theseNames = switch(categ,
       ## orf_classification: applies to "gene", "CDS", and "intron"
       "verified"        = gff$Name[gff$feature=="gene" & gff$orf_classification=="Verified"],
       "uncharacterized" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Uncharacterized"],
-      "other ncRNA"     = gff$Name[gff$feature %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA")],
+      "ncRNA"           = gff$Name[gff$feature %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA")],
       "dubious"         = gff$Name[gff$feature=="gene" & gff$orf_classification=="Dubious"],
-      "unannotated"     = "Unannotated",
       stop("Zapperlot")
       )
     stopifnot(!is.null(theseNames))
-    nrInGenome[f] = length(unique(theseNames))
-    
-    mt[, f] = sapply(pat, function(x) 
-      !all(is.na(match(x, theseNames))))
-  }
-  ## clean up mt - set to zero all lower priority entries:
-  for(i in 1:(ncol(mt)-1))
-    mt[ mt[,i]>0, (i+1):ncol(mt) ] = 0 
-    
-  stopifnot(all(rowSums(mt)==1))
-  list(mt=mt, nrInGenome=nrInGenome)
+    count[categ, "in genome"] = length(unique(theseNames))
+    count[categ, "observed"]  = length(unique(intersect(theseNames, unlist(pat))))
+
+    isThisCateg = sapply(pat, function(x) any(!is.na(match(x, theseNames))))
+    category[wh][isThisCateg] = categ
+
+  } ## for categ
+
+  ## Properly count the unannotated segments: they should be flanked on both sides by something
+  ## which is not expressed. Possible consecutive expressed unannotated segments are merged.
+  category[wh][name=="" & nameOppo==""] = "unI"
+  category[wh][name=="" & nameOppo!=""] = "unA"
+
+  isUnanno = (category %in% c("unA", "unI"))
+  n = length(isUnanno)
+  isConsecutive = c(FALSE, isUnanno[2:n] & isUnanno[1:(n-1)])
+  
+  mc  = category[!isConsecutive]
+  n   = length(mc)
+  s1 = (mc[1:(n-2)]=="not expressed" & mc[2:(n-1)]=="unA" & mc[3:n]=="not expressed")
+  s2 = (mc[1:(n-2)]=="not expressed" & mc[2:(n-1)]=="unI" & mc[3:n]=="not expressed")
+  count["unA", ] = c(sum(s1), NA)
+  count["unI", ] = c(sum(s2), NA)
+
+  rownames(count) = sub("unA", "unannot. (pot. antisense)", rownames(count))
+  rownames(count) = sub("unI", "unannot. (isolated)", rownames(count))
+
+  list(category=category, count=count)
 }
 
 
