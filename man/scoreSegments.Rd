@@ -4,22 +4,25 @@
 \description{Score the segments found by a previous call to findSegments by
   comparing to genome annotation}
 \usage{
-scoreSegments(x, gff, 
+scoreSegments(s, gff, 
   nrBasePerSeg = 1500, 
   probeLength  = 25,
   knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
         "rRNA", "snRNA", "snoRNA", "tRNA",
         "transposable_element", "transposable_element_gene"),
+  params =c(minOverlapFractionSame=0.8, minOverlapBasesOppo=40), 
   verbose = TRUE)
 }
 \arguments{
-  \item{x}{environment. See details.}
+  \item{s}{environment. See details.}
   \item{gff}{GFF dataframe.}
   \item{nrBasePerSeg}{Numeric of length 1. This parameter determines the
     number of segments.}
   \item{probeLength}{Numeric of length 1.}
   \item{knownFeatures}{Character vector. Names of those features in
     \code{gff} which should be considered \emph{known features}.}
+  \item{params}{vector of additional parameters, describing limits for
+    probes considered for plotting}
   \item{verbose}{Logical.}
 }
 

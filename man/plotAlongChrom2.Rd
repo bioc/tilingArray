@@ -4,8 +4,9 @@
 \keyword{hplot}
 \description{Plot the results of segmentation along a chromosomal region}
 
-\usage{plotAlongChrom2(chr, coord, highlight, segRes, segScore,
-   scoreShow = "pt", nrBasesPerSeg, gff)}
+\usage{plotAlongChrom2(chr, coord, highlight, segRes, y, probeAnno,
+                       segScore,scoreShow = "pt", nrBasesPerSeg, gff,
+                       haveLegend=TRUE)}
 
 \arguments{
   \item{chr}{integer of length 1 with the number of the chromosome for
@@ -30,6 +31,7 @@
     nucleotide bases per segment. Can
     be missing iff \code{segScore} is present.}
   \item{gff}{data frame with genome annotation from the GFF file.}
+  \item{haveLegend}{logical, should the plot contain a legend?}
 }
 
 \details{
