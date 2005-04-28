@@ -36,8 +36,11 @@ names(colors) =c("verified", "ncRNA", "uncharacterized", "dubious",
 ##
 if("pie" %in% what){
   par(mfrow=c(1,2))
-  cat("Counting the found segments:\n",
-      "============================\n", sep="")
+  cat("Counts for the pie chart:\n",
+      "=========================\n",
+      "For known features, counts are unique IDs.\n",
+      "For new segments, counts are non-consecutive blocks of 1..n segments\n",
+      sep="")
   for(rt in rnaTypes) {
     ct  = tab[[rt]]$count
     
@@ -83,9 +86,9 @@ if("length" %in% what){
 
 if(!exists("blastres")) {
   blastResultFiles = c("Sbay_contigs.out", "Smik_contigs.out",
-    "Spar_contigs.out", "Spom_all.out")
+    "Spar_contigs.out")
   names(blastResultFiles) = c("S.bayanus", "S.mikatae",
-         "S.paradoxus", "S.pombe")
+         "S.paradoxus")
   names(rnaTypes)=rnaTypes
   blastres = lapply(rnaTypes, function(rt)
     lapply(blastResultFiles, function(f)
@@ -99,10 +102,12 @@ calchit = function(sp, rt) {
   colnames(hit) = names(blastResultFiles)
   for(b in 1:ncol(hit)) {
     br = blastres[[rt]][[b]]
-    ## split by name of query sequence (1) and just keep the hit with the
-    ## highest sequence identity
+    
     ## numNucMatch = br[[3]]*br[[4]] ## 3=Percent identity, 4=Alignment length
     numNucMatch = 100*br[[4]] ## 3=Percent identity, 4=Alignment length
+
+    ## split by name of query sequence (1) and just keep the hit with the
+    ## highest value of numNucMatch
     spbyq = split(1:nrow(br), br[[1]]) ## 1=Identity of query sequence
     theBest = sapply(spbyq, function(i) i[which.max(numNucMatch[i])])
     
@@ -114,11 +119,10 @@ calchit = function(sp, rt) {
       mean( prcid[segments] )
     })
   }
-  hit = cbind("no." = listLen(sp),  hit)
+  hit = data.frame(number=listLen(sp), fraction=rowMeans(hit))
   cat("\n", rt, "\n-----\n", sep="")
   print(round(hit,1))
-  ## print(signif(hit,2))
-  hit
+  hit  
 }
 
 
@@ -147,18 +151,27 @@ if("cons" %in% what){
 ## does the hit rate depend on expression level?
 if("conswex" %in% what){
   cat("\n\nanI, grouped by expression levels\n(in 5 quantile groups of equal size):\n",
-      "=====================================\n",
+      "=====================================\n", 
       sep="")
   par(mfrow=c(1,2))
   cols = 1:4
+
+  segClasses = c("verified", "unI")
+  segClassesLong = c("verified genes", "unannotated, isolated")
+  nrexplevs = 5
+  fraction = matrix(NA, nrow=nrexplevs, ncol=length(segClasses))
+  colnames(fraction) = segClasses
+  
   for(rt in rnaTypes) {
-    s  = get("segScore", get(rt))
-    ct = tab[[rt]]$category
-    wh = which(ct == "unI")
-    sp  = split(wh, cut(s$level[wh], breaks=quantile(s$level[wh], (0:5)/5)))
-    sp = lapply(sp, function(i) i[s$length[i]>=700 & s$length[i]<=1400])
-    hit = calchit(sp, rt)
-    matplot(hit[,-1], type="b", main=rt, lty=1, 
+    s   = get("segScore", get(rt))
+    ct  = tab[[rt]]$category
+    for(segClass in segClasses) {
+      wh = which(ct == segClass)
+      sp = split(wh, cut(s$level[wh], breaks=quantile(s$level[wh], (0:nrexplevs)/nrexplevs)))
+      ## sp = lapply(sp, function(i) i[s$length[i]>=700 & s$length[i]<=1400])
+      fraction[, segClass] = calchit(sp, rt)$fraction
+    }
+    matplot(fraction, type="b", main=rt, lty=1, 
             ylab="Fraction of alignable sequence", xlab="expression",
             ylim=c(0,100), pch=16)
     if(rt=="polyA")

@@ -89,11 +89,16 @@ categorizeSegmentsPie = function(s, minOverlap=0.8, maxDuplicated=0.5) {
   isConsecutive = c(FALSE, isUnanno[2:n] & isUnanno[1:(n-1)])
   
   mc  = category[!isConsecutive]
+
   n   = length(mc)
   s1 = (mc[1:(n-2)]=="not expressed" & mc[2:(n-1)]=="unA" & mc[3:n]=="not expressed")
   s2 = (mc[1:(n-2)]=="not expressed" & mc[2:(n-1)]=="unI" & mc[3:n]=="not expressed")
   count["unA", ] = c(sum(s1), NA)
   count["unI", ] = c(sum(s2), NA)
+
+  cat("New segments: started with ", sum(isUnanno), ", merging resulted in",
+      sum(mc %in% c("unA", "unI")), ", 'neighbor-not-expressed' filter resulted in",
+      count["unA",1], "+", count["unI", 1], "=", count["unA",1]+count["unI", 1], ".\n", sep="")
 
   rownames(count) = sub("unA", "unannot. (pot. antisense)", rownames(count))
   rownames(count) = sub("unI", "unannot. (isolated)", rownames(count))
