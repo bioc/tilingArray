@@ -10,6 +10,9 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
   
   if(!haveLegend)
     VP = VP[-which(names(VP)=="legend")]
+
+  ## do not draw p-value bars
+  VP = VP[-which(name(VP)%in%c("z1", "z2"))]
   
   if(!missing(y)) {
     if(missing(probeAnno))
@@ -143,7 +146,8 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
   }
   popViewport(2)
 
-  if(!is.null(segScore)) {
+  if(FALSE) {
+  ## if(!is.null(segScore)) {
     pushViewport(dataViewport(xData=coord, yscale=c(0,2), extension=0, clip="on",
        layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("z%d", istrand))))
 

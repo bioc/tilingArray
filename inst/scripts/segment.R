@@ -11,7 +11,7 @@ if(!exists("probeAnno"))
 if(!exists("x")) 
   load("x.rda")
 
-what = c("polyA", "tot")[2]
+what = c("polyA", "polyA2", "tot")[2]
 
 switch(what,
   "polyA" = {
@@ -19,6 +19,12 @@ switch(what,
       "050209_mRNAx4_30min_re-hybe_RH6.cel.gz",
       "050218_polyA-RNA_RH6_4x15min.cel.gz")
     outdir = "seg-polyA-050418"
+  },
+  "polyA2" = {
+    fn = c("05_04_27_2xpolyA_NAP3.cel.gz",
+      "05_04_26_2xpolyA_NAP2.cel.gz",
+      "05_04_20_2xpolyA_NAP_2to1.cel.gz")
+    outdir = "seg-polyA-050428"
   },
   "tot"    = {
     fn = c("050409_totcDNA_14ug_no52.cel.gz",

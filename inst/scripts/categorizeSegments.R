@@ -14,9 +14,9 @@ categorizeSegmentsUTRmap = function(s, minOverlap=1, maxDuplicated=0.5) {
   isUnique = (s$frac.dup < maxDuplicated)        ## a
   isUnanno = (s$same.feature=="")
   thresh   = calcThreshold(s$level, sel=isUnique&isUnanno, main=rt)
-  cat("thresh=", signif(thresh, 2), "\n")
 
-  isOneGene  = (listLen(strsplit(s$same.feature, split=", "))==1) & (s$same.overlap >= minOverlap) ## b
+  isOneGene  = ((listLen(strsplit(s$same.feature, split=", "))==1) &
+                (s$same.overlap >= minOverlap))  ## b
   isGoodGene = (s$same.feature %in% goodGenes)   ## c
 
   k = 2:(nrow(s)-1)  ## d+e
@@ -96,9 +96,10 @@ categorizeSegmentsPie = function(s, minOverlap=0.8, maxDuplicated=0.5) {
   count["unA", ] = c(sum(s1), NA)
   count["unI", ] = c(sum(s2), NA)
 
-  cat("New segments: started with ", sum(isUnanno), ", merging resulted in",
-      sum(mc %in% c("unA", "unI")), ", 'neighbor-not-expressed' filter resulted in",
-      count["unA",1], "+", count["unI", 1], "=", count["unA",1]+count["unI", 1], ".\n", sep="")
+  cat("New segments: started with ", sum(isUnanno), ", merging resulted in ",
+      sum(mc %in% c("unA", "unI")), ",\n'neighbor-not-expressed' filter resulted in ",
+      count["unA",1], "+", count["unI", 1], "=", count["unA",1]+count["unI", 1], ".\n\n",
+      sep="")
 
   rownames(count) = sub("unA", "unannot. (pot. antisense)", rownames(count))
   rownames(count) = sub("unI", "unannot. (isolated)", rownames(count))

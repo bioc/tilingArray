@@ -5,25 +5,33 @@ source("scripts/categorizeSegments.R")
 
 options(error=recover, warn=0)
 
-doSink=TRUE
-what=c("pie", "length", "cons", "conswex")[1:4]
+interact = FALSE 
+what=c("pie", "length", "cons", "conswex")
+## rm(tab)
 
-if(doSink)
+if(!interact)
   sink("tableSegments.txt")
 
 if(!exists("tab")) {
-  graphics.off(); x11(width=9, height=5)
+  graphics.off()
+  if(interact)
+    x11(width=11, height=8)
+  else
+    pdf(width=11, height=8)
   par(mfrow=c(2,1))
   
   tab = vector(mode="list", length=length(rnaTypes))
   names(tab)=rnaTypes
   
+  cat("Categorizing segments:\n",
+      "======================\n", sep="")
   for(rt in rnaTypes) {
     s = get("segScore", get(rt))
     tab[[rt]] = categorizeSegmentsPie(s)
   }
 
-  dev.copy(pdf, "tableSegments-thresh.pdf", width=11, height=8); dev.off()
+  if(!interact)
+    dev.off()
 }
 
 
@@ -35,11 +43,17 @@ names(colors) =c("verified", "ncRNA", "uncharacterized", "dubious",
 ## PIE
 ##
 if("pie" %in% what){
+  if(!interact)
+    pdf("tableSegments-pie.pdf", width=14, height=4.8)
   par(mfrow=c(1,2))
   cat("Counts for the pie chart:\n",
       "=========================\n",
-      "For known features, counts are unique IDs.\n",
-      "For new segments, counts are non-consecutive blocks of 1..n segments\n",
+      "For known features, counts are unique IDs. While in typical cases\n",
+      "there is a 1:1 mapping between segments and IDs, this is not always\n",
+      "the case: there can be several IDs per segment, and several segments\n",
+      "per ID.\n",
+      "For new segments, counts are non-consecutive blocks of one or several\n",
+      "expressed segments flanked by a non-expressed segment on each side.\n",
       sep="")
   for(rt in rnaTypes) {
     ct  = tab[[rt]]$count
@@ -58,13 +72,16 @@ if("pie" %in% what){
         col=colors,
         labels=paste(names(px), " (", px, ")", sep=""))
   }
-  dev.copy(pdf, "tableSegments-pie.pdf", width=14, height=4.8); dev.off()
+  if(!interact)
+    dev.off()
 }
 
 ##
 ## LENGTH DISTRIBUTIONS
 ##
 if("length" %in% what){
+  if(!interact)
+    pdf("tableSegments-lengths.pdf", width=14, height=6)
   par(mfrow=c(2,5))
   maxlen=5000
   br = seq(0, maxlen, by=200)
@@ -77,7 +94,8 @@ if("length" %in% what){
       hist(len, breaks=br, col=colors[lev], main=paste(rt, lev))
     }
   }
-  dev.copy(pdf, "tableSegments-lengths.pdf", width=14, height=6); dev.off()
+  if(!interact)
+    dev.off()
 }
 
 ##
@@ -119,17 +137,17 @@ calchit = function(sp, rt) {
       mean( prcid[segments] )
     })
   }
-  hit = data.frame(number=listLen(sp), fraction=rowMeans(hit))
-  cat("\n", rt, "\n-----\n", sep="")
-  print(round(hit,1))
-  hit  
+  data.frame(number=listLen(sp), fraction=rowMeans(hit))
 }
 
+##
+## cons
+##
 
 if("cons" %in% what){
   cat("\n\nFraction of alignable sequence (percent):\n",
       "=========================================\n",
-      sep="")
+      "Here, 'number' is the number of segments.\n", sep="")
   
   for(rt in rnaTypes) {
     s  = get("segScore", get(rt))
@@ -141,44 +159,74 @@ if("cons" %in% what){
                  s$level <= quantile(s$level, 0.2, na.rm=TRUE))
     sp[[8]] = seq(along=ct)
     names(sp)[8] = "whole genome"
-    sp = lapply(sp, function(i) i[s$length[i]>=800 & s$length[i]<=1200])
-  
     hit = calchit(sp, rt)
+    
+    cat("\n", rt, "\n-----\n", sep="")
+    print(round(hit,1))
   }
- }
+}
 
-
-## does the hit rate depend on expression level?
+##
+## conswex
+##
 if("conswex" %in% what){
-  cat("\n\nanI, grouped by expression levels\n(in 5 quantile groups of equal size):\n",
-      "=====================================\n", 
+  nrlevs = 5
+  minlen    = 200
+  cat("\n\nGrouping of conservation scores by length and expression levels\n",
+      "using ", nrlevs,
+      " quantile groups of equal size, respectively.\n",
+      "For 'expression', scores are calculated for segments with length >= ", minlen, ".\n",
+      "==========================================================================\n", 
       sep="")
-  par(mfrow=c(1,2))
-  cols = 1:4
-
+  if(!interact)
+    pdf("tableSegments-conswex.pdf", width=9, height=9)
+  par(mfcol=c(2,2))
+  cols = c("#303030", "#0000e0")
+  pchs = c(15,16)
+  
   segClasses = c("verified", "unI")
   segClassesLong = c("verified genes", "unannotated, isolated")
-  nrexplevs = 5
-  fraction = matrix(NA, nrow=nrexplevs, ncol=length(segClasses))
+  fraction = matrix(NA, nrow=nrlevs, ncol=length(segClasses))
   colnames(fraction) = segClasses
   
   for(rt in rnaTypes) {
     s   = get("segScore", get(rt))
     ct  = tab[[rt]]$category
-    for(segClass in segClasses) {
-      wh = which(ct == segClass)
-      sp = split(wh, cut(s$level[wh], breaks=quantile(s$level[wh], (0:nrexplevs)/nrexplevs)))
-      ## sp = lapply(sp, function(i) i[s$length[i]>=700 & s$length[i]<=1400])
-      fraction[, segClass] = calchit(sp, rt)$fraction
+    cat("\n", rt, "\n-----\n", sep="")
+
+    for(ev in c("expression", "length")) {
+      for(segClass in segClasses) {
+        wh = which(ct == segClass)
+        v  = switch(ev,
+          "expression" = s$level[wh],
+          "length" =     s$length[wh],
+          stop("Zapperlot"))
+        br = quantile(v, (0:nrlevs)/nrlevs)
+        sp = split(wh, cut(v, breaks=br))
+        names(sp) = switch(ev,
+          "expression" = paste("<=", round(br[-1], 1)),
+          "length"     = paste("<=", as.integer(br[-1], 0)))
+        
+        if( ev=="expression")
+          sp = lapply(sp, function(i) i[s$length[i]>=minlen])
+
+        hit = calchit(sp, rt)
+        fraction[, segClass] = hit$fraction
+        cat("\nby '", ev, "', for '", segClass, "' segments\n", sep="")
+        print(round(hit,1))
+      }
+      matplot(fraction, xaxt="n", type="b", main=paste(ev, " (", rt, ")", sep=""),
+              lty=1, lwd=2, pch=pchs, col=cols,
+              ylab="Fraction of alignable sequence", xlab=ev,
+              ylim=c(0,100))
+      axis(side=1, at = 1:nrlevs, labels = names(sp))
+      if(rt=="polyA"&&ev=="expression")
+        legend(x=1, y=100, legend=segClassesLong, lty=1, lwd=2, pch=pchs, col=cols)
     }
-    matplot(fraction, type="b", main=rt, lty=1, 
-            ylab="Fraction of alignable sequence", xlab="expression",
-            ylim=c(0,100), pch=16)
-    if(rt=="polyA")
-      legend(x=1, y=100, legend=colnames(hit)[-1], lty=1, pch=16, col=cols)
   }
-  dev.copy(pdf, "tableSegments-conswex.pdf", width=12, height=6); dev.off()
+  if(!interact)
+    dev.off()
 }
 
-if(doSink)
+if(!interact)
   sink()

@@ -9,7 +9,6 @@ calcThreshold = function(x, sel, pthresh=0.05, showPlot=FALSE, main) {
   loc   = shorth(levu, na.rm=TRUE)
   z     = levu[which(levu<=loc)]-loc
   scale = mad(c(z, -z))
-  cat("loc=", loc, "scale=", scale, "\n")
   
   ## we calculate the threshold for level on the basis of the normal
   ## distribution and the FDR for _unannotated_ features
@@ -33,6 +32,6 @@ calcThreshold = function(x, sel, pthresh=0.05, showPlot=FALSE, main) {
     dn = dnorm(x=d1$x, mean=loc, sd=scale)
     lines(d1$x, dn/max(dn)*max(d2$y), col="orange")
   }
-
+  cat("loc=", signif(loc,3), "scale=", signif(scale,3), "thresh=", signif(thresh,3), "\n")
   return(thresh)
 }
