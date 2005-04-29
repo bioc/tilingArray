@@ -7,7 +7,7 @@ if(!exists("gff"))
 
 chrs = 1:16
 
-for(indir in c("segmentation-3polyA", "seg-tot-050421")) {
+for(indir in c("segmentation-3polyA", "seg-tot-050421", "seg-polyA-050428")[3]) {
   cat(indir, "\n")
 
   if(TRUE) {

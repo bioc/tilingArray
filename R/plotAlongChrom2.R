@@ -12,7 +12,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
     VP = VP[-which(names(VP)=="legend")]
 
   ## do not draw p-value bars
-  VP = VP[-which(name(VP)%in%c("z1", "z2"))]
+  VP = VP[-which(names(VP)%in%c("z1", "z2"))]
   
   if(!missing(y)) {
     if(missing(probeAnno))
