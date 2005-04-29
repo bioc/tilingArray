@@ -8,7 +8,7 @@ library("tilingArray")
 if(!exists("gff"))
   load("probeAnno.rda")
 
-segmentationDirs  = c("segmentation-3polyA", "seg-tot-050421")
+segmentationDirs  = c("segmentation-3polyA", "seg-tot-050421", "seg-polyA-050428")[3]
 segScoreFile      = c("segScore-1500.rda")
 seqDir = "SGD"
 

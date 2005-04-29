@@ -8,8 +8,8 @@ if(!exists("gff")) {
   gff$gene   = getAttributeField(gff$attributes, "gene")
 }
 
-rnaTypes = c("polyA", "tot")
-indir = c("segmentation-3polyA", "seg-tot-050421")
+rnaTypes = c("polyA", "polyA2", "tot")
+indir = c("segmentation-3polyA", "seg-polyA-050428", "seg-tot-050421")
 names(indir) = rnaTypes
 
 for(rt in rnaTypes) {

@@ -3,11 +3,15 @@ source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
 source("scripts/categorizeSegments.R") 
 
+
 options(error=recover, warn=0)
 
 interact = FALSE 
-what=c("pie", "length", "cons", "conswex")
+what=c("pie", "length", "lvsx", "cons", "conswex")
+
 ## rm(tab)
+n = length(rnaTypes)
+longNames=c(polyA="poly-A RNA", polyA2="poly-A doubly enr.", tot="total RNA")
 
 if(!interact)
   sink("tableSegments.txt")
@@ -15,10 +19,10 @@ if(!interact)
 if(!exists("tab")) {
   graphics.off()
   if(interact)
-    x11(width=11, height=8)
+    x11(width=10, height=n*3)
   else
-    pdf(width=11, height=8)
-  par(mfrow=c(2,1))
+    pdf(width=11, height=n*4)
+  par(mfrow=c(n,1))
   
   tab = vector(mode="list", length=length(rnaTypes))
   names(tab)=rnaTypes
@@ -44,8 +48,8 @@ names(colors) =c("verified", "ncRNA", "uncharacterized", "dubious",
 ##
 if("pie" %in% what){
   if(!interact)
-    pdf("tableSegments-pie.pdf", width=14, height=4.8)
-  par(mfrow=c(1,2))
+    pdf("tableSegments-pie.pdf", width=7*n, height=4.8)
+  par(mfrow=c(1,n))
   cat("Counts for the pie chart:\n",
       "=========================\n",
       "For known features, counts are unique IDs. While in typical cases\n",
@@ -68,7 +72,7 @@ if("pie" %in% what){
     px = ct[, "observed"]
     names(px) = rownames(ct)
     px = px[c(1,3,2,4,6,5)]
-    pie(px, radius=0.75, main=c(polyA="poly-A RNA", tot="total RNA")[rt],
+    pie(px, radius=0.75, main=longNames[rt],
         col=colors,
         labels=paste(names(px), " (", px, ")", sep=""))
   }
@@ -79,11 +83,11 @@ if("pie" %in% what){
 ##
 ## LENGTH DISTRIBUTIONS
 ##
+maxlen=5000
 if("length" %in% what){
   if(!interact)
-    pdf("tableSegments-lengths.pdf", width=14, height=6)
-  par(mfrow=c(2,5))
-  maxlen=5000
+    pdf("tableSegments-lengths.pdf", width=14, height=n*3)
+  par(mfrow=c(n,5))
   br = seq(0, maxlen, by=200)
   for(rt in rnaTypes) {
     s  = get("segScore", get(rt))
@@ -92,6 +96,40 @@ if("length" %in% what){
       len = s$length[ct == lev]
       len[len>maxlen]=maxlen
       hist(len, breaks=br, col=colors[lev], main=paste(rt, lev))
+    }
+  }
+  if(!interact)
+    dev.off()
+}
+
+##
+## LENGTH VERSUS EXPRESSION LEVEL
+##
+if("lvsx" %in% what){
+  if(!interact) {
+    pdf("tableSegments-lvsx.pdf", width=14, height=n*3)
+    pch="."
+  } else {
+    pch=18
+  }
+  par(mfrow=c(n, 2))
+  maxlen=5000
+  br = seq(0, maxlen, by=200)
+  for(rt in rnaTypes) {
+    s  = get("segScore", get(rt))
+    ct = tab[[rt]]$category
+    levs = levels(ct)[c(1, 6)]
+    ylim = quantile(s$level[ct %in% levs], probs=c(0.01, 0.99), na.rm=TRUE)
+    for(lev in levs) {
+      len = s$length[ct == lev]
+      len[len>maxlen]=maxlen
+      exl = s$level[ct == lev]
+      plot(len, exl, pch=pch, ylim=ylim, main=paste(longNames[rt], ": ", lev, sep=""),
+           ylab="expression level", xlab="length")
+      lf = loess(exl ~ len)
+      slen = sort(len)
+      lines(slen, predict(lf, newdata=slen), col="blue")
+      ## smoothScatter(len, exl, ylim=ylim, pch=pch, main=paste(rt, lev))
     }
   }
   if(!interact)
@@ -155,7 +193,7 @@ if("cons" %in% what){
     sp = split(seq(along=ct), ct)
 
     stopifnot(length(sp)==7)
-    sp[[7]] = which(s$same.feature=="" & s$same.dist5 > 100 & s$same.dist3 > 100 &
+    sp[[7]] = which(s$same.feature=="" & s$oppo.feature=="" &
                  s$level <= quantile(s$level, 0.2, na.rm=TRUE))
     sp[[8]] = seq(along=ct)
     names(sp)[8] = "whole genome"
@@ -179,8 +217,8 @@ if("conswex" %in% what){
       "==========================================================================\n", 
       sep="")
   if(!interact)
-    pdf("tableSegments-conswex.pdf", width=9, height=9)
-  par(mfcol=c(2,2))
+    pdf("tableSegments-conswex.pdf", width=4*n, height=8)
+  par(mfcol=c(2,n))
   cols = c("#303030", "#0000e0")
   pchs = c(15,16)
   

@@ -9,12 +9,7 @@ source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 rt = "polyA"
 alongChromWidth = 25e3
 alongChromStep  = 10e3
-
-#### Generic plot
-graphics.off()
-## X11(width=15, height=8); grid.newpage()
-
-e = get(rt)
+nrChr = 16
 
 outdir = file.path(indir[rt], "viz")
 if(!file.exists(outdir) || !file.info(outdir)$isdir)
@@ -24,7 +19,8 @@ if(!file.exists(outdir) || !file.info(outdir)$isdir)
 ## this function maps a chromosome number and start and end coordinates
 ## to a file name
 mapCoord2Plot = function (chr, start, end) {
-  mid  = (start+end-alongChromWidth)/2 
+  mid  = (start+end-alongChromWidth)/2
+  mid[mid<0]=0
   pst  = as.integer(alongChromStep/1e3*floor(mid/alongChromStep))
   sprintf("%02d_%04d", as.integer(chr), pst)
 }
@@ -51,11 +47,13 @@ outtab$plotfile = mapCoord2Plot(outtab$chr, outtab$start, outtab$end)
 write.table(outtab, file=file.path(outdir, "gff.txt"),
             sep="\t", quote=FALSE, row.names=FALSE, col.names=TRUE)
 
+
 ##
 ## Write the pictures
 ## 
 
-for(chr in 1:length(chrSeqname)) {
+e = get(rt)
+for(chr in 1:nrChr) {
   startPoints = seq(0, max(gff$end[gff$chr==chr]), by=alongChromStep)
   conv = character(length(startPoints))
   for(i in seq(along=startPoints)) {

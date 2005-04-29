@@ -67,7 +67,7 @@ categorizeSegmentsPie = function(s, minOverlap=0.8, maxDuplicated=0.5) {
       "verified"        = gff$Name[gff$feature=="gene" & gff$orf_classification=="Verified"],
       "uncharacterized" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Uncharacterized"],
       "ncRNA"           = gff$Name[gff$feature %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA")],
-      "dubious"         = gff$Name[gff$feature=="gene" & gff$orf_classification=="Dubious"],
+      "dubious"         = gff$Name[(gff$feature=="gene" & gff$orf_classification=="Dubious") | gff$feature=="pseudogene"],
       stop("Zapperlot")
       )
     stopifnot(!is.null(theseNames))
@@ -78,11 +78,12 @@ categorizeSegmentsPie = function(s, minOverlap=0.8, maxDuplicated=0.5) {
     category[wh][isThisCateg] = categ
 
   } ## for categ
-
+  
   ## Properly count the unannotated segments: they should be flanked on both sides by something
   ## which is not expressed. Possible consecutive expressed unannotated segments are merged.
   category[wh][name=="" & nameOppo==""] = "unI"
   category[wh][name=="" & nameOppo!=""] = "unA"
+  stopifnot(!any(is.na(category)))
 
   isUnanno = (category %in% c("unA", "unI"))
   n = length(isUnanno)
@@ -103,7 +104,7 @@ categorizeSegmentsPie = function(s, minOverlap=0.8, maxDuplicated=0.5) {
 
   rownames(count) = sub("unA", "unannot. (pot. antisense)", rownames(count))
   rownames(count) = sub("unI", "unannot. (isolated)", rownames(count))
-
+  
   list(category=category, count=count)
 }
 
