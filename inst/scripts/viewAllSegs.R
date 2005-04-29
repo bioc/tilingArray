@@ -21,7 +21,7 @@ if(!file.exists(outdir) || !file.info(outdir)$isdir)
 mapCoord2Plot = function (chr, start, end) {
   mid  = (start+end-alongChromWidth)/2
   mid[mid<0]=0
-  pst  = as.integer(alongChromStep/1e3*floor(mid/alongChromStep))
+  pst  = as.integer(alongChromStep/1e3*round(mid/alongChromStep))
   sprintf("%02d_%04d", as.integer(chr), pst)
 }
 

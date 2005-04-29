@@ -18,7 +18,7 @@ switch(what,
     fn = c("041203_S96_polyAx1_RH6.cel.gz",
       "050209_mRNAx4_30min_re-hybe_RH6.cel.gz",
       "050218_polyA-RNA_RH6_4x15min.cel.gz")
-    outdir = "seg-polyA-050418"
+    outdir = "segmentation-3polyA"
   },
   "polyA2" = {
     fn = c("05_04_27_2xpolyA_NAP3.cel.gz",
