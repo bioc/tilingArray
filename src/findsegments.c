@@ -171,7 +171,6 @@ void findsegments_dp(double* J, int* th, int maxcp) {
     for(cp=0; cp<maxcp*maxcp; cp++) 
        th[cp] += 1; 
 
-    return;
 } 
 
 /*-----------------------------------------------------------------
@@ -231,7 +230,7 @@ SEXP findsegments(SEXP _G, SEXP _maxcp, SEXP _verbose)
   setAttrib(res, R_NamesSymbol, namesres);
 
   UNPROTECT(5); /* done with res, namesres, J, th, dimth */
-  return(res);
+  return res;
 }
 
 
