@@ -27,49 +27,38 @@ scoreSegments(s, gff,
 }
 
 \details{
-  This function is typically called after a \emph{segmentation}.
-  For an example segmentation script, see the script \code{segment.R}
-  in the \code{scripts} directory of this package. For an example
-  scoring script, which loads the data and then calls this function, see
-  the script \code{scoreSegments.R}.
+This function is typically called after a \emph{segmentation}.
+For an example segmentation script, see the script \code{segment.R}
+in the \code{scripts} directory of this package. For an example
+scoring script, which loads the data and then calls this function, see
+the script \code{scoreSegments.R}.
   
-  This function scores segments.
-  For each segment, we calculate and/or record its:
-  \describe{
-    \item{chr, strand}{chromosome and strand}
-    \item{start, end, length}{start position, end position, length (in
-      bases)}
-    \item{frac.dup}{fraction (0...1) of probes in this segment that have
-      also hits otherwhere} 
-    \item{level}{mean level minus that of the background}
-    \item{p-value}{one-sample t-test against hypothesis level=0}
-    \item{same.feature}{the name(s) of annotated features on the same
-      strand with which it overlaps}
-    \item{same.overlap}{the fraction (0...1) of probes that are part of
-      an annotated feature (see below for definition of \emph{part of})}
-    \item{same.dist.start2feat}{Here, we distinguish two cases:
-      \enumerate{
-         \item If the leftmost probe of a segment is part of an annotated feature,
-          then dist.start2feat is the difference between that probe's middle
-          nucleotide and the annotated start point of the feature.
-         \item If it is not part of an annotated feature, then dist.start2feat
-          is the difference between the middle nucleotide and the end point of
-          the next feature to the left.}}
-    \item{same.dist.end2feat}{Here, we distinguish two cases:
-      \enumerate{
-         \item If the rightmost probe of a segment is part of an annotated feature,
-          then dist.endfeat is the difference between that probe's middle
-          nucleotide and the annotated end point of the feature.
-         \item If it is not part of an annotated feature, then dist.end2feat
-          is the difference between the start point of the next feature to the
-          right and the middle nucleotide.}}}
-    In addition, quantities oppo.XXX are calculated for the opposite
-    strand analogous to the same.XXX.
-
-    A probe is considered \emph{part of} a feature if its middle
-    nucleotide (\code{(probeLength-1)/2}) falls into it. That is an
-    arbitrary rule, which is intended to err on the side of assigning
-    probes to features rather than not.
+This function scores segments.
+For each segment, we calculate and/or record its:
+\describe{
+\item{chr, strand}{chromosome and strand}
+\item{start, end, length}{start position, end position, length (in
+bases)}
+\item{frac.dup}{fraction (0...1) of probes in this segment that have
+also hits otherwhere} 
+\item{level}{mean level minus that of the background}
+\item{featureInSegment}
+{the name of one or several features that are contained to more
+than \code{minOverlapFractionSame} in the segment. Can be empty.}
+\item{segmentInFeature}
+{the name of the (single) feature that the segment is contained in
+(to 100 percent). Can be empty. This is used in the UTR mapping.}
+\item{oppositeFeature}
+{the name of one several features that have >=\code{minOverlapBasesOppo} bases
+overlap with the segment.}
+\item{utr5}{candidate 5' UTR length}
+\item{utr3}{candidate 5' UTR length}
+\item{and other}{...to be filled in...}
+}
+A probe is considered \emph{part of} a feature if its middle
+nucleotide (\code{(probeLength-1)/2}) falls into it. That is an
+arbitrary rule, which is intended to err on the side of assigning
+probes to features rather than not.
 }
 
 

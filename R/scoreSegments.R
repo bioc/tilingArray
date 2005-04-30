@@ -72,19 +72,18 @@ scoreSegments = function(s, gff,
         end                   = rep(as.integer(NA), cp),
         length                = rep(as.integer(NA), cp),
         level                 = rep(as.numeric(NA), cp),
+        featureInSegment      = I(character(cp)),
+        segmentInFeature      = I(character(cp)),
+        oppositeFeature       = I(character(cp)),
+        utr5                  = rep(as.integer(NA), cp),
+        utr3                  = rep(as.integer(NA), cp),
         excurse               = rep(as.numeric(NA), cp),
         sdLeft                = rep(as.numeric(NA), cp),
         sdThis                = rep(as.numeric(NA), cp),
         sdRight               = rep(as.numeric(NA), cp),
-        frac.dup              = rep(as.numeric(NA), cp),
-        same.feature          = I(character(cp)),
-        same.overlap          = rep(as.numeric(NA), cp),
-        same.dist5            = rep(as.integer(NA), cp),
-        same.dist3            = rep(as.integer(NA), cp),
-        oppo.feature          = I(character(cp)),
-        oppo.overlap          = rep(as.numeric(NA), cp),
         oppo.dist5            = rep(as.integer(NA), cp),
-        oppo.dist3            = rep(as.integer(NA), cp))
+        oppo.dist3            = rep(as.integer(NA), cp),
+        frac.dup              = rep(as.numeric(NA), cp))
       
       ## th[i] is 1 + (end point of segment i) which is the same as
       ## the start point of segment (i-1).
@@ -107,73 +106,69 @@ scoreSegments = function(s, gff,
       segStart = segScore$start[idx]+probeMiddle
       segEnd   = segScore$end[idx]+probeMiddle
 
-      for(wgff in c("same", "oppo")) {
-        gffstrand = switch(wgff,
-          same = strand,
-          oppo = otherStrand(strand),
-          stop("Sapperlot"))
-        sgff = gff[ gff$seqname == chrSeqname[chr] &
-          gff$strand  == gffstrand &
+      same.gff = gff[ gff$seqname == chrSeqname[chr] &
+          gff$strand  == strand &
           gff$feature %in% knownFeatures, ]
-        p = function(x) paste(wgff, x, sep=".")
-
-        ov = rep(as.numeric(NA), cp)        
-        dl = dr = rep(as.integer(NA), cp)   
-        ft = character(cp)  
-        
-        for(j in 1:cp) {
-          ssj = segStart[j]
-          sej = segEnd[j]
-          overlap = (pmin(sej, sgff$end) - pmax(ssj, sgff$start) + 1) 
-          whf = switch(wgff,
-            same = {
-              which(overlap/sgff$length > params["minOverlapFractionSame"])
-            },
-            oppo = {
-              which(overlap > params["minOverlapBasesOppo"])
-            },
-            stop("Zapperlot"))
-          
-          if(length(whf)>0) {
-            ## The segment contains one or more features:
-            ft[j] = paste(unique(sgff$Name[whf]), collapse=", ")
-            ## one number measuring overlap: from start of leftmost feature in whf to end of
-            ## rightmost one:
-            leftStart = min(sgff$start[whf])
-            rightEnd  = max(sgff$end[whf])
-            ov[j] = (min(sej, rightEnd)-max(ssj, leftStart)+1) / (rightEnd-leftStart+1)
-            dl[j] = leftStart-ssj+1
-            dr[j] = sej-rightEnd+1
-          } else {
-            ## The segment contains no features:
-            ## distance to next features on the left and on the right:
-            dl[j] = posMin(ssj - sgff$end)
-            dr[j] = posMin(sgff$start - sej)
-          }
-        } ## for j
-        segScore[idx, p("overlap")] = ov
-        segScore[idx, p(distleft)]  = dl
-        segScore[idx, p(distright)] = dr
-        segScore[idx, p("feature")] = ft
-      } ## for wgff
-      if(verbose)
-        cat("\n")
-
+      
+      oppo.gff = gff[ gff$seqname == chrSeqname[chr] &
+          gff$strand  == otherStrand(strand) &
+          gff$feature %in% knownFeatures, ]
+      
+      dl  = dr = rep(as.integer(NA), cp)   
+      ft1 = ft2 = character(cp)  
       vars = matrix(as.numeric(NA), nrow=5, ncol=cp)
       stopifnot(all(diff(dat$x)>=0))
+        
       for(j in 1:cp) {
-        yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) & (dat$x<=dat$x[i2[j]]+50), , drop=FALSE]
-        yl = dat$y[dat$xunique & (dat$x <  dat$x[i1[j]]) & (dat$x>=dat$x[i1[j]]-50), , drop=FALSE]
-        ym = dat$y[dat$xunique & (dat$x >= dat$x[i1[j]]) & (dat$x<=dat$x[i2[j]])   , , drop=FALSE]
-        vars[, j] = isGoodUTRMappingCandidate(yl, ym, yr)
-      }
+        startj  = segStart[j]
+        endj    = segEnd[j]
+        overlapSame = (pmin(endj, same.gff$end) - pmax(startj, same.gff$start) + 1) 
+        overlapOppo = (pmin(endj, oppo.gff$end) - pmax(startj, oppo.gff$start) + 1) 
+        whFinS      = which(   overlapSame / sgff$length  > params["minOverlapFractionSame"])
+        whSinF      = which((overlapSame+1)/(endj-startj) >= 1)
+        whOppo      = which(  overlapOppo >= params["minOverlapBasesOppo"])
+          
+        if(length(whFinS)>0) {
+          ## The segment contains one or more features:
+          ft1[j] = paste(unique(same.gff$Name[whFinS]), collapse=", ")
+        }
+        if(length(whSinF)>0) {
+          nm     = unique(same.gff$Name[whSinF])
+          ft2[j] = paste(nm, collapse=", ")
+          if(length(whSinF)==1) {
+            dl[j] = same.gff$start[whSinF] - startj + 1
+            dr[j] = -same.gff$end[whSinF]  + endj + 1
 
+            ## UTR mapping confidence scores
+            yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) & (dat$x<=dat$x[i2[j]]+50), , drop=FALSE]
+            yl = dat$y[dat$xunique & (dat$x <  dat$x[i1[j]]) & (dat$x>=dat$x[i1[j]]-50), , drop=FALSE]
+            ym = dat$y[dat$xunique & (dat$x >= dat$x[i1[j]]) & (dat$x<=dat$x[i2[j]])   , , drop=FALSE]
+            vars[, j] = isGoodUTRMappingCandidate(yl, ym, yr)
+          }
+        }
+        if(ft1[j]=="" & ft2[j]=="") {
+          ## No featuress around:
+          ## distance to next features on the left and on the right:
+          dl[j] = posMin(startj - same.gff$end)
+          dr[j] = posMin(same.gff$start - endj)
+        }
+      } ## for j
+
+      segScore[idx, c("utr5", "utr3")]  = switch(strand,
+                "+" = c(dl, dr),
+                "-" = c(dr, dl))
+
+      segScore$segmentInFeature[idx] = ft2
+      segScore$featureInSegment[idx] = ft1
       segScore$sdLeft[idx]  = vars[1,]
       segScore$sdThis[idx]  = vars[2,]
       segScore$sdRight[idx] = vars[3,]
       segScore$level[idx]   = vars[4,]
       segScore$excurse[idx] = vars[5,]
       rv = rbind(rv, segScore)
+
+      if(verbose)
+        cat("\n")
     } ## for strand
   } ## for chr
   return(rv)

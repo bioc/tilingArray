@@ -2,16 +2,16 @@ library("tilingArray")
 source("scripts/readSegments.R") 
 source("scripts/calcThreshold.R") 
 source("scripts/categorizeSegments.R") 
-
+source("scripts/writeSegmentTable.R")
 
 options(error=recover, warn=0)
 
-interact = FALSE 
-what=c("pie", "length", "lvsx", "cons", "conswex")
+interact = TRUE
+what=c("pie", "wst", "length", "lvsx", "cons", "conswex")
 
 ## rm(tab)
 n = length(rnaTypes)
-longNames=c(polyA="poly-A RNA", polyA2="poly-A doubly enr.", tot="total RNA")
+longNames=c(polyA="poly-A RNA", polyA2="poly-A double enr.", tot="total RNA")
 
 if(!interact)
   sink("tableSegments.txt")
@@ -78,6 +78,18 @@ if("pie" %in% what){
   }
   if(!interact)
     dev.off()
+}
+
+##
+## WRITE THE SEGMENT TABLE
+##
+if("wst" %in% what){
+  for(rt in rnaTypes) {
+    s = get("segScore", get(rt))
+    sel = tab[[rt]]$category %in% c("verified", "uncharacterized", "ncRNA", "unA", "unI")
+    s = cbind(category=tab[[rt]]$category, s)[sel, ]
+    writeSegmentTable(s, title=longNames[rt], fn=file.path(indir[rt], "viz", "index.html"))
+  }
 }
 
 ##
