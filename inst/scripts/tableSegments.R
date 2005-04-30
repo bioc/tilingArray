@@ -65,13 +65,15 @@ if("pie" %in% what){
     perct = 100*ct[,1]/ct[,2]
     ctp  = cbind(ct, "percent" = round(perct,1))
     ctp  = rbind(ctp,  "total" = colSums(ctp, na.rm=TRUE))
-    
+    rownames(ctp) = sub("unA", "unannot. (pot. antisense)", rownames(ctp))
+    rownames(ctp) = sub("unI", "unannot. (isolated)", rownames(ctp))
+  
     cat("\n", rt, "\n-----\n", sep="")
     print(ctp)
     
     px = ct[, "observed"]
     names(px) = rownames(ct)
-    px = px[c(1,3,2,4,6,5)]
+    px = px[c("verified",  "ncRNA", "uncharacterized", "dubious", "unA", "unI")]
     pie(px, radius=0.75, main=longNames[rt],
         col=colors,
         labels=paste(names(px), " (", px, ")", sep=""))

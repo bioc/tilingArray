@@ -30,12 +30,9 @@ outtab = gff[ gff$feature=="gene", c("chr", "start", "end",
 outtab$plotfile = mapCoord2Plot(outtab$chr, outtab$start, outtab$end)
 
 
-
 ##
 ## Loop over the RNA Types
 ##
-convCmd = "#!/bin/sh"
-
 for(rt in rnaTypes) {
   cat(">>>", rt, "<<<\n")
   
@@ -53,6 +50,8 @@ for(rt in rnaTypes) {
   ## Write the pictures
   ## 
   e = get(rt)
+  convCmd = "#!/bin/sh"
+
   for(chr in 1:nrChr) {
     startPoints = seq(0, max(gff$end[gff$chr==chr]), by=alongChromStep)
     for(i in seq(along=startPoints)) {
@@ -62,7 +61,7 @@ for(rt in rnaTypes) {
       pdfname = file.path(outdir, paste(nm, ".pdf", sep=""))
       pixname = file.path(outdir, paste(nm, ".jpg", sep=""))
       
-      pdf(file=pdfname, width=12, height=6)
+      pdf(file=pdfname, width=10, height=5.5)
       grid.newpage()
       plotAlongChrom2(chr=chr, coord=c(start, start+alongChromWidth),
                       segRes   = e,
@@ -72,11 +71,10 @@ for(rt in rnaTypes) {
       convCmd = c(convCmd, paste("convert -density 120", pdfname, "-quality 100", pixname))
     }
   }
+  shellFile = paste("viewAllSeqs", rt, "sh", sep=".")
+  writeLines(convCmd, con=shellFile)
+  system(paste("chmod a+x", shellFile))
+  cat("\n\nYou can now run", shellFile, "\n\n")
 }
 
-
-    
-writeLines(convCmd, con="viewAllSeqs.sh")
-system("chmod a+x viewAllSeqs.sh")
-cat("\n\nYou can now run", viewAllSeqs.sh, "\n\n")
 

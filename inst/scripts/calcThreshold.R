@@ -4,8 +4,7 @@ calcThreshold = function(x, sel, pthresh=0.05, showPlot=FALSE, main) {
   require("multtest")
   require("genefilter")
 
-  levu = x[ sel]
-
+  levu  = x[sel]
   loc   = shorth(levu, na.rm=TRUE)
   z     = levu[which(levu<=loc)]-loc
   scale = mad(c(z, -z))
