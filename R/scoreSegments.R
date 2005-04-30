@@ -121,18 +121,14 @@ scoreSegments = function(s, gff,
       for(j in 1:cp) {
         startj  = segStart[j]
         endj    = segEnd[j]
-        overlapSame = (pmin(endj, same.gff$end) - pmax(startj, same.gff$start) + 1) 
-        overlapOppo = (pmin(endj, oppo.gff$end) - pmax(startj, oppo.gff$start) + 1) 
-        whGinS      = which( overlapSame/same.gff$length > params["minOverlapFractionSame"] &
-                             same.gff$feature=="gene")
-        whSinF      = which((overlapSame+1)/(endj-startj)   >= 1)
-        whOppo      = which(  overlapOppo >= params["minOverlapBasesOppo"])
-
-        ym = dat$y[dat$xunique & (dat$x >= dat$x[i1[j]]) & (dat$x<=dat$x[i2[j]])   , , drop=FALSE]
+        ym = dat$y[dat$xunique & (dat$x >= dat$x[i1[j]]) & (dat$x<=dat$x[i2[j]]),, drop=FALSE]
         lev[j] = mean(ym)
-        
+
+        ## genes that are fully contained in the segment
+        whGinS = which( same.gff$feature=="gene" &
+          same.gff$start >= startj &
+          same.gff$end   >= endj )
         if(length(whGinS)>0) {
-          ## The segment contains one or more features:
           nam = unique(same.gff$Name[whGinS])
           stopifnot(!any(duplicated(nam)))
           ft1[j] = paste(nam, collapse=", ")
@@ -147,17 +143,27 @@ scoreSegments = function(s, gff,
             vars[, j] = isGoodUTRMappingCandidate(yl, ym, yr)
           } ## else { browser() }
         }
+
+        ## features that have overlap with the segment
+        overlapSame = ((pmin(endj, same.gff$end) - pmax(startj, same.gff$start)) /
+                        pmin(endj-startj, same.gff$end-same.gff$start))
+        overlapOppo =  (pmin(endj, oppo.gff$end) - pmax(startj, oppo.gff$start))
+                             
+        whSinF      = which( overlapSame >= params["minOverlapFractionSame"])
+        whOppo      = which( overlapOppo >= params["minOverlapBasesOppo"])
+
         if(length(whSinF)>0) {
-          ## The segment is fully contained in a feature:
           nm     = unique(same.gff$Name[whSinF])
           ft2[j] = paste(nm, collapse=", ")
         }
+
         if(ft1[j]=="" & ft2[j]=="") {
           ## No featuress around:
           ## distance to next features on the left and on the right:
           dl[j] = posMin(startj - same.gff$end)
           dr[j] = posMin(same.gff$start - endj)
         }
+        
         if(length(whOppo)>0) {
           ft3[j] = paste(unique(oppo.gff$Name[whOppo]), collapse=", ")
         }

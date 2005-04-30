@@ -9,17 +9,15 @@
 ##
 ## Criteria for good gene-containing segments:
 ## a. contains less than 50% (maxDuplicated) multiple-hit probes
-## b. contains exactly one gene, fully (minOverlap): isOneGene 
-## c. the gene is not spliced, and it is Validated or Uncharacterized (not Dubious): isGoodGene
 ## d. the mean level is above threshold
 ## e. on both flanks level is down
 ## f. moving average of 3 probes should not deviate too far to below
 
 library("tilingArray")
-library("prada")
-source("colorRamp.R")
-source("readSegments.R") 
-source("categorizeSegments.R") 
+## source("colorRamp.R")
+source("scripts/readSegments.R") 
+source("scripts/categorizeSegments.R") 
+source("scripts/writeSegmentTable.R")
 
 graphics.off();
 x11(width=14, height=9)
@@ -32,10 +30,35 @@ names(utr)=rnaTypes
       
 for(rt in rnaTypes) {
   s = get("segScore", get(rt))
-  s$category = categorizeSegments(s)
+  s$category = categorizeSegmentsUTRmap(s)
+ 
+  ##
+  ## WRITE THE SEGMENT TABLE
+  ##
+  s$gene = character(nrow(s))
+  selgff = which(gff$feature=="gene")
+  mt = match(s$featureInSegment, gff$Name[selgff])
+  hasMatch    = !is.na(mt)
+  hasGeneName = !is.na(gff$gene[selgff][mt])
+  sel = hasMatch&hasGeneName
+  s$gene[sel] = gff$gene[selgff][mt[sel]]
+  
+  wh  = which(!is.na(s$category))
+  ord = order(s$category[wh])
+  s = s[wh[ord], c( "category", "excurse", "sdLeft", "sdThis", "sdRight",
+    "gene", "chr", "strand", "start", "end", "length", "level", "utr5", "utr3",
+    "featureInSegment", "segmentInFeature", "oppositeFeature",  "frac.dup")]
+  colnames(s)[1] = "score"
+  s = cbind(rank=1:nrow(s), s)
+  
+  fn = file.path(indir[rt], "viz", "utrmap.html")
+  cat("Writing", fn, "\n")
 
-  utr5 = s$same.dist5[ s$category==1 ]
-  utr3 = s$same.dist3[ s$category==l ]
+  writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn)
+
+  browser()
+  utr5 = s$same.dist5[ wh ]
+  utr3 = s$same.dist3[ wh ]
 
   z = cbind(utr5, utr3)
   rownames(z) = s$same.feature[sel]

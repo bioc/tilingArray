@@ -9,8 +9,10 @@ if(!exists("gff")) {
 }
 
 rnaTypes = c("polyA", "polyA2", "tot")[2:3]
-indir = c("segmentation-3polyA", "seg-polyA-050428", "seg-tot-050421")
-names(indir) = rnaTypes
+longNames=c(polyA="poly-A RNA single enriched", polyA2="poly-A RNA", tot="total RNA")
+
+indir = c("polyA"="segmentation-3polyA", "polyA2"="seg-polyA-050428",
+  "tot"="seg-tot-050421")
 
 for(rt in rnaTypes) {
   if(!exists(rt)) {

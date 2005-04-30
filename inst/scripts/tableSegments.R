@@ -6,12 +6,13 @@ source("scripts/writeSegmentTable.R")
 
 options(error=recover, warn=0)
 
-interact = TRUE
+interact = F
 what=c("pie", "wst", "length", "lvsx", "cons", "conswex")
 
-## rm(tab)
+if(!interact & exists("tab"))
+  rm(tab)
+
 n = length(rnaTypes)
-longNames=c(polyA="poly-A RNA", polyA2="poly-A double enr.", tot="total RNA")
 
 if(!interact)
   sink("tableSegments.txt")
@@ -62,9 +63,9 @@ if("pie" %in% what){
   for(rt in rnaTypes) {
     ct  = tab[[rt]]$count
     
-    perct = 100*ct[,1]/ct[,2]
-    ctp  = cbind(ct, "percent" = round(perct,1))
-    ctp  = rbind(ctp,  "total" = colSums(ctp, na.rm=TRUE))
+    ctp  = rbind(ct,  "total" = colSums(ct, na.rm=TRUE))
+    perct = 100*ctp[,1]/ctp[,2]
+    ctp  = cbind(ctp, "percent" = round(perct,1))
     rownames(ctp) = sub("unA", "unannot. (pot. antisense)", rownames(ctp))
     rownames(ctp) = sub("unI", "unannot. (isolated)", rownames(ctp))
   
@@ -90,7 +91,9 @@ if("wst" %in% what){
     s = get("segScore", get(rt))
     sel = tab[[rt]]$category %in% c("verified", "uncharacterized", "ncRNA", "unA", "unI")
     s = cbind(category=tab[[rt]]$category, s)[sel, ]
-    writeSegmentTable(s, title=longNames[rt], fn=file.path(indir[rt], "viz", "index.html"))
+    fn = file.path(indir[rt], "viz", "index.html")
+    cat("Writing", fn, "\n")
+    writeSegmentTable(s, title=longNames[rt], fn=fn)
   }
 }
 
@@ -106,7 +109,7 @@ if("length" %in% what){
   for(rt in rnaTypes) {
     s  = get("segScore", get(rt))
     ct = tab[[rt]]$category
-    for(lev in levels(ct)[c(1:2, 4:6)]) {
+    for(lev in c("verified",  "uncharacterized", "ncRNA", "unA", "unI")) {
       len = s$length[ct == lev]
       len[len>maxlen]=maxlen
       hist(len, breaks=br, col=colors[lev], main=paste(rt, lev))
@@ -132,7 +135,7 @@ if("lvsx" %in% what){
   for(rt in rnaTypes) {
     s  = get("segScore", get(rt))
     ct = tab[[rt]]$category
-    levs = levels(ct)[c(1, 6)]
+    levs = c("verified", "unI")
     ylim = quantile(s$level[ct %in% levs], probs=c(0.01, 0.99), na.rm=TRUE)
     for(lev in levs) {
       len = s$length[ct == lev]
@@ -181,12 +184,11 @@ calchit = function(sp, rt) {
     spbyq = split(1:nrow(br), br[[1]]) ## 1=Identity of query sequence
     theBest = sapply(spbyq, function(i) i[which.max(numNucMatch[i])])
     
-    prcid = numeric(nrow(s))
-    prcid[  br[[1]][theBest] ] = numNucMatch[theBest]
-    prcid = prcid / s$length
+    alignableLen = numeric(nrow(s))
+    alignableLen[  br[[1]][theBest] ] = numNucMatch[theBest]
     
     hit[,b] = sapply(sp, function(segments) {
-      mean( prcid[segments] )
+      sum(alignableLen[segments]) / sum(s$length[segments]) 
     })
   }
   data.frame(number=listLen(sp), fraction=rowMeans(hit))
@@ -205,12 +207,13 @@ if("cons" %in% what){
     s  = get("segScore", get(rt))
     ct = tab[[rt]]$category
     sp = split(seq(along=ct), ct)
-
-    stopifnot(length(sp)==7)
-    sp[[7]] = which(s$same.feature=="" & s$oppo.feature=="" &
-                 s$level <= quantile(s$level, 0.2, na.rm=TRUE))
-    sp[[8]] = seq(along=ct)
-    names(sp)[8] = "whole genome"
+    selected = c("verified", "uncharacterized" , "ncRNA",  "unA", "unI")
+    stopifnot(all(selected %in% names(sp)))
+    sp = sp[selected]
+    sp$unexpressed=which(s$featureInSegment=="" & s$segmentInFeature=="" &
+        s$oppositeFeature=="" & s$level <= quantile(s$level, 0.2, na.rm=TRUE))
+    sp$"whole genome" = seq(along=ct)
+    
     hit = calchit(sp, rt)
     
     cat("\n", rt, "\n-----\n", sep="")
@@ -272,7 +275,7 @@ if("conswex" %in% what){
               ylab="Fraction of alignable sequence", xlab=ev,
               ylim=c(0,100))
       axis(side=1, at = 1:nrlevs, labels = names(sp))
-      if(rt=="polyA"&&ev=="expression")
+      if(rt=="polyA2" & ev=="expression")
         legend(x=1, y=100, legend=segClassesLong, lty=1, lwd=2, pch=pchs, col=cols)
     }
   }

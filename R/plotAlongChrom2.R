@@ -310,7 +310,7 @@ plotAlongChromLegend = function(vpr) {
             x     = (i-0.65)*dx,
             y     = 0.4,
             default.units = "npc", just  = c("left", "center"),
-            gp    = gpar(cex=1))
+            gp    = gpar(cex=.8))
 
   popViewport()
 }

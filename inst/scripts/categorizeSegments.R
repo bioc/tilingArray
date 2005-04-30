@@ -10,22 +10,29 @@ splicedGenes1 = sort(gff$Name[gff$feature=="intron"])
 splicedGenes2 = names(which(table(gff$Name[gff$feature=="CDS"])>=2))
 goodGenes     = setdiff(goodGenes, union(splicedGenes1, splicedGenes2))
 
-categorizeSegmentsUTRmap = function(s, minOverlap=1, maxDuplicated=0.5) {
-  isUnique = (s$frac.dup < maxDuplicated)        ## a
-  stop("FIXME")
-  ## isUnanno = (s$same.feature=="")
-  thresh   = calcThreshold(s$level, sel=isUnique&isUnanno, main=rt)
+categorizeSegmentsUTRmap = function(s, maxDuplicated=0.5) {
+  isUnique = (s$frac.dup < maxDuplicated)
+  isUnanno = (s$featureInSegment=="" & s$segmentInFeature=="" & isUnique)
+  thresh = calcThreshold(s$level, sel=isUnanno, showPlot=FALSE, main=rt)
+  cat("thresh=", signif(thresh, 2), "\n")
 
-  isOneGene  = ((listLen(strsplit(s$same.feature, split=", "))==1) &
-                (s$same.overlap >= minOverlap))  ## b
-  isGoodGene = (s$same.feature %in% goodGenes)   ## c
+  isTranscribed = (isUnique & (s$level>=thresh))
+  neighborSegmentUnTranscribed = ( c(FALSE, s$level[-nrow(s)]<thresh) &
+                                   c(s$level[-1]<thresh, FALSE) )
+  
+  ll = listLen(strsplit(s$featureInSegment, split=", "))
+  isWellDefined = !(is.na(s$sdLeft) | is.na(s$sdRight) | is.na(s$excurse) | ll !=1 )
+  isGoodGene    = (s$featureInSegment %in% goodGenes)   ## c
 
-  k = 2:(nrow(s)-1)  ## d+e
-  isTranscribed = rep(FALSE, nrow(s))
-  isTranscribed[k] = (s$level[k]>=thresh) & (s$level[k-1]<thresh) & (s$level[k+1]<thresh)
+  candidates = which(isTranscribed & neighborSegmentUnTranscribed & isWellDefined & isGoodGene)
 
-  sel = isUnique & isAnno & isGoodGene & isTranscribed
-
+  ## max. rank
+  maxrk = pmax(rank(s$sdLeft[candidates]), rank(s$sdRight[candidates]),
+              rank(s$excurse[candidates]))
+     
+  res = rep(as.integer(NA), nrow(s))
+  res[candidates] = maxrk
+  return(res)
 }
 
 ##
@@ -36,7 +43,7 @@ categorizeSegmentsUTRmap = function(s, minOverlap=1, maxDuplicated=0.5) {
 ## ncRNA, uniqueness is defined by name. For unannotated segments, it is 
 ## defined by non-consecutiveness.
 
-categorizeSegmentsPie = function(s, minOverlap=0.8, maxDuplicated=0.5) {
+categorizeSegmentsPie = function(s, maxDuplicated=0.5) {
   isUnique = (s$frac.dup < maxDuplicated)
   isUnanno = (s$featureInSegment=="" & s$segmentInFeature=="" & isUnique)
   thresh = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
@@ -46,7 +53,7 @@ categorizeSegmentsPie = function(s, minOverlap=0.8, maxDuplicated=0.5) {
   wh = which(isTranscribed)
   
   category = factor(rep(NA, nrow(s)), 
-    levels = c("verified", "uncharacterized", "ncRNA", "dubious", "other",
+    levels = c("verified", "ncRNA", "uncharacterized", "dubious", "other",
       "unA", "unI", "not expressed"))
   category[ -wh ] = "not expressed"
 
@@ -66,7 +73,8 @@ categorizeSegmentsPie = function(s, minOverlap=0.8, maxDuplicated=0.5) {
       "uncharacterized" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Uncharacterized"],
       "ncRNA"           = gff$Name[gff$feature %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA")],
       "dubious"         = gff$Name[gff$feature=="gene" & gff$orf_classification=="Dubious"],
-      "other"           = gff$Name[gff$feature %in% c("pseudogene", "transposable_element")],
+      "other"           = gff$Name[gff$feature %in% c("pseudogene", "transposable_element",
+                              "transposable_element_gene")],
       stop("Zapperlot")
       )
     stopifnot(!is.null(theseNames))
