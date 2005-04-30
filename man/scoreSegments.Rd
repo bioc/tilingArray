@@ -42,15 +42,14 @@ bases)}
 \item{frac.dup}{fraction (0...1) of probes in this segment that have
 also hits otherwhere} 
 \item{level}{mean level minus that of the background}
-\item{featureInSegment}
-{the name of one or several features that are contained to more
-than \code{minOverlapFractionSame} in the segment. Can be empty.}
-\item{segmentInFeature}
-{the name of the (single) feature that the segment is contained in
-(to 100 percent). Can be empty. This is used in the UTR mapping.}
-\item{oppositeFeature}
-{the name of one several features that have >=\code{minOverlapBasesOppo} bases
-overlap with the segment.}
+\item{featureInSegment}{the name of one or several features that
+  are contained to more than \code{minOverlapFractionSame} in the
+  segment. Can be empty.}
+\item{segmentInFeature}{the name of the (single) feature that
+  the segment is contained in (to 100 percent).
+  Can be empty. This is used in the UTR mapping.}
+\item{oppositeFeature}{the name of one several features that
+  have >=\code{minOverlapBasesOppo} bases overlap with the segment.}
 \item{utr5}{candidate 5' UTR length}
 \item{utr3}{candidate 5' UTR length}
 \item{and other}{...to be filled in...}
