@@ -127,7 +127,7 @@ scoreSegments = function(s, gff,
         ## genes that are fully contained in the segment
         whGinS = which( same.gff$feature=="gene" &
           same.gff$start >= startj &
-          same.gff$end   >= endj )
+          same.gff$end   <= endj )
         if(length(whGinS)>0) {
           nam = unique(same.gff$Name[whGinS])
           stopifnot(!any(duplicated(nam)))

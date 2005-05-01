@@ -43,7 +43,7 @@ categorizeSegmentsUTRmap = function(s, maxDuplicated=0.5) {
 ## ncRNA, uniqueness is defined by name. For unannotated segments, it is 
 ## defined by non-consecutiveness.
 
-categorizeSegmentsPie = function(s, maxDuplicated=0.5) {
+categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=50) {
   isUnique = (s$frac.dup < maxDuplicated)
   isUnanno = (s$featureInSegment=="" & s$segmentInFeature=="" & isUnique)
   thresh = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
@@ -98,20 +98,38 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5) {
   category[isTranscribed & isUnanno & s$oppositeFeature!=""] = "unA"
   stopifnot(!any(is.na(category)))
 
-  unBoth = (category %in% c("unA", "unI"))
-  n = length(unBoth)
-  isConsecutive = c(FALSE, unBoth[2:n] & unBoth[1:(n-1)])
-  
-  mc  = category[!isConsecutive]
+  unBoth  = (category %in% c("unA", "unI"))
+  n       = length(unBoth)
+  unStart = which(unBoth & c(TRUE, !unBoth[-n]))
+  unEnd   = which(unBoth & c(!unBoth[-1], TRUE))
+  stopifnot(length(unStart)==length(unEnd), all(unEnd>=unStart))
 
-  n   = length(mc)
-  s1 = (mc[1:(n-2)]=="not expressed" & mc[2:(n-1)]=="unA" & mc[3:n]=="not expressed")
-  s2 = (mc[1:(n-2)]=="not expressed" & mc[2:(n-1)]=="unI" & mc[3:n]=="not expressed")
-  count["unA", ] = c(sum(s1), NA)
-  count["unI", ] = c(sum(s2), NA)
+  diffChrLeft  = c(TRUE, s$chr[-1]!=s$chr[-n])
+  diffChrRight = c(s$chr[-1]!=s$chr[-n], TRUE)
+
+  for(j in 1:length(unStart)) {
+    i1=unStart[j]
+    i2=unEnd[j]
+    if(i2>i1) {
+      ## in consecutive segments, unA trumps unI
+      if(any(category[i1:i2]%in%"unA"))
+        category[i1:i2]="unA"
+      s$length[i1]=s$end[i2]-s$start[i1]+1
+    }
+    ## Length Filter
+    if (! ((s$length[i1] >= minNewSegmentLength) &&
+          (diffChrLeft[i1]  | category[i1-1]=="not expressed") &&
+          (diffChrRight[i2] | category[i2+1]=="not expressed")) ) {
+      category[i1:i2]="other"
+    }
+  }
+
+  for(w in c("unA","unI")) 
+    count[w, ] = c(sum(category[unStart]==w), NA)
 
   cat("New segments: started with ", sum(unBoth), ", merging resulted in ",
-      sum(mc %in% c("unA", "unI")), ",\n'neighbor-not-expressed' filter resulted in ",
+      length(unStart), ",\n'neighbor-not-expressed' and 'length>=", minNewSegmentLength,
+      "' filter resulted in ",
       count["unA",1], "+", count["unI", 1], "=", count["unA",1]+count["unI", 1], ".\n\n",
       sep="")
 

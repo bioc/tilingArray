@@ -6,7 +6,7 @@ source("scripts/writeSegmentTable.R")
 
 options(error=recover, warn=0)
 
-interact = F
+interact =  FALSE
 what=c("pie", "wst", "length", "lvsx", "cons", "conswex")
 
 if(!interact & exists("tab"))
@@ -87,6 +87,7 @@ if("pie" %in% what){
 ## WRITE THE SEGMENT TABLE
 ##
 if("wst" %in% what){
+  cat("\n\n")
   for(rt in rnaTypes) {
     s = get("segScore", get(rt))
     sel = tab[[rt]]$category %in% c("verified", "uncharacterized", "ncRNA", "unA", "unI")
@@ -95,6 +96,7 @@ if("wst" %in% what){
     cat("Writing", fn, "\n")
     writeSegmentTable(s, title=longNames[rt], fn=fn)
   }
+  cat("\n\n")
 }
 
 ##

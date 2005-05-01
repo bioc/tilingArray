@@ -15,7 +15,8 @@
 
 library("tilingArray")
 ## source("colorRamp.R")
-source("scripts/readSegments.R") 
+source("scripts/readSegments.R")
+source("scripts/calcThreshold.R") 
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
 
