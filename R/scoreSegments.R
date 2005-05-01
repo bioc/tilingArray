@@ -14,7 +14,7 @@ isGoodUTRMappingCandidate = function(xleft, x, xright, minN=5) {
     sx = vectornorm(sd(x))
     k  = 3:nrow(x)
     x  = matrix(colMeans(x), ncol=ncol(x), nrow=nrow(x), byrow=TRUE) - x
-    ex = max(rowMeans(x[k-2, ]+x[k-1, ]+x[k, ])) / 3
+    ex = max(abs(rowMeans(x[k-2, ]+x[k-1, ]+x[k, ]))) / 3
   }
   return(c(sl, sx, sr, ex))
 }
@@ -25,7 +25,7 @@ scoreSegments = function(s, gff,
   knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
         "rRNA", "snRNA", "snoRNA", "tRNA",
         "transposable_element", "transposable_element_gene"),
-  params = c(minOverlapFractionSame = 0.8, minOverlapBasesOppo = 40),
+  params = c(minOverlapFractionSame = 0.8, minOverlapBasesOppo = 40, utrScoreWidth=100),
   verbose = TRUE) {
 
   ## minOverlapFractionSame: minimal overlap fraction (between 0 and 1) of a feature
@@ -138,8 +138,10 @@ scoreSegments = function(s, gff,
             dr[j] = -same.gff$end[whGinS]   + endj + 1
 
             ## UTR mapping confidence scores
-            yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) & (dat$x<=dat$x[i2[j]]+50), , drop=FALSE]
-            yl = dat$y[dat$xunique & (dat$x <  dat$x[i1[j]]) & (dat$x>=dat$x[i1[j]]-50), , drop=FALSE]
+            yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) &
+               (dat$x<=dat$x[i2[j]]+params["utrScoreWidth"]), , drop=FALSE]
+            yl = dat$y[dat$xunique & (dat$x <  dat$x[i1[j]]) &
+              (dat$x>=dat$x[i1[j]]-params["utrScoreWidth"]), , drop=FALSE]
             vars[, j] = isGoodUTRMappingCandidate(yl, ym, yr)
           } ## else { browser() }
         }

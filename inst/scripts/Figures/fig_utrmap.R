@@ -14,6 +14,7 @@
 ## f. moving average of 3 probes should not deviate too far to below
 
 library("tilingArray")
+library("prada")
 ## source("colorRamp.R")
 source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
@@ -57,22 +58,18 @@ for(rt in rnaTypes) {
 
   writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn)
 
-  browser()
-  utr5 = s$same.dist5[ wh ]
-  utr3 = s$same.dist3[ wh ]
-
-  z = cbind(utr5, utr3)
-  rownames(z) = s$same.feature[sel]
+  z = cbind(s$utr5, s$utr3)
+  rownames(z) = s$featureInSegment
   colnames(z) = c("5' UTR", "3' UTR")
   utr[[rt]] = z
 
   br=50
-  hist(utr5[utr5<1000],
-       col=cols[1], breaks=br,
-       main=paste(rt, ": 5' UTR", " (", length(utr5), ")", sep=""))
-  hist(utr3[utr3<1000], 
-       col=cols[3], breaks=br, main=paste(rt, ": 3' UTR", sep=""))
-  plot(utr5, utr3, pch=16, col=cols[2])
+  hist(s$utr5[s$utr5<1000],
+       col=cols[1], breaks=br, xlab="length of 5' UTR",
+       main=paste(longNames[rt], ": 5' UTR", " (", length(s$utr5), ")", sep=""))
+  hist(s$utr3[s$utr3<1000], xlab="length of 3' UTR",
+       col=cols[3], breaks=br, main=paste(longNames[rt], ": 3' UTR", sep=""))
+  plot(s$utr5, s$utr3, pch=16, main=longNames[rt], xlab="length of 5' UTR", ylab="length of 3' UTR", col=cols[2])
 }
 
 dev.copy(pdf, file="utrmap-hists.pdf", width=10, height=7); dev.off()
@@ -82,9 +79,9 @@ comm = intersect(rownames(utr[[1]]), rownames(utr[[2]]))
 x11(width=9, height=5)
 par(mfrow=c(1,2))
 for(i in 1:2)
-  smoothScatter(log(utr[[1]][comm,i]), log(utr[[2]][comm,i]),
-       main=paste(colnames(utr[[1]])[i], " (", length(comm), ")", sep=""),
-       xlab=rnaTypes[1], ylab=rnaTypes[2])
+  smoothScatter(log(utr[[1]][comm,i], 10), log(utr[[2]][comm,i], 10),
+       main=paste("log10 of length of ", colnames(utr[[1]])[i], " (", length(comm), ")", sep=""),
+       xlab=longNames[rnaTypes[1]], ylab=longNames[rnaTypes[2]])
 
 dev.copy(pdf, file="utrmap-scatter.pdf", width=8, height=4.8); dev.off()
 
@@ -98,6 +95,6 @@ cat("Selection criteria: segment must\n- contain exactly 1 annotated (",
     sprintf("%10s  %6s  %5s\n", "RNA type", "side", "mode"), file=out, sep="")
 for(rt in rnaTypes)
   for(i in 1:2)
-    cat(sprintf("%10s  %6s  %5d\n", rt, colnames(utr[[rt]])[i],
+    cat(sprintf("%10s  %6s  %5d\n", longNames[rt], colnames(utr[[rt]])[i],
                 as.integer(shorth(utr[[rt]][comm, i]))), file=out)
 close(out)

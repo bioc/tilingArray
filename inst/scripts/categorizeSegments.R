@@ -29,7 +29,7 @@ categorizeSegmentsUTRmap = function(s, maxDuplicated=0.5) {
   ## max. rank
   maxrk = pmax(rank(s$sdLeft[candidates]), rank(s$sdRight[candidates]),
               rank(s$excurse[candidates]))
-     
+     browser()
   res = rep(as.integer(NA), nrow(s))
   res[candidates] = maxrk
   return(res)
