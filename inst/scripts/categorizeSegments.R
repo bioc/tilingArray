@@ -43,7 +43,7 @@ categorizeSegmentsUTRmap = function(s, maxDuplicated=0.5) {
 ## ncRNA, uniqueness is defined by name. For unannotated segments, it is 
 ## defined by non-consecutiveness.
 
-categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=50) {
+categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24) {
   isUnique = (s$frac.dup < maxDuplicated)
   isUnanno = (s$overlappingFeature=="" & isUnique)
   thresh = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
@@ -58,7 +58,6 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=50) {
   category[ -wh ] = "not expressed"
 
   ## split
-  patFinS = strsplit(s$geneInSegment[wh],  split=", ")
   patSinF = strsplit(s$overlappingFeature[wh],  split=", ")
   
   count           = matrix(NA, nrow=length(levels(category)), ncol=2)
@@ -79,16 +78,11 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=50) {
       )
     stopifnot(!is.null(theseNames))
     count[categ, "in genome"] = length(unique(theseNames))
-    count[categ, "observed"]  = length(unique(intersect(theseNames,
-           union(unlist(patFinS), unlist(patSinF)))))
+    count[categ, "observed"]  = length(unique(intersect(theseNames, unlist(patSinF))))
 
     ## first with features that this segment is contained in
     isThisCategSinF = sapply(patSinF, function(x) any(!is.na(match(x, theseNames))))
     category[wh][isThisCategSinF] = categ
-
-    ## then with features contained in this segment
-    isThisCategFinS = sapply(patFinS, function(x) any(!is.na(match(x, theseNames))))
-    category[wh][isThisCategFinS] = categ
 
   } ## for categ
   

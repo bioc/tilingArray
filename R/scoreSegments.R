@@ -1,22 +1,16 @@
 ##------------------------------------------------------------
 ## Copyright (2005) Wolfgang Huber
 ##------------------------------------------------------------
-vectornorm = function(x) sqrt(mean(x*x))
+## vectornorm = function(x) sqrt(mean(x*x))
 
-isGoodUTRMappingCandidate = function(xleft, x, xright, minN=5) {
-  sl = sx = sr = ex = px = as.numeric(NA)
-  stopifnot(is.matrix(xleft), is.matrix(x), is.matrix(xright))
-  if(nrow(xleft)>=minN)
-    sl = vectornorm(sd(xleft[nrow(xleft)-(0:(minN-1)), ]))
-  if(nrow(xright)>=minN)
-    sr = vectornorm(sd(xright[1:minN, ]))
-  if(nrow(x)>=minN) {
-    sx = vectornorm(sd(x))
-    k  = 3:nrow(x)
-    x  = matrix(colMeans(x), ncol=ncol(x), nrow=nrow(x), byrow=TRUE) - x
-    ex = max(abs(rowMeans(x[k-2, ]+x[k-1, ]+x[k, ]))) / 3
+zscore = function(x, x0) {
+  if(nrow(x)>2) {
+    sds = sd(x)
+    dm  = colMeans(x)-x0
+    z   = sqrt(sum((dm*dm)/(sds*sds))/length(dm))
+  } else {
+    as.numeric(NA)
   }
-  return(c(sl, sx, sr, ex))
 }
 
 scoreSegments = function(s, gff, 
@@ -78,10 +72,8 @@ scoreSegments = function(s, gff,
         utr3                  = rep(as.integer(NA), cp),
         distLeft              = rep(as.integer(NA), cp),
         distRight             = rep(as.integer(NA), cp),
-        excurse               = rep(as.numeric(NA), cp),
-        sdLeft                = rep(as.numeric(NA), cp),
-        sdThis                = rep(as.numeric(NA), cp),
-        sdRight               = rep(as.numeric(NA), cp),
+        zLeft                 = rep(as.numeric(NA), cp),
+        zRight                = rep(as.numeric(NA), cp),
         frac.dup              = rep(as.numeric(NA), cp))
       
       ## th[i] is 1 + (end point of segment i) which is the same as
@@ -113,18 +105,26 @@ scoreSegments = function(s, gff,
           gff$strand  == otherStrand(strand) &
           gff$feature %in% knownFeatures, ]
       
-      utrLeft  = utrRight = rep(as.integer(NA), cp)   
+      utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = character(cp)  
-      vars = matrix(as.numeric(NA), nrow=4, ncol=cp)
-      lev  = rep(as.numeric(NA), cp)
+      zl = zr = lev = rep(as.numeric(NA), cp)
       
       stopifnot(all(diff(dat$x)>=0))
         
       for(j in 1:cp) {
         startj  = segStart[j]
         endj    = segEnd[j]
-        ym = dat$y[dat$xunique & (dat$x >= dat$x[i1[j]]) & (dat$x<=dat$x[i2[j]]),, drop=FALSE]
-        lev[j] = mean(ym)
+        ym  = dat$y[dat$xunique & (dat$x >= dat$x[i1[j]]) & (dat$x<=dat$x[i2[j]]),, drop=FALSE]
+        cmym   = colMeans(ym)
+        lev[j] = mean(cmym)
+        
+        ## segment quality scores
+        yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) &
+          (dat$x<=dat$x[i2[j]]+params["utrScoreWidth"]), , drop=FALSE]
+        yl = dat$y[dat$xunique & (dat$x <  dat$x[i1[j]]) &
+          (dat$x>=dat$x[i1[j]]-params["utrScoreWidth"]), , drop=FALSE]
+        zl[j] = zscore(yl, cmym)
+        zr[j] = zscore(yr, cmym)
 
         ## genes that are fully contained in the segment
         whGinS = which( same.gff$feature=="gene" &
@@ -138,14 +138,9 @@ scoreSegments = function(s, gff,
             ## The segment contains exactly one feature:
             utrLeft[j] =  same.gff$start[whGinS] - startj 
             utrRight[j] = -same.gff$end[whGinS]   + endj 
-
-            ## UTR mapping confidence scores
-            yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) &
-               (dat$x<=dat$x[i2[j]]+params["utrScoreWidth"]), , drop=FALSE]
-            yl = dat$y[dat$xunique & (dat$x <  dat$x[i1[j]]) &
-              (dat$x>=dat$x[i1[j]]-params["utrScoreWidth"]), , drop=FALSE]
-            vars[, j] = isGoodUTRMappingCandidate(yl, ym, yr)
-          } ## else { browser() }
+          } 
+        } else {
+          nm1 = character(0)
         }
 
         ## features that have overlap with the segment
@@ -162,12 +157,9 @@ scoreSegments = function(s, gff,
         }
         stopifnot(all(nm1 %in% nm2))
         
-        if(ft2[j]=="") {
-          ## No featuress around:
-          ## distance to next features on the left and on the right:
-          dl[j] = posMin(startj - same.gff$end)
-          dr[j] = posMin(same.gff$start - endj)
-        }
+        ## distance to next features on the left and on the right:
+        dl[j] = posMin(startj - same.gff$end)
+        dr[j] = posMin(same.gff$start - endj)
         
         if(length(whOppo)>0) {
           ft3[j] = paste(unique(oppo.gff$Name[whOppo]), collapse=", ")
@@ -178,14 +170,14 @@ scoreSegments = function(s, gff,
                 "+" = c(utrLeft, utrRight),
                 "-" = c(utrRight, utrLeft))
 
-      segScore$geneInSegment[idx]       = ft1
+      segScore$geneInSegment[idx]      = ft1
       segScore$overlappingFeature[idx] = ft2
-      segScore$oppositeFeature[idx]     = ft3
-      segScore$level[idx]            = lev
-      segScore$sdLeft[idx]  = vars[1,]
-      segScore$sdThis[idx]  = vars[2,]
-      segScore$sdRight[idx] = vars[3,]
-      segScore$excurse[idx] = vars[4,]
+      segScore$oppositeFeature[idx]    = ft3
+      segScore$level[idx]              = lev
+      segScore$distLeft[idx]           = dl
+      segScore$distRight[idx]          = dr
+      segScore$zLeft[idx]              = zl
+      segScore$zRight[idx]             = zr
       rv = rbind(rv, segScore)
 
       if(verbose)
