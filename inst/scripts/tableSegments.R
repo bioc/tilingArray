@@ -6,7 +6,7 @@ source("scripts/writeSegmentTable.R")
 
 options(error=recover, warn=0)
 
-interact =  FALSE
+interact =  F
 what=c("pie", "wst", "length", "lvsx", "cons", "conswex")
 
 if(!interact & exists("tab"))
@@ -178,19 +178,30 @@ calchit = function(sp, rt) {
   for(b in 1:ncol(hit)) {
     br = blastres[[rt]][[b]]
     
-    ## numNucMatch = br[[3]]*br[[4]] ## 3=Percent identity, 4=Alignment length
-    numNucMatch = 100*br[[4]] ## 3=Percent identity, 4=Alignment length
+    numNucMatch = br[[3]]*br[[4]] ## 3=Percent identity, 4=Alignment length
+    ## numNucMatch = 100*br[[4]] ## 3=Percent identity, 4=Alignment length
 
     ## split by name of query sequence (1) and just keep the hit with the
     ## highest value of numNucMatch
     spbyq = split(1:nrow(br), br[[1]]) ## 1=Identity of query sequence
     theBest = sapply(spbyq, function(i) i[which.max(numNucMatch[i])])
-    
-    alignableLen = numeric(nrow(s))
-    alignableLen[  br[[1]][theBest] ] = numNucMatch[theBest]
+    i.seg = br[[1]][theBest]
+      
+    ## ratio of the sums:
+    ##
+    ## alignableLen = numeric(nrow(s))
+    ## alignableLen[  br[[1]][theBest] ] = numNucMatch[theBest]
+    ## hit[,b] = sapply(sp, function(segments) {
+    ##  sum(alignableLen[segments]) / sum(s$length[segments]) 
+    ## })
+
+    ## mean of the ratios:
+    ##
+    alignableFrac = numeric(nrow(s))
+    alignableFrac[i.seg] = numNucMatch[theBest] / s$length[i.seg]
     
     hit[,b] = sapply(sp, function(segments) {
-      sum(alignableLen[segments]) / sum(s$length[segments]) 
+      mean(alignableFrac[segments]) 
     })
   }
   data.frame(number=listLen(sp), fraction=rowMeans(hit))
@@ -212,7 +223,7 @@ if("cons" %in% what){
     selected = c("verified", "uncharacterized" , "ncRNA",  "unA", "unI")
     stopifnot(all(selected %in% names(sp)))
     sp = sp[selected]
-    sp$unexpressed=which(s$featureInSegment=="" & s$segmentInFeature=="" &
+    sp$unexpressed=which(s$overlappingFeature=="" &
         s$oppositeFeature=="" & s$level <= quantile(s$level, 0.2, na.rm=TRUE))
     sp$"whole genome" = seq(along=ct)
     

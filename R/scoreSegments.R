@@ -71,11 +71,13 @@ scoreSegments = function(s, gff,
         end                   = rep(as.integer(NA), cp),
         length                = rep(as.integer(NA), cp),
         level                 = rep(as.numeric(NA), cp),
-        featureInSegment      = I(character(cp)),
-        segmentInFeature      = I(character(cp)),
+        geneInSegment         = I(character(cp)),
+        overlappingFeature    = I(character(cp)),
         oppositeFeature       = I(character(cp)),
         utr5                  = rep(as.integer(NA), cp),
         utr3                  = rep(as.integer(NA), cp),
+        distLeft              = rep(as.integer(NA), cp),
+        distRight             = rep(as.integer(NA), cp),
         excurse               = rep(as.numeric(NA), cp),
         sdLeft                = rep(as.numeric(NA), cp),
         sdThis                = rep(as.numeric(NA), cp),
@@ -111,7 +113,7 @@ scoreSegments = function(s, gff,
           gff$strand  == otherStrand(strand) &
           gff$feature %in% knownFeatures, ]
       
-      dl  = dr = rep(as.integer(NA), cp)   
+      utrLeft  = utrRight = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = character(cp)  
       vars = matrix(as.numeric(NA), nrow=4, ncol=cp)
       lev  = rep(as.numeric(NA), cp)
@@ -129,13 +131,13 @@ scoreSegments = function(s, gff,
           same.gff$start >= startj &
           same.gff$end   <= endj )
         if(length(whGinS)>0) {
-          nam = unique(same.gff$Name[whGinS])
-          stopifnot(!any(duplicated(nam)))
-          ft1[j] = paste(nam, collapse=", ")
+          nm1 = unique(same.gff$Name[whGinS])
+          stopifnot(!any(duplicated(nm1)))
+          ft1[j] = paste(nm1, collapse=", ")
           if(length(whGinS)==1) {
             ## The segment contains exactly one feature:
-            dl[j] =  same.gff$start[whGinS] - startj + 1
-            dr[j] = -same.gff$end[whGinS]   + endj + 1
+            utrLeft[j] =  same.gff$start[whGinS] - startj 
+            utrRight[j] = -same.gff$end[whGinS]   + endj 
 
             ## UTR mapping confidence scores
             yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) &
@@ -155,11 +157,12 @@ scoreSegments = function(s, gff,
         whOppo      = which( overlapOppo >= params["minOverlapBasesOppo"])
 
         if(length(whSinF)>0) {
-          nm     = unique(same.gff$Name[whSinF])
-          ft2[j] = paste(nm, collapse=", ")
+          nm2    = unique(same.gff$Name[whSinF])
+          ft2[j] = paste(nm2, collapse=", ")
         }
-
-        if(ft1[j]=="" & ft2[j]=="") {
+        stopifnot(all(nm1 %in% nm2))
+        
+        if(ft2[j]=="") {
           ## No featuress around:
           ## distance to next features on the left and on the right:
           dl[j] = posMin(startj - same.gff$end)
@@ -172,12 +175,12 @@ scoreSegments = function(s, gff,
       } ## for j
 
       segScore[idx, c("utr5", "utr3")]  = switch(strand,
-                "+" = c(dl, dr),
-                "-" = c(dr, dl))
+                "+" = c(utrLeft, utrRight),
+                "-" = c(utrRight, utrLeft))
 
-      segScore$featureInSegment[idx] = ft1
-      segScore$segmentInFeature[idx] = ft2
-      segScore$oppositeFeature[idx]  = ft3
+      segScore$geneInSegment[idx]       = ft1
+      segScore$overlappingFeature[idx] = ft2
+      segScore$oppositeFeature[idx]     = ft3
       segScore$level[idx]            = lev
       segScore$sdLeft[idx]  = vars[1,]
       segScore$sdThis[idx]  = vars[2,]

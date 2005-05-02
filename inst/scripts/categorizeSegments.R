@@ -12,7 +12,7 @@ goodGenes     = setdiff(goodGenes, union(splicedGenes1, splicedGenes2))
 
 categorizeSegmentsUTRmap = function(s, maxDuplicated=0.5) {
   isUnique = (s$frac.dup < maxDuplicated)
-  isUnanno = (s$featureInSegment=="" & s$segmentInFeature=="" & isUnique)
+  isUnanno = (s$overlappingFeature=="" & isUnique)
   thresh = calcThreshold(s$level, sel=isUnanno, showPlot=FALSE, main=rt)
   cat("thresh=", signif(thresh, 2), "\n")
 
@@ -20,9 +20,9 @@ categorizeSegmentsUTRmap = function(s, maxDuplicated=0.5) {
   neighborSegmentUnTranscribed = ( c(FALSE, s$level[-nrow(s)]<thresh) &
                                    c(s$level[-1]<thresh, FALSE) )
   
-  ll = listLen(strsplit(s$featureInSegment, split=", "))
+  ll = listLen(strsplit(s$geneInSegment, split=", "))
   isWellDefined = !(is.na(s$sdLeft) | is.na(s$sdRight) | is.na(s$excurse) | ll !=1 )
-  isGoodGene    = (s$featureInSegment %in% goodGenes)   ## c
+  isGoodGene    = (s$geneInSegment %in% goodGenes)   ## c
 
   candidates = which(isTranscribed & neighborSegmentUnTranscribed & isWellDefined & isGoodGene)
 
@@ -45,7 +45,7 @@ categorizeSegmentsUTRmap = function(s, maxDuplicated=0.5) {
 
 categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=50) {
   isUnique = (s$frac.dup < maxDuplicated)
-  isUnanno = (s$featureInSegment=="" & s$segmentInFeature=="" & isUnique)
+  isUnanno = (s$overlappingFeature=="" & isUnique)
   thresh = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
   cat("thresh=", signif(thresh, 2), "\n")
 
@@ -58,8 +58,8 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=50) {
   category[ -wh ] = "not expressed"
 
   ## split
-  patFinS = strsplit(s$featureInSegment[wh],  split=", ")
-  patSinF = strsplit(s$segmentInFeature[wh],  split=", ")
+  patFinS = strsplit(s$geneInSegment[wh],  split=", ")
+  patSinF = strsplit(s$overlappingFeature[wh],  split=", ")
   
   count           = matrix(NA, nrow=length(levels(category)), ncol=2)
   rownames(count) = levels(category)

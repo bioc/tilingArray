@@ -39,7 +39,7 @@ for(rt in rnaTypes) {
   ##
   s$gene = character(nrow(s))
   selgff = which(gff$feature=="gene")
-  mt = match(s$featureInSegment, gff$Name[selgff])
+  mt = match(s$geneInSegment, gff$Name[selgff])
   hasMatch    = !is.na(mt)
   hasGeneName = !is.na(gff$gene[selgff][mt])
   sel = hasMatch&hasGeneName
@@ -49,7 +49,7 @@ for(rt in rnaTypes) {
   ord = order(s$category[wh])
   s = s[wh[ord], c( "category", "excurse", "sdLeft", "sdThis", "sdRight",
     "gene", "chr", "strand", "start", "end", "length", "level", "utr5", "utr3",
-    "featureInSegment", "segmentInFeature", "oppositeFeature",  "frac.dup")]
+    "geneInSegment", "overlappingFeature", "oppositeFeature",  "frac.dup")]
   colnames(s)[1] = "score"
   s = cbind(rank=1:nrow(s), s)
   
@@ -59,7 +59,7 @@ for(rt in rnaTypes) {
   writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn)
 
   z = cbind(s$utr5, s$utr3)
-  rownames(z) = s$featureInSegment
+  rownames(z) = s$geneInSegment
   colnames(z) = c("5' UTR", "3' UTR")
   utr[[rt]] = z
 
