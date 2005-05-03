@@ -48,16 +48,16 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
 
   isUnique = (s$frac.dup < maxDuplicated)
   isUnanno = (s$overlappingFeature=="" & isUnique)
-  thresh = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
-  cat("thresh=", signif(thresh, 2), "\n")
+  threshold = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
+  cat("threshold=", signif(threshold, 2), "\n")
 
-  isTranscribed = (isUnique & (s$level>=thresh))
+  isTranscribed = (isUnique & (s$level>=threshold))
   wh = which(isTranscribed)
 
   ## results data structure: a factor which assigns a category to each segment:
   s$category = factor(rep(NA, nrow(s)), 
     levels = c("verified", "ncRNA", "uncharacterized", "dubious", "other",
-      "unA", "unI", "not expressed"))
+      "unIso", "unAnti", "unDubious, ""not expressed"))
 
   count           = matrix(NA, nrow=length(levels(category)), ncol=2)
   rownames(count) = levels(s$category)
@@ -112,7 +112,7 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
     keep[ (i1+1) : i2 ] = FALSE
   }       
   s$end[unStart]       = s$end[unEnd]
-  s$length[unStart]    = s$end[unStart]-s$start[unStart]+1
+  s$length[unStart]    = s$end[unStart]-s$start[unStart]
   s$zRight[unStart]    = s$zRight[unEnd]
   s$distRight[unStart] = s$distRight[unEnd]
 
@@ -123,53 +123,22 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
   s$category[ (s$length<minNewSegmentLength) | (s$zLeft < zTresh) |
              (s$zRight < zTresh) ] = "other"
              
-  ## >>> Phase 4: assign to "unI" or "unA"
-  for(i in which(is.na(s$category))) {
-    chr    = s$chr[i]
-    strand = s$strand[i]
-    start  = s$start[i]
-    
-    end  =   s$end[i]
-    
-
-  }
-    browser()
-
-      if(any(category[i1:i2]%in%"unA"))
-        category[i1:i2]="unA"
-
-    
-  ## Properly count the unannotated segments: they should be flanked on both sides by something
-  ## which is not expressed. Possible consecutive expressed unannotated segments are merged.
-  category[isTranscribed & isUnanno & s$oppositeFeature==""] = "unI"
-  category[isTranscribed & isUnanno & s$oppositeFeature!=""] = "unA"
-  stopifnot(!any(is.na(category)))
+  ## >>> Phase 4: assign to "unIso", "unAnti", or "unDubious"
+  s$category[ is.na(s$category) & s$oppositeFeature=="" ] = "unIso"
+  s$category[ is.na(s$category) & s$oppositeExpression >= threshold] = "unDubious"
+  s$category[ is.na(s$category) ] = "unAnti"
 
 
-    ## Length Filter
-    if (! ((s$length[i1] >= minNewSegmentLength) &&
-          (diffChrLeft[i1]  | category[i1-1]=="not expressed") &&
-          (diffChrRight[i2] | category[i2+1]=="not expressed")) ) {
-      category[i1:i2]="other"
-    }
-  }
-
-    count[categ, "observed"]  = length(unique(intersect(theseNames, unlist(ovF))))
-
-
-  
-  for(w in c("unA","unI")) 
-    count[w, ] = c(sum(category[unStart]==w), NA)
+  tab = table(s$category)
+  count[names(tab), "observed"]  = tab
 
   cat("New segments: started with ", sum(unBoth), ", merging resulted in ",
       length(unStart), ",\n'neighbor-not-expressed' and 'length>=", minNewSegmentLength,
       "' filter resulted in ",
       count["unA",1], "+", count["unI", 1], "=", count["unA",1]+count["unI", 1], ".\n\n",
       sep="")
-
-
   
-  list(s=s, count=count)
+  list(s=s, count=count, threshold=threshold)
 }
 
 

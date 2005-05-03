@@ -1,13 +1,11 @@
 ##------------------------------------------------------------
 ## Copyright (2005) Wolfgang Huber
 ##------------------------------------------------------------
-## vectornorm = function(x) sqrt(mean(x*x))
+vectornorm = function(x) sqrt(mean(x*x))
 
 zscore = function(x, x0) {
   if(nrow(x)>2) {
-    sds = sd(x)
-    dm  = colMeans(x)-x0
-    z   = sqrt(sum((dm*dm)/(sds*sds))/length(dm))
+    (mean(colMeans(x)-x0)/vectornorm(sd(x)))
   } else {
     as.numeric(NA)
   }
@@ -37,7 +35,8 @@ scoreSegments = function(s, gff,
   knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
         "rRNA", "snRNA", "snoRNA", "tRNA",
         "transposable_element", "transposable_element_gene"),
-  params = c(minOverlapFractionSame = 0.8, oppositeWindow = 100, utrScoreWidth=100),
+  params = c(minOverlapFractionSame = 0.8, minOverlapOppo = 40,
+    oppositeWindow = 100, utrScoreWidth=100),
   verbose = TRUE) {
 
   ## minOverlapFractionSame: minimal overlap fraction (between 0 and 1) of a feature
@@ -109,7 +108,7 @@ scoreSegments = function(s, gff,
       segScore$strand[idx]   = strand
       segScore$start[idx]    = dat$x[i1]
       segScore$end[idx]      = dat$x[i2]
-      segScore$length[idx]   = dat$x[i2]-dat$x[i1]+1
+      segScore$length[idx]   = dat$x[i2]-dat$x[i1]
       segScore$frac.dup[idx] = mapply(function(h1, h2) {
         z = dat$xunique[h1:h2]
         1-sum(z)/length(z)
