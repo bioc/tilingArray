@@ -13,7 +13,7 @@ normRefFiles = file.path("Celfiles",
     "041120_S96genDNA_re-hybe.cel.gz"))
 
 files = file.path("Celfiles",
-  c("050225_cDNA_S96_12ug.cel.gz"))
+  c("05_04_08_#22.cel.gz"))
 
 hybeType=c(rep("Reverse", length(files)))  ## "Direct"
 

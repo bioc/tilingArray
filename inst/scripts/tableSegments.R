@@ -6,7 +6,7 @@ source("scripts/writeSegmentTable.R")
 
 options(error=recover, warn=0)
 
-interact =  F
+interact =  TRUE
 what=c("pie", "wst", "length", "lvsx", "cons", "conswex")
 
 if(!interact & exists("tab"))
