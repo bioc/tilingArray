@@ -6,14 +6,6 @@
 \documentclass[11pt]{article}
 \usepackage{color}
 \definecolor{darkblue}{rgb}{0.0,0.0,0.75}
-\usepackage[%
-baseurl={http://www.bioconductor.org},%
-pdftitle={How to use the findSegments function to fit a piecewise constant curve},%
-pdfauthor={Wolfgang Huber},%
-pdfsubject={tilingArray},%
-pdfkeywords={Bioconductor},%
-pagebackref,bookmarks,colorlinks,linkcolor=darkblue,citecolor=darkblue,%
-pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 
 \newcommand{\Robject}[1]{\texttt{#1}}
 \newcommand{\Rpackage}[1]{\textit{#1}}
@@ -36,7 +28,7 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 %------------------------------------------------------------
 \author{Wolfgang Huber}
 \maketitle
-% \tableofcontents
+\tableofcontents
 
 %--------------------------------------------------
 \section{Introduction}
@@ -78,7 +70,7 @@ plot(gd$x, pch=".")
 abline(v=gd$cp, col="red")
 @ 
 %
-\myincfig{findSegments-plotData}{0.6\textwidth}{%
+\myincfig{findsegments-plotData}{0.6\textwidth}{%
 A simulated data example with \Sexpr{nrcp} change points, shown with red
 vertical lines}
 %

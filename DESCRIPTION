@@ -6,9 +6,6 @@ Author: Wolfgang Huber
 Maintainer: W. Huber <huber@ebi.ac.uk>
 Depends: R (>= 2.0.0), Biobase (>= 1.4.1), RColorBrewer (>= 0.2-2), grid (>= 2.0.0)
 Suggests: 
-Description: Analysis of tiling arrays. The package provides a fast,
-model-based segmentation algorithm and functions for scoring and
-visualization of the segments. Currently, the focus has been on algorithm
-development, the user-friendliness will be improved in subsequent releases.
+Description: Analysis of tiling arrays. The package provides a fast, model-based segmentation algorithm and functions for scoring and visualization of the segments. Currently, the focus has been on algorithm development, the user-friendliness will be improved in subsequent releases.
 License: LGPL
 

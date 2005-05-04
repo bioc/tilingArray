@@ -45,12 +45,13 @@ array data: RNA hybridizations and finding new transcripts}
 %--------------------------------------------------
 \section{Introduction}
 %--------------------------------------------------
-The data processing tasks in the following typically require a lot of CPU
-times (in the order of days) and memory (several Gigabytes). Many of tasks
+The data processing tasks in the following typically require a lot of CPU time
+(in the order of hours or days) and memory (several Gigabytes). Many of tasks
 will therefore usually be performed in scripts rather than in interactive
-sessions. Compute-heavy scripts (that in some cases can be run in parallel)
-alternate with visualization-oriented scripts for analysis of (intermediate)
-results.
+sessions. Also, they are spliced in several smaller steps, to be able to
+examine intermediate results. Compute-heavy scripts (that in some cases can be
+run in parallel) are separated with visualization-oriented scripts for
+the analysis of (intermediate) results.
 
 Intermediate results are stored and recoverd with the \Rfunction{save} and
 \Rfunction{load} commands. The data types that are used are in many cases
@@ -59,6 +60,8 @@ package matures and is re-used in different projects, it is foreseen but these
 data structures will evolve, and some of them will undoubtedly benefit from
 being implemented as proper S4 classes.
 
+This vignette is not complete. For detailed questions, please contact the
+author, or bear with me for a subsequent, more complete version.
 
 %--------------------------------------------------
 \section{Reading the CEL files}
@@ -76,13 +79,25 @@ the whole set of previous CEL files also needs to be imported again, to create
 a new object \Robject{x} and a new file \filename{x.Rdata}.
 
 
+%--------------------------------------------------
+\section{Segmentation}
+%--------------------------------------------------
+This is done by the script \Rscript{segment.R}.
 
+%--------------------------------------------------
+\section{Scoring the segments}
+%--------------------------------------------------
+This is done by the script \Rscript{scoreSegments.R}.
 
+%--------------------------------------------------
+\section{Categorizing the segments}
+%--------------------------------------------------
+This is done by the script \Rscript{tableSegments.R}.
 
-
-
-%\myincfig{findsegments-plotData}{0.6\textwidth}{%
-%A simulated data example with \Sexpr{nrcp} change points}
+%--------------------------------------------------
+\section{UTR mapping}
+%--------------------------------------------------
+This is done by the script \Rscript{utrmap.R}.
 
 
 \end{document}
