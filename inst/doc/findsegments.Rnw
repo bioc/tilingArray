@@ -74,7 +74,7 @@ abline(v=gd$cp, col="red")
 A simulated data example with \Sexpr{nrcp} change points, shown with red
 vertical lines}
 %
-The result is shown in Figure~\ref{findSegments-plotData}.
+The result is shown in Figure~\ref{findsegments-plotData}.
 We can use the function \Rfunction{findSegments} to reconstruct the
 changepoints from the \Robject{x} data alone.
 %
@@ -142,7 +142,7 @@ A statistical approach for CGH microarray data analysis.
 \newblock Rapport de recherche No. 5139, Mars 2004,
   \textit{Institut National de Recherche en Informatique et en Automatique (INRIA)},
   ISSN 0249-6399.
-  \url{http://www.inapg.fr/ens_rech/mathinfo/recherche/mathematique/outil.html}
+  http://www.inapg.fr/ens\_rech/mathinfo/recherche/mathematique/outil.html
 
 \end{thebibliography}
 \end{document}
