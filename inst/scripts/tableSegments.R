@@ -4,20 +4,21 @@ source("scripts/calcThreshold.R")
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
 
-options(error=recover, warn=0)
+options(error=recover, warn=2)
+## debug(categorizeSegmentsPie)
 
 interact =  TRUE
 what=c("pie", "wst", "length", "lvsx", "cons", "conswex")
 
-if(!interact & exists("tab"))
-  rm(tab)
+if(!interact & exists("cs"))
+  rm(cs)
 
 n = length(rnaTypes)
 
 if(!interact)
   sink("tableSegments.txt")
 
-if(!exists("tab")) {
+if(!exists("cs") || TRUE) {
   graphics.off()
   if(interact)
     x11(width=10, height=n*3)
@@ -25,14 +26,14 @@ if(!exists("tab")) {
     pdf(width=11, height=n*4)
   par(mfrow=c(n,1))
   
-  tab = vector(mode="list", length=length(rnaTypes))
-  names(tab)=rnaTypes
+  cs = vector(mode="list", length=length(rnaTypes))
+  names(cs)=rnaTypes
   
   cat("Categorizing segments:\n",
       "======================\n", sep="")
   for(rt in rnaTypes) {
     s = get("segScore", get(rt))
-    tab[[rt]] = categorizeSegmentsPie(s)
+    cs[[rt]] = categorizeSegmentsPie(s)
   }
 
   if(!interact)
@@ -42,7 +43,7 @@ if(!exists("tab")) {
 
 colors = c(brewer.pal(9, "Pastel1")[c(2:6, 1)])
 names(colors) =c("verified", "ncRNA", "uncharacterized", "dubious",
-     "unA", "unI")
+                 "unAnti", "unIso")
 
 ##
 ## PIE
@@ -61,23 +62,19 @@ if("pie" %in% what){
       "expressed segments flanked by a non-expressed segment on each side.\n",
       sep="")
   for(rt in rnaTypes) {
-    ct  = tab[[rt]]$count
-    
-    ctp  = rbind(ct,  "total" = colSums(ct, na.rm=TRUE))
-    perct = 100*ctp[,1]/ctp[,2]
-    ctp  = cbind(ctp, "percent" = round(perct,1))
-    rownames(ctp) = sub("unA", "unannot. (pot. antisense)", rownames(ctp))
-    rownames(ctp) = sub("unI", "unannot. (isolated)", rownames(ctp))
-  
     cat("\n", rt, "\n-----\n", sep="")
-    print(ctp)
-    
-    px = ct[, "observed"]
-    names(px) = rownames(ct)
-    px = px[c("verified",  "ncRNA", "uncharacterized", "dubious", "unA", "unI")]
+    selectedCategories = c("verified", "ncRNA", "uncharacterized", "dubious", "unAnti", "unIso")
+    stopifnot(all(selectedCategories %in% names(colors)))
+    ct  = cs[[rt]]$count
+    stopifnot(all(selectedCategories %in% rownames(ct)))
+
+    print(cbind(ct, "percent" = round(100*ct[,1]/ct[,2], 1)))
+
+    px = ct[selectedCategories, "observed"]
     pie(px, radius=0.75, main=longNames[rt],
-        col=colors,
-        labels=paste(names(px), " (", px, ")", sep=""))
+        col=colors[selectedCategories],
+        labels=paste(selectedCategories, " (", px, ")", sep=""))
+    rm(list=c("ct", "px", "selectedCategories"))
   }
   if(!interact)
     dev.off()
@@ -88,13 +85,15 @@ if("pie" %in% what){
 ##
 if("wst" %in% what){
   cat("\n\n")
+  selectedCategories = c("verified", "uncharacterized", "ncRNA", "unAnti", "unIso", "unDubious")
   for(rt in rnaTypes) {
-    s = get("segScore", get(rt))
-    sel = tab[[rt]]$category %in% c("verified", "uncharacterized", "ncRNA", "unA", "unI")
-    s = cbind(category=tab[[rt]]$category, s)[sel, ]
-    fn = file.path(indir[rt], "viz", "index.html")
+    s   = cs[[rt]]$s
+    stopifnot(all(selectedCategories %in% levels(s$category)))
+    sel = (s$category %in% selectedCategories)
+    fn  = file.path(indir[rt], "viz", "index.html")
     cat("Writing", fn, "\n")
-    writeSegmentTable(s, title=longNames[rt], fn=fn)
+    writeSegmentTable(s[sel, ], title=longNames[rt], fn=fn)
+    rm(list=c("s", "sel", "fn"))
   }
   cat("\n\n")
 }
@@ -104,15 +103,17 @@ if("wst" %in% what){
 ##
 maxlen=5000
 if("length" %in% what){
+  selectedCategories = c("verified", "uncharacterized", "ncRNA", "unAnti", "unIso")
+  stopifnot(all(selectedCategories %in% names(colors)))
   if(!interact)
     pdf("tableSegments-lengths.pdf", width=14, height=n*3)
   par(mfrow=c(n,5))
   br = seq(0, maxlen, by=200)
   for(rt in rnaTypes) {
-    s  = get("segScore", get(rt))
-    ct = tab[[rt]]$category
-    for(lev in c("verified",  "uncharacterized", "ncRNA", "unA", "unI")) {
-      len = s$length[ct == lev]
+    s   = cs[[rt]]$s
+    stopifnot(all(selectedCategories %in% levels(s$category)))
+    for(lev in selectedCategories) {
+      len = s$length[s$category == lev]
       len[len>maxlen]=maxlen
       hist(len, breaks=br, col=colors[lev], main=paste(rt, lev))
     }
@@ -134,22 +135,22 @@ if("lvsx" %in% what){
   par(mfrow=c(n, 2))
   maxlen=5000
   br = seq(0, maxlen, by=200)
+  selectedCategories = c("verified", "unIso")
   for(rt in rnaTypes) {
-    s  = get("segScore", get(rt))
-    ct = tab[[rt]]$category
-    levs = c("verified", "unI")
-    ylim = quantile(s$level[ct %in% levs], probs=c(0.01, 0.99), na.rm=TRUE)
-    for(lev in levs) {
-      len = s$length[ct == lev]
-      len[len>maxlen]=maxlen
-      exl = s$level[ct == lev]
+    s   = cs[[rt]]$s
+    stopifnot(all(selectedCategories %in% levels(s$category)))
+    ylim = quantile(s$level[s$category %in% selectedCategories], probs=c(0.01, 0.99), na.rm=TRUE)
+    for(lev in selectedCategories) {
+      len = s$length[s$category == lev]
+      len[len>maxlen] = maxlen
+      exl = s$level[s$category == lev]
       plot(len, exl, pch=pch, ylim=ylim, main=paste(longNames[rt], ": ", lev, sep=""),
            ylab="expression level", xlab="length")
       lf = loess(exl ~ len)
       slen = sort(len)
       lines(slen, predict(lf, newdata=slen), col="blue")
-      ## smoothScatter(len, exl, ylim=ylim, pch=pch, main=paste(rt, lev))
     }
+    rm(list=c("s", "ylim", "len", "lev", "exl", "lf", "slen"))
   }
   if(!interact)
     dev.off()
@@ -187,14 +188,6 @@ calchit = function(sp, rt) {
     theBest = sapply(spbyq, function(i) i[which.max(numNucMatch[i])])
     i.seg = br[[1]][theBest]
       
-    ## ratio of the sums:
-    ##
-    ## alignableLen = numeric(nrow(s))
-    ## alignableLen[  br[[1]][theBest] ] = numNucMatch[theBest]
-    ## hit[,b] = sapply(sp, function(segments) {
-    ##  sum(alignableLen[segments]) / sum(s$length[segments]) 
-    ## })
-
     ## mean of the ratios:
     ##
     alignableFrac = numeric(nrow(s))
@@ -216,16 +209,15 @@ if("cons" %in% what){
       "=========================================\n",
       "Here, 'number' is the number of segments.\n", sep="")
   
+  selectedCategories = c("verified", "uncharacterized" , "ncRNA",  "unAnti", "unIso")
   for(rt in rnaTypes) {
-    s  = get("segScore", get(rt))
-    ct = tab[[rt]]$category
-    sp = split(seq(along=ct), ct)
-    selected = c("verified", "uncharacterized" , "ncRNA",  "unA", "unI")
-    stopifnot(all(selected %in% names(sp)))
-    sp = sp[selected]
-    sp$unexpressed=which(s$overlappingFeature=="" &
+    s   = cs[[rt]]$s
+    stopifnot(all(selectedCategories %in% levels(s$category)))
+    sp = split(seq(along=s$category), s$category)
+    sp = sp[selectedCategries]
+    sp$"unexpressed"  = which(s$overlappingFeature=="" &
         s$oppositeFeature=="" & s$level <= quantile(s$level, 0.2, na.rm=TRUE))
-    sp$"whole genome" = seq(along=ct)
+    sp$"whole genome" = seq(along=s$category)
     
     hit = calchit(sp, rt)
     
@@ -252,19 +244,19 @@ if("conswex" %in% what){
   cols = c("#303030", "#0000e0")
   pchs = c(15,16)
   
-  segClasses = c("verified", "unI")
-  segClassesLong = c("verified genes", "unannotated, isolated")
-  fraction = matrix(NA, nrow=nrlevs, ncol=length(segClasses))
-  colnames(fraction) = segClasses
+  selectedCategories = c("verified", "unIso")
+  selectedCategoriesLong = c("verified genes", "unannotated, isolated")
+  fraction = matrix(NA, nrow=nrlevs, ncol=length(selectedCategories))
+  colnames(fraction) = selectedCategories
   
   for(rt in rnaTypes) {
-    s   = get("segScore", get(rt))
-    ct  = tab[[rt]]$category
+    s   = cs[[rt]]$s
+    stopifnot(all(selectedCategories %in% levels(s$category)))
     cat("\n", rt, "\n-----\n", sep="")
 
     for(ev in c("expression", "length")) {
-      for(segClass in segClasses) {
-        wh = which(ct == segClass)
+      for(segClass in selectedCategories) {
+        wh = which(s$category == segClass)
         v  = switch(ev,
           "expression" = s$level[wh],
           "length" =     s$length[wh],
@@ -289,7 +281,7 @@ if("conswex" %in% what){
               ylim=c(0,100))
       axis(side=1, at = 1:nrlevs, labels = names(sp))
       if(rt=="polyA2" & ev=="expression")
-        legend(x=1, y=100, legend=segClassesLong, lty=1, lwd=2, pch=pchs, col=cols)
+        legend(x=1, y=100, legend=selectedCategoriesLong, lty=1, lwd=2, pch=pchs, col=cols)
     }
   }
   if(!interact)

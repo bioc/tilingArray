@@ -5,7 +5,7 @@ vectornorm = function(x) sqrt(mean(x*x))
 
 zscore = function(x, x0) {
   if(nrow(x)>2) {
-    (mean(colMeans(x)-x0)/vectornorm(sd(x)))
+    (mean(x0-colMeans(x)))/vectornorm(sd(x))
   } else {
     as.numeric(NA)
   }
