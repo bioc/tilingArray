@@ -7,7 +7,7 @@ source("scripts/writeSegmentTable.R")
 options(error=recover, warn=2)
 ## debug(categorizeSegmentsPie)
 
-interact =  TRUE
+interact =  FALSE
 what=c("pie", "wst", "length", "lvsx", "cons", "conswex")
 
 if(!interact & exists("cs"))
@@ -18,7 +18,7 @@ n = length(rnaTypes)
 if(!interact)
   sink("tableSegments.txt")
 
-if(!exists("cs") || TRUE) {
+if(!exists("cs")) {
   graphics.off()
   if(interact)
     x11(width=10, height=n*3)
@@ -63,7 +63,7 @@ if("pie" %in% what){
       sep="")
   for(rt in rnaTypes) {
     cat("\n", rt, "\n-----\n", sep="")
-    selectedCategories = c("verified", "ncRNA", "uncharacterized", "dubious", "unAnti", "unIso")
+    selectedCategories = c("verified", "ncRNA", "uncharacterized", "dubious", "unIso", "unAnti")
     stopifnot(all(selectedCategories %in% names(colors)))
     ct  = cs[[rt]]$count
     stopifnot(all(selectedCategories %in% rownames(ct)))
@@ -91,7 +91,6 @@ if("wst" %in% what){
     stopifnot(all(selectedCategories %in% levels(s$category)))
     sel = (s$category %in% selectedCategories)
     fn  = file.path(indir[rt], "viz", "index.html")
-    cat("Writing", fn, "\n")
     writeSegmentTable(s[sel, ], title=longNames[rt], fn=fn)
     rm(list=c("s", "sel", "fn"))
   }
@@ -144,6 +143,7 @@ if("lvsx" %in% what){
       len = s$length[s$category == lev]
       len[len>maxlen] = maxlen
       exl = s$level[s$category == lev]
+      
       plot(len, exl, pch=pch, ylim=ylim, main=paste(longNames[rt], ": ", lev, sep=""),
            ylab="expression level", xlab="length")
       lf = loess(exl ~ len)
@@ -172,26 +172,27 @@ if(!exists("blastres")) {
               sep="\t", as.is=TRUE, header=FALSE)))
 }
     
-calchit = function(sp, rt) {  
-  hit = matrix(NA, nrow=length(sp), ncol=length(blastResultFiles))
+calchit = function(sp, blrt, s) {  
+  hit = matrix(NA, nrow=length(sp), ncol=length(blrt))
   rownames(hit) = names(sp)
-  colnames(hit) = names(blastResultFiles)
-  for(b in 1:ncol(hit)) {
-    br = blastres[[rt]][[b]]
+  colnames(hit) = names(blrt)
+  for(b in 1:length(blrt)) {
+    br  = blrt[[b]]
+    ## 1 = Query Sequence ID, 3 = Percent identity, 4 = Alignment length 
+    fas = br[[3]] * br[[4]] / (s$length[br[[1]]]+1)
+    ## fas = br[[4]] / (s$length[br[[1]]]+1) * 100
+    ## fas = br[[3]] 
+    stopifnot(all( fas>=0 & fas<=115 & !is.na(fas)))
     
-    numNucMatch = br[[3]]*br[[4]] ## 3=Percent identity, 4=Alignment length
-    ## numNucMatch = 100*br[[4]] ## 3=Percent identity, 4=Alignment length
-
-    ## split by name of query sequence (1) and just keep the hit with the
-    ## highest value of numNucMatch
-    spbyq = split(1:nrow(br), br[[1]]) ## 1=Identity of query sequence
-    theBest = sapply(spbyq, function(i) i[which.max(numNucMatch[i])])
+    ## split by name of query sequence and just keep the hit with the
+    ## highest value of fas
+    spbyq   = split(1:nrow(br), br[[1]]) 
+    theBest = sapply(spbyq, function(i) i[which.max(fas[i])])
     i.seg = br[[1]][theBest]
       
     ## mean of the ratios:
-    ##
     alignableFrac = numeric(nrow(s))
-    alignableFrac[i.seg] = numNucMatch[theBest] / s$length[i.seg]
+    alignableFrac[i.seg] = fas[theBest] 
     
     hit[,b] = sapply(sp, function(segments) {
       mean(alignableFrac[segments]) 
@@ -214,12 +215,12 @@ if("cons" %in% what){
     s   = cs[[rt]]$s
     stopifnot(all(selectedCategories %in% levels(s$category)))
     sp = split(seq(along=s$category), s$category)
-    sp = sp[selectedCategries]
-    sp$"unexpressed"  = which(s$overlappingFeature=="" &
+    sp = sp[selectedCategories]
+    sp$"unexpressed & unannotated"  = which(s$overlappingFeature=="" &
         s$oppositeFeature=="" & s$level <= quantile(s$level, 0.2, na.rm=TRUE))
     sp$"whole genome" = seq(along=s$category)
     
-    hit = calchit(sp, rt)
+    hit = calchit(sp, blastres[[rt]], s)
     
     cat("\n", rt, "\n-----\n", sep="")
     print(round(hit,1))
@@ -230,17 +231,18 @@ if("cons" %in% what){
 ## conswex
 ##
 if("conswex" %in% what){
-  nrlevs = 5
-  minlen    = 200
-  cat("\n\nGrouping of conservation scores by length and expression levels\n",
+  nrlevs = 3
+  minlen = 150
+  evList = c("expression", "length")[1]
+  cat("\n\nGrouping of conservation scores by ", paste(evList, collapse=", "), "\n",
       "using ", nrlevs,
       " quantile groups of equal size, respectively.\n",
       "For 'expression', scores are calculated for segments with length >= ", minlen, ".\n",
       "==========================================================================\n", 
       sep="")
   if(!interact)
-    pdf("tableSegments-conswex.pdf", width=4*n, height=8)
-  par(mfcol=c(2,n))
+    pdf("tableSegments-conswex.pdf", width=4*n, height=4*length(evList))
+  par(mfcol=c(length(evList), n))
   cols = c("#303030", "#0000e0")
   pchs = c(15,16)
   
@@ -254,7 +256,7 @@ if("conswex" %in% what){
     stopifnot(all(selectedCategories %in% levels(s$category)))
     cat("\n", rt, "\n-----\n", sep="")
 
-    for(ev in c("expression", "length")) {
+    for(ev in evList) {
       for(segClass in selectedCategories) {
         wh = which(s$category == segClass)
         v  = switch(ev,
@@ -270,7 +272,7 @@ if("conswex" %in% what){
         if( ev=="expression")
           sp = lapply(sp, function(i) i[s$length[i]>=minlen])
 
-        hit = calchit(sp, rt)
+        hit = calchit(sp, blastres[[rt]], s)
         fraction[, segClass] = hit$fraction
         cat("\nby '", ev, "', for '", segClass, "' segments\n", sep="")
         print(round(hit,1))
@@ -278,10 +280,10 @@ if("conswex" %in% what){
       matplot(fraction, xaxt="n", type="b", main=paste(ev, " (", rt, ")", sep=""),
               lty=1, lwd=2, pch=pchs, col=cols,
               ylab="Fraction of alignable sequence", xlab=ev,
-              ylim=c(0,100))
+              ylim=c(0, 90))
       axis(side=1, at = 1:nrlevs, labels = names(sp))
       if(rt=="polyA2" & ev=="expression")
-        legend(x=1, y=100, legend=selectedCategoriesLong, lty=1, lwd=2, pch=pchs, col=cols)
+        legend(x=1, y=90, legend=selectedCategoriesLong, lty=1, lwd=2, pch=pchs, col=cols)
     }
   }
   if(!interact)

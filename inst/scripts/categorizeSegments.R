@@ -49,8 +49,7 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
   isUnique = (s$frac.dup < maxDuplicated)
   isUnanno = (s$overlappingFeature=="" & isUnique)
   threshold = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
-  cat("threshold=", signif(threshold, 2), "\n")
-
+ 
   isTranscribed = (isUnique & (s$level>=threshold))
   wh = which(isTranscribed)
 
@@ -104,29 +103,27 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
   stopifnot(length(unStart)==length(unEnd), all(unEnd>=unStart))
 
   ## ... merge
-  keep = rep(TRUE, n)
+  drop = rep(FALSE, n)
   for(j in which(unEnd>unStart)) {
     i1 = unStart[j]
     i2 = unEnd[j]
     s$level[i1] = sum(s$level[i1:i2]*s$length[i1:i2])/sum(s$length[i1:i2])
-    keep[ (i1+1) : i2 ] = FALSE
+    drop[ (i1+1) : i2 ] = TRUE
   }       
   s$end[unStart]       = s$end[unEnd]
   s$length[unStart]    = s$end[unStart]-s$start[unStart]
   s$zRight[unStart]    = s$zRight[unEnd]
   s$distRight[unStart] = s$distRight[unEnd]
 
-  s = s[keep, ]
+  s$category[drop] = "other"
   nua2 = sum(is.na(s$category))
   
-  ## 3b. Require large z-scores on both sides
-  ## 3c. Length requirement: 3 probes (24 bases)
+  ## 3b. Length requirement: 3 probes (24 bases)
+  s$category[ is.na(s$category) & (s$length<minNewSegmentLength)] = "other"
+  nua3 = sum(is.na(s$category))
 
-  cat("\n\n\n\nATTENTION z is the wrong way round !!!! \n\n")
-  s$category[ is.na(s$category) & ((s$length<minNewSegmentLength) | (s$zLeft > -zTresh) |
-             (s$zRight > -zTresh)) ] = "other"
-##  s$category[ is.na(s$category) & ((s$length<minNewSegmentLength) | (s$zLeft < zTresh) |
-##             (s$zRight < zTresh)) ] = "other"
+  ## 3c. Require large z-scores on both sides
+  s$category[ is.na(s$category) & ((s$zLeft < zTresh)|(s$zRight < zTresh)) ] = "other"
              
   ## >>> Phase 4: assign to "unIso", "unAnti", or "unDubious"
   s$category[ is.na(s$category) & s$oppositeFeature=="" ] = "unIso"
@@ -137,11 +134,12 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
   count[names(tab), "observed"]  = tab
   count = count[-which(rownames(count) %in% c("other", "not expressed")), ]
 
-  nua3 = count["unAnti",1]
-  nua4 = count["unIso",1]
+  nua4 = count["unAnti",1]
+  nua5 = count["unIso",1]
   cat("New segments: started with ", nua1, ", merging resulted in ",
-      nua2, ",\n'neighbor-not-expressed' and 'length>=", minNewSegmentLength,
-      "' filter resulted in ", nua3, "+", nua4, "=", nua3+nua4, ".\n\n",
+      nua2, ",\n'length>=", minNewSegmentLength, "' filter resulted in ", nua3,
+      ",\n'zLeft, zRight>=", zTresh, "' filter resulted in ",
+      nua4, "+", nua5, "=", nua4+nua5, ".\n\n",
       sep="")
   
   list(s=s, count=count, threshold=threshold)

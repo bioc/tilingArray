@@ -37,22 +37,6 @@ for(rt in rnaTypes) {
   ##
   ## WRITE THE SEGMENT TABLE
   ##
-  s$gene = character(nrow(s))
-  selgff = which(gff$feature=="gene")
-  mt = match(s$geneInSegment, gff$Name[selgff])
-  hasMatch    = !is.na(mt)
-  hasGeneName = !is.na(gff$gene[selgff][mt])
-  sel = hasMatch&hasGeneName
-  s$gene[sel] = gff$gene[selgff][mt[sel]]
-  
-  wh  = which(!is.na(s$category))
-  ord = order(s$category[wh])
-  s = s[wh[ord], c( "category", "excurse", "sdLeft", "sdThis", "sdRight",
-    "gene", "chr", "strand", "start", "end", "length", "level", "utr5", "utr3",
-    "geneInSegment", "overlappingFeature", "oppositeFeature",  "frac.dup")]
-  colnames(s)[1] = "score"
-  s = cbind(rank=1:nrow(s), s)
-  
   fn = file.path(indir[rt], "viz", "utrmap.html")
   cat("Writing", fn, "\n")
 
