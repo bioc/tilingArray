@@ -1,14 +1,13 @@
 plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno, 
   scoreShow="pt", nrBasesPerSeg, gff, haveLegend=TRUE) {
-
-  
   
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
   colors = c("+" = "#33A02C", 
              "-" = "#1F78B4",
              "duplicated" = "grey",
              "cp" = "#101010",
-             "highlight" = "red")
+             "highlight" = "red",
+             "threshold" = "grey")
   
   if(!haveLegend)
     VP = VP[-which(names(VP)=="legend")]
@@ -40,6 +39,10 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
       sgs = NULL     
     } else {
       dat = get(paste(chr, strand, "dat", sep="."), segObj)
+
+      threshold = ifelse("threshold" %in% ls(segObj), 
+         get("threshold", segObj), as.numeric(NA))
+      
       if("segScore" %in% ls(segObj)) {
         sgs = get("segScore", segObj)
         if(!missing(nrBasesPerSeg))
@@ -62,7 +65,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
       coord = range(dat$start)
 
     plotSegmentation(x=dat$start, y=dat$yraw, coord=coord, uniq=dat$unique,
-                     segScore=sgs, scoreShow=scoreShow,
+                     segScore=sgs, threshold=threshold, scoreShow=scoreShow,
                      gff=gff, chr=chr, chrSeqname=chrSeqname, strand=strand,
                      VP=VP, colors=colors)
     
@@ -102,7 +105,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
 
 ## gff and chrSeqname into an environment or object?
 
-plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
+plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
   gff, chr, chrSeqname, strand, VP, colors) {
 
   ## could this be done better?
@@ -139,6 +142,9 @@ plotSegmentation = function(x, y, coord, uniq, segScore, scoreShow,
   colo = ifelse(uniq[ord], colors[strand], colors["duplicated"])
   grid.points(x[ord], y[ord], pch=16, size=unit(0.0016, "npc"), gp=gpar(col=colo))
 
+  if(!is.na(threshold))
+    grid.lines(y=unit(rep(threshold, 2), "native"), gp=gpar(col=colors["threshold"]))
+  
   if(!is.null(segScore)) {
     segSel   = which(segScore$chr==chr & segScore$strand==strand)
     segstart = segScore$start[segSel]

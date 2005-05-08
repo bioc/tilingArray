@@ -1,13 +1,12 @@
 options(error=recover, warn=0)
-
 library("tilingArray")
 source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 ## source("colorRamp.R")  ## can go with R 2.1
-
 source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
 source("scripts/writeSegmentTable.R")
 
+interact =  FALSE
 nrChr = 16
 
 ##
@@ -51,12 +50,19 @@ for(rt in rnaTypes) {
       cat(chr, ":", as.integer(start), " ", sep="")
       pdfname = file.path(outdir, paste(nm, ".pdf", sep=""))
       pixname = file.path(outdir, paste(nm, ".jpg", sep=""))
-      
-      pdf(file=pdfname, width=10, height=5.5)
+
+      if(interact){
+        x11(width=10, height=5.5)
+      } else {
+        pdf(file=pdfname, width=10, height=5.5)
+      }
       grid.newpage()
       plotAlongChrom2(chr=chr, coord=c(start, start+alongChromWidth),
                       segObj = get(rt), gff = gff)
-      dev.off()	
+      if(interact)
+        locator()
+      dev.off()
+      
       convCmd = c(convCmd, paste("convert -density 120", pdfname, "-quality 100", pixname))
     }
   }

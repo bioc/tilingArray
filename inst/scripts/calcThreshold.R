@@ -31,20 +31,30 @@ calcThreshold = function(x, sel, pthresh=0.05, showPlot=FALSE, main) {
     dn = dnorm(x=d1$x, mean=loc, sd=scale)
     lines(d1$x, dn/max(dn)*max(d2$y), col="orange")
   }
-  cat("loc=", signif(loc,3), "scale=", signif(scale,3), "thresh=", signif(thresh,3), "\n")
+  cat(main, ": loc=", signif(loc,3), "scale=", signif(scale,3), "thresh=", signif(thresh,3), "\n")
   return(thresh)
 }
 
 cat("Calculating Thresholds:\n",
     "=======================\n", sep="")
 
+if(interact) {
+  x11(width=10, height=length(rnaTypes)*3)
+} else {
+  pdf(file="tableSegments-thresh.pdf", width=11, height=length(rnaTypes)*4)
+}
+par(mfrow=c(length(rnaTypes),1), ask=interact)
+
 maxDuplicated = 0.5
 for(rt in rnaTypes) {
   s = get("segScore", get(rt))
   isUnique = (s$frac.dup < maxDuplicated)
   isUnanno = (s$overlappingFeature=="" & isUnique)
-  thr = calcThreshold(s$level, sel=isUnanno, showPlot=FALSE, main=rt)
+  thr = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
   assign("threshold", thr, envir=get(rt))
 }
+
+if(!interact)
+    dev.off()
 
 cat("\n\n")
