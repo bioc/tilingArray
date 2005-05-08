@@ -1,6 +1,8 @@
-plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno, 
-  segScore, scoreShow="pt", nrBasesPerSeg, gff, haveLegend=TRUE) {
+plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno, 
+  scoreShow="pt", nrBasesPerSeg, gff, haveLegend=TRUE) {
 
+  
+  
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
   colors = c("+" = "#33A02C", 
              "-" = "#1F78B4",
@@ -17,14 +19,12 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
   if(!missing(y)) {
     if(missing(probeAnno))
       stop("If 'y' is specified, 'probeAnno' must also be specified.")
-    if(!missing(segRes))
-      stop("If 'y' is specified, 'segRes' must not be specified.")
+    if(!missing(segObj))
+      stop("If 'y' is specified, 'segObj' must not be specified.")
     VP = VP[-which(names(VP) %in% c("z1", "z2"))]
   } else {
-    if(missing(segRes))
-      stop("Please specify either 'y' or 'segRes'")
-    if(!xor(missing(nrBasesPerSeg), missing(segScore)))
-      stop("Please specify either 'segScore' or 'nrBasesPerSeg'")
+    if(missing(segObj))
+      stop("Please specify either 'y' or 'segObj'")
   }
 
   pushViewport(viewport(width=0.9, height=0.95)) ## plot margin
@@ -39,9 +39,15 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
                  unique = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
       sgs = NULL     
     } else {
-      dat = get(paste(chr, strand, "dat", sep="."), segRes)
-      if(missing(segScore)) {
-        seg = get(paste(chr, strand, "seg", sep="."), segRes)
+      dat = get(paste(chr, strand, "dat", sep="."), segObj)
+      if("segScore" %in% ls(segObj)) {
+        sgs = get("segScore", segObj)
+        if(!missing(nrBasesPerSeg))
+          stop("Please do not specify 'nrBasesPerSeg' when 'segObj' contains 'segScore'")
+      } else {
+        if(missing(nrBasesPerSeg))
+          stop("Please specify 'nrBasesPerSeg' ('segScore' was not found in 'segObj')")
+        seg = get(paste(chr, strand, "seg", sep="."), segObj)
         cp = round(max(dat$x)/nrBasesPerSeg)
         th=c(1, seg$th[cp, 1:cp])
         sgs = data.frame(
@@ -49,8 +55,6 @@ plotAlongChrom2 = function(chr, coord, highlight, segRes, y, probeAnno,
           strand = I(rep(strand, cp)),
           start  = dat$x[th[-length(th)]],
           end    = dat$x[th[-1]]-1)
-      } else {
-        sgs = segScore
       }
     } 
     

@@ -4,8 +4,8 @@
 \keyword{hplot}
 \description{Plot the results of segmentation along a chromosomal region}
 
-\usage{plotAlongChrom2(chr, coord, highlight, segRes, y, probeAnno,
-                       segScore,scoreShow = "pt", nrBasesPerSeg, gff,
+\usage{plotAlongChrom2(chr, coord, highlight, segObj, y, probeAnno,
+                       scoreShow = "pt", nrBasesPerSeg, gff,
                        haveLegend=TRUE)}
 
 \arguments{
@@ -16,15 +16,19 @@
   \item{highlight}{optional, list with two elements: a single numeric value
     \code{coord} and a character \code{strand}. If present, this
     position is marked by a vertical red bar on the coordinate axis.}
-  \item{segRes}{environment containing microarray intensities in
-    along-chromosome order and segmentation results, see Paragraph
-    \emph{Intensities} in the \emph{Details} section.}
+  \item{segObj}{environment containing three types of data:
+    1. microarray intensities in along-chromosome order,
+    2. segmentation (output of findSegments),
+    3. segment score (dataframe, can
+    be missing iff \code{nrBasesPerSeg} is present),
+    4. the threshold for "transcribed" segments.
+    See also Paragraph \emph{Intensities} in the \emph{Details} section.
+    This is currently simply an environment that is expected to contain
+    certain objects with certain names. In future version, this is
+    supposed to be replaced by a proper S4 object.}
   \item{y}{numeric vector of intensities from a (virtual) array,
     see Paragraph \emph{Intensities} in the \emph{Details} section.}
   \item{probeAnno}{environment with probe annotations, see details.}
-  
-  \item{segScore}{dataframe with segmentation scores, see details. Can
-    be missing iff \code{nrBasesPerSeg} is present.}
   \item{scoreShow}{character, name of a column in \code{segScore} that
     is to be used for the coloring of the segments.}
   \item{nrBasesPerSeg}{numeric of length 1 with the average number of

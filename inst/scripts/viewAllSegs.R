@@ -2,15 +2,16 @@ options(error=recover, warn=0)
 
 library("tilingArray")
 source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
-
 ## source("colorRamp.R")  ## can go with R 2.1
+
 source("scripts/readSegments.R")
+source("scripts/calcThreshold.R") 
 source("scripts/writeSegmentTable.R")
 
 nrChr = 16
 
 ##
-## Prepare the GFF-table
+## Prepare and write the GFF-table
 ##
 if(!"chr" %in% names(gff))
   gff$chr = match(gff$seqname, chrSeqname)
@@ -28,29 +29,19 @@ outtab = gff[ gff$feature=="gene", c("chr", "start", "end",
                 "strand", "Name", "gene", "orf_classification",
                 "Note") ]
 outtab$plotfile = mapCoord2Plot(outtab$chr, outtab$start, outtab$end)
-
+write.table(outtab, file="gff.txt",
+              sep="\t", quote=FALSE, row.names=FALSE, col.names=TRUE)
 
 ##
-## Loop over the RNA Types
-##
+## Write the pictures
+## 
 for(rt in rnaTypes) {
   cat(">>>", rt, "<<<\n")
-  
-  ##
-  ## Write the GFF-table
-  ##
+  convCmd = "#!/bin/sh"
+
   outdir = file.path(indir[rt], "viz")
   if(!file.exists(outdir) || !file.info(outdir)$isdir)
     stop(paste("Output directory", outdir, "does not exist."))
-
-  write.table(outtab, file=file.path(outdir, "gff.txt"),
-              sep="\t", quote=FALSE, row.names=FALSE, col.names=TRUE)
-
-  ##
-  ## Write the pictures
-  ## 
-  e = get(rt)
-  convCmd = "#!/bin/sh"
 
   for(chr in 1:nrChr) {
     startPoints = seq(0, max(gff$end[gff$chr==chr]), by=alongChromStep)
@@ -64,9 +55,7 @@ for(rt in rnaTypes) {
       pdf(file=pdfname, width=10, height=5.5)
       grid.newpage()
       plotAlongChrom2(chr=chr, coord=c(start, start+alongChromWidth),
-                      segRes   = e,
-                      segScore = get("segScore", e), 
-                      gff      = gff)
+                      segObj = get(rt), gff = gff)
       dev.off()	
       convCmd = c(convCmd, paste("convert -density 120", pdfname, "-quality 100", pixname))
     }

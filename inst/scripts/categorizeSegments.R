@@ -10,15 +10,14 @@ splicedGenes1 = sort(gff$Name[gff$feature=="intron"])
 splicedGenes2 = names(which(table(gff$Name[gff$feature=="CDS"])>=2))
 goodGenes     = setdiff(goodGenes, union(splicedGenes1, splicedGenes2))
 
-categorizeSegmentsUTRmap = function(s, maxDuplicated=0.5) {
-  isUnique = (s$frac.dup < maxDuplicated)
-  isUnanno = (s$overlappingFeature=="" & isUnique)
-  thresh = calcThreshold(s$level, sel=isUnanno, showPlot=FALSE, main=rt)
-  cat("thresh=", signif(thresh, 2), "\n")
+categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5) {
+  s = get("segScore", env)
+  threshold = get("threshold", env)
+  stopifnot(length(threshold)==1)
 
-  isTranscribed = (isUnique & (s$level>=thresh))
-  neighborSegmentUnTranscribed = ( c(FALSE, s$level[-nrow(s)]<thresh) &
-                                   c(s$level[-1]<thresh, FALSE) )
+  isTranscribed = ((s$frac.dup < maxDuplicated) & (s$level>=threshold))
+  neighborSegmentUnTranscribed = ( c(FALSE, s$level[-nrow(s)]<threshold) &
+                                   c(s$level[-1]<threshold, FALSE) )
   
   ll = listLen(strsplit(s$geneInSegment, split=", "))
   isWellDefined = !(is.na(s$sdLeft) | is.na(s$sdRight) | is.na(s$excurse) | ll !=1 )
@@ -43,14 +42,14 @@ categorizeSegmentsUTRmap = function(s, maxDuplicated=0.5) {
 ## ncRNA, uniqueness is defined by name. For unannotated segments, it is 
 ## defined by non-consecutiveness.
 
-categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
-  zTresh=1) {
+categorizeSegmentsPie = function(env, maxDuplicated=0.5,
+  minNewSegmentLength=24, zThresh=1) {
 
-  isUnique = (s$frac.dup < maxDuplicated)
-  isUnanno = (s$overlappingFeature=="" & isUnique)
-  threshold = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
- 
-  isTranscribed = (isUnique & (s$level>=threshold))
+  s = get("segScore", env)
+  threshold = get("threshold", env)
+  stopifnot(length(threshold)==1, is(s, "data.frame"))
+
+  isTranscribed = ((s$frac.dup < maxDuplicated) & (s$level>=threshold))
   wh = which(isTranscribed)
 
   ## results data structure: a factor which assigns a category to each segment:
@@ -90,7 +89,6 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
 
   ## >>> Phase 3: remaining segments 
   isUnassigned = is.na(s$category)
-  stopifnot(all((isTranscribed & isUnanno) == isUnassigned))  ## just check
   nua1 = sum(isUnassigned) ## audit
     
   ## 3a: merge adjacent ones:
@@ -123,7 +121,7 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
   nua3 = sum(is.na(s$category))
 
   ## 3c. Require large z-scores on both sides
-  s$category[ is.na(s$category) & ((s$zLeft < zTresh)|(s$zRight < zTresh)) ] = "other"
+  s$category[ is.na(s$category) & ((s$zLeft < zThresh)|(s$zRight < zThresh)) ] = "other"
              
   ## >>> Phase 4: assign to "unIso", "unAnti", or "unDubious"
   s$category[ is.na(s$category) & s$oppositeFeature=="" ] = "unIso"
@@ -138,11 +136,11 @@ categorizeSegmentsPie = function(s, maxDuplicated=0.5, minNewSegmentLength=24,
   nua5 = count["unIso",1]
   cat("New segments: started with ", nua1, ", merging resulted in ",
       nua2, ",\n'length>=", minNewSegmentLength, "' filter resulted in ", nua3,
-      ",\n'zLeft, zRight>=", zTresh, "' filter resulted in ",
+      ",\n'zLeft, zRight>=", zThresh, "' filter resulted in ",
       nua4, "+", nua5, "=", nua4+nua5, ".\n\n",
       sep="")
   
-  list(s=s, count=count, threshold=threshold)
+  list(s=s, count=count)
 }
 
 

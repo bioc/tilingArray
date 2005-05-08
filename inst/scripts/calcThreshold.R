@@ -34,3 +34,17 @@ calcThreshold = function(x, sel, pthresh=0.05, showPlot=FALSE, main) {
   cat("loc=", signif(loc,3), "scale=", signif(scale,3), "thresh=", signif(thresh,3), "\n")
   return(thresh)
 }
+
+cat("Calculating Thresholds:\n",
+    "=======================\n", sep="")
+
+maxDuplicated = 0.5
+for(rt in rnaTypes) {
+  s = get("segScore", get(rt))
+  isUnique = (s$frac.dup < maxDuplicated)
+  isUnanno = (s$overlappingFeature=="" & isUnique)
+  thr = calcThreshold(s$level, sel=isUnanno, showPlot=FALSE, main=rt)
+  assign("threshold", thr, envir=get(rt))
+}
+
+cat("\n\n")

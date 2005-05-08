@@ -5,41 +5,32 @@ source("scripts/categorizeSegments.R")
 source("scripts/writeSegmentTable.R")
 
 options(error=recover, warn=2)
-## debug(categorizeSegmentsPie)
 
-interact =  FALSE
+interact =  TRUE ## FALSE
 what=c("pie", "wst", "length", "lvsx", "cons", "conswex")
-
-if(!interact & exists("cs"))
-  rm(cs)
-
-n = length(rnaTypes)
 
 if(!interact)
   sink("tableSegments.txt")
 
-if(!exists("cs")) {
-  graphics.off()
-  if(interact)
-    x11(width=10, height=n*3)
-  else
-    pdf(width=11, height=n*4)
-  par(mfrow=c(n,1))
-  
-  cs = vector(mode="list", length=length(rnaTypes))
-  names(cs)=rnaTypes
-  
-  cat("Categorizing segments:\n",
-      "======================\n", sep="")
-  for(rt in rnaTypes) {
-    s = get("segScore", get(rt))
-    cs[[rt]] = categorizeSegmentsPie(s)
-  }
+graphics.off()
+if(interact) {
+  x11(width=10, height=length(rnaTypes)*3)
+} else {
+  pdf(width=11, height=length(rnaTypes)*4)
+}
+par(mfrow=c(length(rnaTypes),1))
 
-  if(!interact)
-    dev.off()
+cs = vector(mode="list", length=length(rnaTypes))
+names(cs)=rnaTypes
+
+cat("Categorizing segments:\n",
+    "======================\n", sep="")
+for(rt in rnaTypes) {
+  cs[[rt]] = categorizeSegmentsPie(get(rt))
 }
 
+if(!interact)
+  dev.off()
 
 colors = c(brewer.pal(9, "Pastel1")[c(2:6, 1)])
 names(colors) =c("verified", "ncRNA", "uncharacterized", "dubious",
@@ -50,8 +41,8 @@ names(colors) =c("verified", "ncRNA", "uncharacterized", "dubious",
 ##
 if("pie" %in% what){
   if(!interact)
-    pdf("tableSegments-pie.pdf", width=7*n, height=4.8)
-  par(mfrow=c(1,n))
+    pdf("tableSegments-pie.pdf", width=7*length(rnaTypes), height=4.8)
+  par(mfrow=c(1, length(rnaTypes)))
   cat("Counts for the pie chart:\n",
       "=========================\n",
       "For known features, counts are unique IDs. While in typical cases\n",
@@ -105,8 +96,8 @@ if("length" %in% what){
   selectedCategories = c("verified", "uncharacterized", "ncRNA", "unAnti", "unIso")
   stopifnot(all(selectedCategories %in% names(colors)))
   if(!interact)
-    pdf("tableSegments-lengths.pdf", width=14, height=n*3)
-  par(mfrow=c(n,5))
+    pdf("tableSegments-lengths.pdf", width=14, height=length(rnaTypes)*3)
+  par(mfrow=c(length(rnaTypes),5))
   br = seq(0, maxlen, by=200)
   for(rt in rnaTypes) {
     s   = cs[[rt]]$s
@@ -126,12 +117,12 @@ if("length" %in% what){
 ##
 if("lvsx" %in% what){
   if(!interact) {
-    pdf("tableSegments-lvsx.pdf", width=14, height=n*3)
+    pdf("tableSegments-lvsx.pdf", width=14, height=length(rnaTypes)*3)
     pch="."
   } else {
     pch=18
   }
-  par(mfrow=c(n, 2))
+  par(mfrow=c(length(rnaTypes), 2))
   maxlen=5000
   br = seq(0, maxlen, by=200)
   selectedCategories = c("verified", "unIso")
@@ -241,8 +232,8 @@ if("conswex" %in% what){
       "==========================================================================\n", 
       sep="")
   if(!interact)
-    pdf("tableSegments-conswex.pdf", width=4*n, height=4*length(evList))
-  par(mfcol=c(length(evList), n))
+    pdf("tableSegments-conswex.pdf", width=4*length(rnaTypes), height=4*length(evList))
+  par(mfcol=c(length(evList), length(rnaTypes)))
   cols = c("#303030", "#0000e0")
   pchs = c(15,16)
   
@@ -279,7 +270,7 @@ if("conswex" %in% what){
       }
       matplot(fraction, xaxt="n", type="b", main=paste(ev, " (", rt, ")", sep=""),
               lty=1, lwd=2, pch=pchs, col=cols,
-              ylab="Fraction of alignable sequence", xlab=ev,
+              ylab="average identity (percent) ", xlab=ev,
               ylim=c(0, 90))
       axis(side=1, at = 1:nrlevs, labels = names(sp))
       if(rt=="polyA2" & ev=="expression")
