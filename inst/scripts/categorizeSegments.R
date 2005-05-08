@@ -10,28 +10,24 @@ splicedGenes1 = sort(gff$Name[gff$feature=="intron"])
 splicedGenes2 = names(which(table(gff$Name[gff$feature=="CDS"])>=2))
 goodGenes     = setdiff(goodGenes, union(splicedGenes1, splicedGenes2))
 
-categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5) {
+categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
   s = get("segScore", env)
   threshold = get("threshold", env)
   stopifnot(length(threshold)==1)
 
+  minZ =  pmin(s$zLeft, s$zRight)
+
   isTranscribed = ((s$frac.dup < maxDuplicated) & (s$level>=threshold))
-  neighborSegmentUnTranscribed = ( c(FALSE, s$level[-nrow(s)]<threshold) &
-                                   c(s$level[-1]<threshold, FALSE) )
-  
-  ll = listLen(strsplit(s$geneInSegment, split=", "))
-  isWellDefined = !(is.na(s$sdLeft) | is.na(s$sdRight) | is.na(s$excurse) | ll !=1 )
+  hasGoodFlanks = (minZ >= zThresh)
+  isWellDefined = (listLen(strsplit(s$geneInSegment, split=", "))==1)
   isGoodGene    = (s$geneInSegment %in% goodGenes)   ## c
 
-  candidates = which(isTranscribed & neighborSegmentUnTranscribed & isWellDefined & isGoodGene)
+  candidates = which(isTranscribed & hasGoodFlanks & isWellDefined & isGoodGene)
 
-  ## max. rank
-  maxrk = pmax(rank(s$sdLeft[candidates]), rank(s$sdRight[candidates]),
-              rank(s$excurse[candidates]))
-     browser()
-  res = rep(as.integer(NA), nrow(s))
-  res[candidates] = maxrk
-  return(res)
+  s$goodUTR = rep(as.integer(NA), nrow(s))
+  s$goodUTR[candidates] = minZ[candidates]
+
+  return(s)
 }
 
 ##

@@ -14,71 +14,119 @@
 ## f. moving average of 3 probes should not deviate too far to below
 
 library("tilingArray")
-library("prada")
+library("geneplotter")
+
+interact=FALSE ## TRUE
+options(error=recover, warn=0)
+graphics.off()
+
 ## source("colorRamp.R")
 source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
 
-graphics.off();
-x11(width=14, height=9)
-par(mfrow=c(2,3))
+
+if(interact) {
+  x11(width = 14, height = 7)
+  pch=16
+} else {
+  sink("utrmap.txt")
+  pch="."
+}
   
 cols = brewer.pal(12, "Paired")
+trsf = function(x) log(x+1, 10)
+## trsf = function(x) sqrt(x)
+
+investigateExpressionVersusLength = function(lev, len, xlab) {
+  smoothScatter(trsf(len), lev, pch=pch, xlab=paste("log10 of", xlab), ylab="level")
+  tt=t.test(lev ~ len>median(len), var.equal=TRUE)
+  cat(xlab, ": p=", format.pval(tt$p.value, 2), "\n")
+}
 
 utr = vector(mode="list", length=length(rnaTypes))
 names(utr)=rnaTypes
       
 for(rt in rnaTypes) {
-  s = get("segScore", get(rt))
-  s$category = categorizeSegmentsUTRmap(s)
- 
+  s = categorizeSegmentsUTRmap(get(rt))
+  s = s[!is.na(s$goodUTR), ]
+  
   ##
   ## WRITE THE SEGMENT TABLE
   ##
+  if(FALSE){
   fn = file.path(indir[rt], "viz", "utrmap.html")
-  cat("Writing", fn, "\n")
-
-  writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn)
-
+  cat("Writing", nrow(s), "UTRs to", fn, "\n")
+  writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn,
+                    sortBy = "goodUTR", sortDecreasing=TRUE)
+  }
+  
   z = cbind(s$utr5, s$utr3)
   rownames(z) = s$geneInSegment
   colnames(z) = c("5' UTR", "3' UTR")
   utr[[rt]] = z
 
+  ##
+  ## HISTOGRAMS and PLOTS of lengths
+  ##
+  if(!interact) {
+    pdf(file=paste("utrmap-", rt, ".pdf", sep=""), width=14, height=7)
+  }
+  par(mfrow = c(2, 4))
   br=50
   hist(s$utr5[s$utr5<1000],
        col=cols[1], breaks=br, xlab="length of 5' UTR",
        main=paste(longNames[rt], ": 5' UTR", " (", length(s$utr5), ")", sep=""))
   hist(s$utr3[s$utr3<1000], xlab="length of 3' UTR",
        col=cols[3], breaks=br, main=paste(longNames[rt], ": 3' UTR", sep=""))
-  plot(s$utr5, s$utr3, pch=16, main=longNames[rt], xlab="length of 5' UTR", ylab="length of 3' UTR", col=cols[2])
-}
 
-dev.copy(pdf, file="utrmap-hists.pdf", width=10, height=7); dev.off()
+  mt = match(s[,"geneInSegment"], gff[,"Name"])
+  stopifnot(!any(is.na(mt)))
+  cdslen = gff[mt, "end"]-gff[mt, "start"]
+
+  smoothScatter(trsf(s$utr5), trsf(cdslen), pch=pch, main="length",
+                xlab="log10 of length of 5' UTR", ylab="log10 of length of CDS")
+  smoothScatter(trsf(s$utr3), trsf(cdslen), pch=pch, main="length",
+                xlab="log10 of length of 3' UTR", ylab="log10 of length of CDS")
+
+  cat(">> ", rt, " ... t-test for difference in level between lower and upper 50% of length distributions:\n")
+  investigateExpressionVersusLength(s$level, s$utr3, "length of 3' UTR")
+  investigateExpressionVersusLength(s$level, s$utr5, "length of 5' UTR")
+  investigateExpressionVersusLength(s$level, cdslen, "length of CDS")
+
+  plot(s$utr5, s$utr3, pch=pch, main=longNames[rt], xlab="length of 5' UTR",
+       ylab="length of 3' UTR", col=cols[2])
+  if(!interact)
+    dev.off()
+}
+cat("\n\n")
+
 
 ## common:
-comm = intersect(rownames(utr[[1]]), rownames(utr[[2]]))
-x11(width=9, height=5)
+comUTR = intersect(rownames(utr[[1]]), rownames(utr[[2]]))
+## union:
+allUTR = union(rownames(utr[[1]]), rownames(utr[[2]]))
+for(j in seq(along=utr))
+  cat(nrow(utr[[j]]), " UTRs for ", rnaTypes[j], ", ", sep="")
+cat("\n", length(comUTR)," in both ", paste(rnaTypes, collapse=" and "), ", ", 
+    length(allUTR), " altogether.\n", sep="")
+
+if(interact) {
+  x11(width=8, height=4)
+} else {
+  pdf(file=paste("utrmap-scatter.pdf", sep=""), width=8, height=4)
+}
+
 par(mfrow=c(1,2))
-for(i in 1:2)
-  smoothScatter(log(utr[[1]][comm,i], 10), log(utr[[2]][comm,i], 10),
-       main=paste("log10 of length of ", colnames(utr[[1]])[i], " (", length(comm), ")", sep=""),
+for(i in 1:2){
+  smoothScatter(trsf(utr[[1]][comUTR,i]), trsf(utr[[2]][comUTR,i]),
+       main=paste("log10 of length of ", colnames(utr[[1]])[i], " (", length(comUTR), ")", sep=""),
        xlab=longNames[rnaTypes[1]], ylab=longNames[rnaTypes[2]])
+  abline(a=0, b=1, col="#606060")
+}
 
-dev.copy(pdf, file="utrmap-scatter.pdf", width=8, height=4.8); dev.off()
-
-out = file("utrmap.txt", open="wt")
-cat("Selection criteria: segment must\n- contain exactly 1 annotated (",
-    "'Verified' or 'Uncharacterized') gene.\n(There are ", length(goodGenes),
-    " of these.)\n",
-    "- less than ", signif(100*maxDuplicated, 2), "% of its sequence must ",
-    "be hit by duplicated probes.\n",
-    "- must be expressed above the 5% FDR threshold.\n\n", 
-    sprintf("%10s  %6s  %5s\n", "RNA type", "side", "mode"), file=out, sep="")
-for(rt in rnaTypes)
-  for(i in 1:2)
-    cat(sprintf("%10s  %6s  %5d\n", longNames[rt], colnames(utr[[rt]])[i],
-                as.integer(shorth(utr[[rt]][comm, i]))), file=out)
-close(out)
+if(!interact) {
+  sink()
+  dev.off()
+}

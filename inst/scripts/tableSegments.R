@@ -81,7 +81,7 @@ if("wst" %in% what){
     stopifnot(all(selectedCategories %in% levels(s$category)))
     sel = (s$category %in% selectedCategories)
     fn  = file.path(indir[rt], "viz", "index.html")
-    writeSegmentTable(s[sel, ], title=longNames[rt], fn=fn)
+    writeSegmentTable(s[sel, ], title=longNames[rt], fn=fn, sortBy="category")
     rm(list=c("s", "sel", "fn"))
   }
   cat("\n\n")
@@ -231,10 +231,10 @@ if("cons" %in% what){
   
   for(plotWhat in 1:2) {
     if(interact) {
-      x11(width=6*length(rnaTypes), height=7)
+      x11(width=6*length(rnaTypes), height=8)
     } else {
       pdf(paste("tableSegments-consex-", plotWhat, ".pdf", sep=""),
-          width=4*length(rnaTypes), height=7)
+          width=4*length(rnaTypes), height=8)
     }
     par(mfcol=c(1, length(rnaTypes)))
     
@@ -243,7 +243,7 @@ if("cons" %in% what){
 
       sp = switch(plotWhat,
         theSplit[[rt]][c("verified", "unIso")],
-        theSplit[[rt]]
+        theSplit[[rt]][-which(names(theSplit[[rt]])=="unannotated, unexpressed")]
         )
         
       names(longNames) = longNames = names(sp)
@@ -253,10 +253,10 @@ if("cons" %in% what){
       fraction = matrix(NA, nrow=nrlevs, ncol=length(sp))
       colnames(fraction) = names(sp)
   
-      pchs = switch(plotWhat,
+      pchs = c(switch(plotWhat,
         14+seq(along=sp),
         rep(16, length(sp))
-        )
+        ), NA)
       
       s   = cs[[rt]]$s
       for(j in seq(along=sp)) {
@@ -264,20 +264,23 @@ if("cons" %in% what){
         v    = s$level[wh]
         br   = quantile(v, (0:nrlevs)/nrlevs, na.rm=TRUE)
         spwh = split(wh, cut(v, breaks=br))
-        hit = calchit(spwh, blastres[[rt]], s)
+        hit  = calchit(spwh, blastres[[rt]], s)
         fraction[, names(sp)[j]] = hit$fraction
         cat("\nby expression for:", names(sp)[j], "\n")
         print(round(hit,1))
       }
-      matplot(fraction, xaxt="n", type="b", main=rt,
+      baseline = calchit(list(theSplit[[rt]]$"unannotated, unexpressed"), blastres[[rt]], s)
+
+      matplot(fraction, xaxt="n", type="b", main=longNames[rt],
               lty=1, lwd=2, pch=pchs, col=lineColors[colnames(fraction)],
               ylab="average identity (percent) ", xlab="transcript level",
               ylim=c(0, 110))
+      abline(h=baseline, col=lineColors["unannotated, unexpressed"], lwd=2, type="l")
       cutNames = paste("<=", round((1:nrlevs)/nrlevs*100), "%", sep="")
       axis(side=1, at = 1:nrlevs, labels = cutNames)
       if(rt=="polyA2")
-        legend(x=1, y=112, legend=longNames[colnames(fraction)],
-               lty=1, lwd=2, pch=pchs, col=lineColors[colnames(fraction)])
+        legend(x=1, y=112, legend=c(longNames[colnames(fraction)], "unannotated, unexpressed"),
+               lty=1, lwd=2, pch=pchs, col=lineColors[c(colnames(fraction),"unannotated, unexpressed")])
     }
     if(!interact)
       dev.off()

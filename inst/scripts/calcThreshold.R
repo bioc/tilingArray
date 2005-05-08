@@ -43,7 +43,7 @@ if(interact) {
 } else {
   pdf(file="tableSegments-thresh.pdf", width=11, height=length(rnaTypes)*4)
 }
-par(mfrow=c(length(rnaTypes),1), ask=interact)
+par(mfrow=c(length(rnaTypes),1))
 
 maxDuplicated = 0.5
 for(rt in rnaTypes) {
