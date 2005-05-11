@@ -31,12 +31,8 @@ categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
 }
 
 ##
-## categorize segments for the Pie chart and for the cross-species comparison
-##
-## The factor 'category' contains for each segment an assignment.
-## The matrix 'count' contains the number of UNIQUE occurences. For genes and
-## ncRNA, uniqueness is defined by name. For unannotated segments, it is 
-## defined by non-consecutiveness.
+## Categorize segments for the Pie chart and for the cross-species comparison.
+## For each segment, the factor 'category' contains an assignment to a category  
 
 categorizeSegmentsPie = function(env, maxDuplicated=0.5,
   minNewSegmentLength=24, zThresh=1) {
@@ -103,6 +99,7 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
     i2 = unEnd[j]
     s$level[i1] = sum(s$level[i1:i2]*s$length[i1:i2])/sum(s$length[i1:i2])
     drop[ (i1+1) : i2 ] = TRUE
+    s$isIsolated[i1] = all(s$isIsolated[i1:i2])
   }       
   s$end[unStart]       = s$end[unEnd]
   s$length[unStart]    = s$end[unStart]-s$start[unStart]
@@ -120,7 +117,7 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
   s$category[ is.na(s$category) & ((s$zLeft < zThresh)|(s$zRight < zThresh)) ] = "other"
              
   ## >>> Phase 4: assign to "unIso", "unAnti", or "unDubious"
-  s$category[ is.na(s$category) & s$oppositeFeature=="" ] = "unIso"
+  s$category[ is.na(s$category) & s$isIsolated ] = "unIso"
   s$category[ is.na(s$category) & s$oppositeExpression >= threshold] = "unDubious"
   s$category[ is.na(s$category) ] = "unAnti"
 

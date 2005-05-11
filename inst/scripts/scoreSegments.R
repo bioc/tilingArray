@@ -5,7 +5,7 @@ source("/homes/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 if(!exists("gff"))
   load("probeAnno.rda")
 
-chrs = 1:16
+chrs = 1:17
 indirList = c("segmentation-3polyA", "seg-polyA-050428", "seg-tot-050421")[2:3]
 nrbpsList = c(1500, 2000)[1]
 

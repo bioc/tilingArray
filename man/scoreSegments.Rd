@@ -11,7 +11,7 @@ scoreSegments(s, gff,
         "rRNA", "snRNA", "snoRNA", "tRNA",
         "transposable_element", "transposable_element_gene"),
   params = c(minOverlapFractionSame = 0.8, minOverlapOppo = 40,
-    oppositeWindow = 100, utrScoreWidth=100),
+    minIsolatedDistance=100, oppositeWindow = 100, utrScoreWidth=100),
   verbose = TRUE)
 }
 \arguments{
@@ -68,6 +68,9 @@ also hits otherwhere}
   sufficiently small, we can assume that there is no transcription at
   least on parts of the strand opposite the segment, hence it cannot be
   a reverse transcription artifact.}
+\item{isIsolated}{logical. TRUE if the distance between the segment and
+  and any annotated feature on either strands is
+  >= \code{params["minIsolatedDistance"]} bases.}
 \item{utr3, utr5}{positive integer numbers. These are calculated only
   for segments which have exactly one gene in the geneInSegment
   list. They are calculated as the difference between start points of

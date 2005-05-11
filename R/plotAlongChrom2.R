@@ -2,8 +2,8 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
   scoreShow="pt", nrBasesPerSeg, gff, haveLegend=TRUE) {
   
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
-  colors = c("+" = "#33A02C", 
-             "-" = "#1F78B4",
+  colors = c("+" = "#00441b", 
+             "-" = "#081d58",
              "duplicated" = "grey",
              "cp" = "#101010",
              "highlight" = "red",
@@ -20,7 +20,6 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
       stop("If 'y' is specified, 'probeAnno' must also be specified.")
     if(!missing(segObj))
       stop("If 'y' is specified, 'segObj' must not be specified.")
-    VP = VP[-which(names(VP) %in% c("z1", "z2"))]
   } else {
     if(missing(segObj))
       stop("Please specify either 'y' or 'segObj'")
@@ -30,6 +29,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
   pushViewport(viewport(layout=grid.layout(length(VP), 1, height=VP)))
   for(i in 1:2) {
     strand = c("+", "-")[i]
+    threshold = as.numeric(NA)
 
     if(!missing(y)) {
       index = get(paste(chr, strand, "index", sep="."), envir=probeAnno)
@@ -40,8 +40,8 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
     } else {
       dat = get(paste(chr, strand, "dat", sep="."), segObj)
 
-      threshold = ifelse("threshold" %in% ls(segObj), 
-         get("threshold", segObj), as.numeric(NA))
+      if("threshold" %in% ls(segObj))
+        threshold = get("threshold", segObj)
       
       if("segScore" %in% ls(segObj)) {
         sgs = get("segScore", segObj)

@@ -36,7 +36,7 @@ scoreSegments = function(s, gff,
         "rRNA", "snRNA", "snoRNA", "tRNA",
         "transposable_element", "transposable_element_gene"),
   params = c(minOverlapFractionSame = 0.8, minOverlapOppo = 40,
-    oppositeWindow = 100, utrScoreWidth=100),
+    minIsolatedDistance=100, oppositeWindow = 100, utrScoreWidth=100),
   verbose = TRUE) {
 
   ## minOverlapFractionSame: minimal overlap fraction (between 0 and 1) of a feature
@@ -88,6 +88,7 @@ scoreSegments = function(s, gff,
         overlappingFeature    = I(character(cp)),
         oppositeFeature       = I(character(cp)),
         oppositeExpression    = rep(as.numeric(NA), cp),
+        isIsolated            = rep(as.logical(NA), cp),
         utr5                  = rep(as.integer(NA), cp),
         utr3                  = rep(as.integer(NA), cp),
         distLeft              = rep(as.integer(NA), cp),
@@ -128,6 +129,7 @@ scoreSegments = function(s, gff,
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = character(cp)  
       zl = zr = lev = oe = rep(as.numeric(NA), cp)
+      isIso = rep(as.logical(NA), cp)
       
       stopifnot(all(diff(dat$x)>=0))
         
@@ -145,9 +147,9 @@ scoreSegments = function(s, gff,
         
         ## data from flanks, for segment quality scores
         yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) &
-          (dat$x<=dat$x[i2[j]]+params["utrScoreWidth"]), , drop=FALSE]
+          (dat$x<=dat$x[i2[j]]+params[["utrScoreWidth"]]), , drop=FALSE]
         yl = dat$y[dat$xunique & (dat$x <  dat$x[i1[j]]) &
-          (dat$x>=dat$x[i1[j]]-params["utrScoreWidth"]), , drop=FALSE]
+          (dat$x>=dat$x[i1[j]]-params[["utrScoreWidth"]]), , drop=FALSE]
         zl[j] = zscore(yl, cmym)
         zr[j] = zscore(yr, cmym)
 
@@ -169,15 +171,20 @@ scoreSegments = function(s, gff,
         }
 
         ## features that have overlap with the segment
-        overlapSame = ((pmin(endj, same.gff$end) - pmax(startj, same.gff$start)) /
-                        pmin(endj-startj, same.gff$end-same.gff$start))
-        whSinF = which( overlapSame >= params["minOverlapFractionSame"])
+        overlapSame   = pmin(endj, same.gff$end) - pmax(startj, same.gff$start)
+        smallerLength = pmin(endj-startj, same.gff$end-same.gff$start)
+        whSinF = which( overlapSame/smallerLength >= params[["minOverlapFractionSame"]])
         if(length(whSinF)>0) {
           nm2    = unique(same.gff$Name[whSinF])
           ft2[j] = paste(nm2, collapse=", ")
         }
         stopifnot(all(nm1 %in% nm2))
-        
+
+        ## isolated ?
+        distSame   = pmin(abs(endj  -same.gff$end), abs(  endj-same.gff$start),
+                          abs(startj-same.gff$end), abs(startj-same.gff$start))
+        isIso[j] = all(distSame >= params[["minIsolatedDistance"]])
+         
         ## distance to next features on the left and on the right:
         dl[j] = posMin(startj - same.gff$end)
         dr[j] = posMin(same.gff$start - endj)
@@ -188,7 +195,7 @@ scoreSegments = function(s, gff,
         ft3[j]      = paste(unique(oppo.gff$Name[whOppo]), collapse=", ")
 
         ## expression on opposite strand?
-        oe[j] = movingWindow(x=xOppo, y=yOppo, width=params["oppositeWindow"])
+        oe[j] = movingWindow(x=xOppo, y=yOppo, width=params[["oppositeWindow"]])
 
       } ## for j
 
@@ -200,6 +207,7 @@ scoreSegments = function(s, gff,
       segScore$overlappingFeature[idx] = ft2
       segScore$oppositeFeature[idx]    = ft3
       segScore$oppositeExpression[idx] = oe
+      segScore$isIsolated[idx]         = isIso
       segScore$level[idx]              = lev
       segScore$distLeft[idx]           = dl
       segScore$distRight[idx]          = dr
