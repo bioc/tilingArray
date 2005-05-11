@@ -8,16 +8,17 @@ if(!exists("gff")) {
   gff$gene               = getAttributeField(gff$attributes, "gene")
 }
 
-rnaTypes = c("polyA", "polyA2", "tot")[2:3]
+## rnaTypes = c("polyA", "polyA2", "tot")[2:3]
+rnaTypes = c("polyA", "polyA2", "tot")[2]
 longNames=c(polyA="poly-A RNA single enriched", polyA2="poly-A RNA", tot="total RNA")
 
 indir = c("polyA"="segmentation-3polyA", "polyA2"="seg-polyA-050428",
   "tot"="seg-tot-050421")
 
 for(rt in rnaTypes) {
-  if(!exists(rt)) {
+  if(TRUE || !exists(rt)) {
     assign(rt, new.env())
-    chrs = 1:16
+    chrs = 1:17
     cat("Loading", rt, ": ")
     for(chr in chrs) {
       cat(chr, "")

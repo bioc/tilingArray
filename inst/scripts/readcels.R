@@ -1,5 +1,5 @@
 celdir = "Celfiles"
-pdfile = "tilingBook-050428.txt"
+pdfile = "tilingBook-050510.txt"
 
 library(affy)
 

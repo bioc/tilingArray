@@ -88,7 +88,8 @@ scoreSegments = function(s, gff,
         overlappingFeature    = I(character(cp)),
         oppositeFeature       = I(character(cp)),
         oppositeExpression    = rep(as.numeric(NA), cp),
-        isIsolated            = rep(as.logical(NA), cp),
+        isIsolatedSame        = rep(as.logical(NA), cp),
+        isIsolatedOppo        = rep(as.logical(NA), cp),
         utr5                  = rep(as.integer(NA), cp),
         utr3                  = rep(as.integer(NA), cp),
         distLeft              = rep(as.integer(NA), cp),
@@ -129,7 +130,7 @@ scoreSegments = function(s, gff,
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = character(cp)  
       zl = zr = lev = oe = rep(as.numeric(NA), cp)
-      isIso = rep(as.logical(NA), cp)
+      isoSame = isoOppo = rep(as.logical(NA), cp)
       
       stopifnot(all(diff(dat$x)>=0))
         
@@ -181,9 +182,12 @@ scoreSegments = function(s, gff,
         stopifnot(all(nm1 %in% nm2))
 
         ## isolated ?
-        distSame   = pmin(abs(endj  -same.gff$end), abs(  endj-same.gff$start),
-                          abs(startj-same.gff$end), abs(startj-same.gff$start))
-        isIso[j] = all(distSame >= params[["minIsolatedDistance"]])
+        distSame = pmin(abs(endj  -same.gff$end), abs(  endj-same.gff$start),
+                        abs(startj-same.gff$end), abs(startj-same.gff$start))
+        isoSame[j] = all(distSame >= params[["minIsolatedDistance"]])
+        distOppo = pmin(abs(endj  -oppo.gff$end), abs(  endj-oppo.gff$start),
+                        abs(startj-oppo.gff$end), abs(startj-oppo.gff$start))
+        isoOppo[j] = all(distOppo >= params[["minIsolatedDistance"]])
          
         ## distance to next features on the left and on the right:
         dl[j] = posMin(startj - same.gff$end)
@@ -207,7 +211,8 @@ scoreSegments = function(s, gff,
       segScore$overlappingFeature[idx] = ft2
       segScore$oppositeFeature[idx]    = ft3
       segScore$oppositeExpression[idx] = oe
-      segScore$isIsolated[idx]         = isIso
+      segScore$isIsolatedSame[idx]     = isoSame
+      segScore$isIsolatedOppo[idx]     = isoOppo
       segScore$level[idx]              = lev
       segScore$distLeft[idx]           = dl
       segScore$distRight[idx]          = dr

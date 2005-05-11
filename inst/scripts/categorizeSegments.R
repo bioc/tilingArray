@@ -15,17 +15,17 @@ categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
   threshold = get("threshold", env)
   stopifnot(length(threshold)==1)
 
-  minZ =  pmin(s$zLeft, s$zRight)
+  minZ =  pmin(s[,"zLeft"], s[,"zRight"])
 
-  isTranscribed = ((s$frac.dup < maxDuplicated) & (s$level>=threshold))
+  isTranscribed = ((s[,"frac.dup"] < maxDuplicated) & (s[,"level"]>=threshold))
   hasGoodFlanks = (minZ >= zThresh)
-  isWellDefined = (listLen(strsplit(s$geneInSegment, split=", "))==1)
-  isGoodGene    = (s$geneInSegment %in% goodGenes)   ## c
+  isWellDefined = (listLen(strsplit(s[,"geneInSegment"], split=", "))==1)
+  isGoodGene    = (s[,"geneInSegment"] %in% goodGenes)   ## c
 
   candidates = which(isTranscribed & hasGoodFlanks & isWellDefined & isGoodGene)
 
   s$goodUTR = rep(as.integer(NA), nrow(s))
-  s$goodUTR[candidates] = minZ[candidates]
+  s[candidates, "goodUTR"] = minZ[candidates]
 
   return(s)
 }
@@ -41,26 +41,26 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
   threshold = get("threshold", env)
   stopifnot(length(threshold)==1, is(s, "data.frame"))
 
-  isTranscribed = ((s$frac.dup < maxDuplicated) & (s$level>=threshold))
+  isTranscribed = ((s[,"frac.dup"] < maxDuplicated) & (s[,"level"]>=threshold))
   wh = which(isTranscribed)
 
   ## results data structure: a factor which assigns a category to each segment:
-  s$category = factor(rep(NA, nrow(s)), 
+  catg = factor(rep(NA, nrow(s)), 
     levels = c("verified", "ncRNA", "uncharacterized", "dubious", "other",
-      "unIso", "unAnti", "unDubious", "not expressed"))
+      "unIso", "unAnti", "unAnti-Dubious", "not expressed"))
 
-  count           = matrix(NA, nrow=length(levels(s$category)), ncol=2)
-  rownames(count) = levels(s$category)
+  count           = matrix(NA, nrow=length(levels(catg)), ncol=2)
+  rownames(count) = levels(catg)
   colnames(count) = c("observed", "in genome")
   
   ## >>> Phase 1: everything which is not expressed
-  s$category[ -wh ] = "not expressed"
+  catg[-wh] = "not expressed"
 
   ## >>> Phase 2: segments that overlap annotated features
-  ovF = strsplit(s$overlappingFeature[wh],  split=", ")
+  ovF = strsplit(s[wh,"overlappingFeature"],  split=", ")
   
-  for(categ in levels(s$category)[5:1]) {
-    theseNames = switch(categ,
+  for(aCateg in levels(catg)[5:1]) {
+    theseNames = switch(aCateg,
       ## orf_classification: applies to "gene", "CDS", and "intron"
       "verified"        = gff$Name[gff$feature=="gene" & gff$orf_classification=="Verified"],
       "uncharacterized" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Uncharacterized"],
@@ -71,23 +71,23 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
       stop("Zapperlot")
     )
     stopifnot(!is.null(theseNames))
-    count[categ, "in genome"] = length(unique(theseNames))
+    count[aCateg, "in genome"] = length(unique(theseNames))
 
     ## first with features that this segment is contained in
     isThisCateg = sapply(ovF, function(x) any(x %in% theseNames))
-    s$category[wh][isThisCateg] = categ
+    catg[wh[isThisCateg]] = aCateg
 
-  } ## for categ
+  } ## for aCateg
 
   ## >>> Phase 3: remaining segments 
-  isUnassigned = is.na(s$category)
+  isUnassigned = is.na(catg)
   nua1 = sum(isUnassigned) ## audit
     
   ## 3a: merge adjacent ones:
   ## ... prepare
   n            = length(isUnassigned)
-  diffChrLeft  = c(TRUE, s$chr[-1]!=s$chr[-n])
-  diffChrRight = c(s$chr[-1]!=s$chr[-n], TRUE)
+  diffChrLeft  = c(TRUE, s[-1, "chr"] != s[-n, "chr"])
+  diffChrRight = c(s[-1, "chr"] != s[-n, "chr"], TRUE)
   unStart      = which(isUnassigned & (c(TRUE, !isUnassigned[-n]) | diffChrLeft))
   unEnd        = which(isUnassigned & (c(!isUnassigned[-1], TRUE) | diffChrRight))
   stopifnot(length(unStart)==length(unEnd), all(unEnd>=unStart))
@@ -97,31 +97,34 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
   for(j in which(unEnd>unStart)) {
     i1 = unStart[j]
     i2 = unEnd[j]
-    s$level[i1] = sum(s$level[i1:i2]*s$length[i1:i2])/sum(s$length[i1:i2])
+    s[i1, "level"] = sum(s[i1:i2, "level"] * s[i1:i2, "length"]) / sum(s[i1:i2, "length"])
     drop[ (i1+1) : i2 ] = TRUE
-    s$isIsolated[i1] = all(s$isIsolated[i1:i2])
+    s[i1, "isIsolatedSame"] = all(s[i1:i2, "isIsolatedSame"])
+    s[i1, "isIsolatedOppo"] = all(s[i1:i2, "isIsolatedOppo"])
   }       
-  s$end[unStart]       = s$end[unEnd]
-  s$length[unStart]    = s$end[unStart]-s$start[unStart]
-  s$zRight[unStart]    = s$zRight[unEnd]
-  s$distRight[unStart] = s$distRight[unEnd]
+  s[unStart, "end"]       = s[unEnd,   "end"]
+  s[unStart, "length"]    = s[unStart, "end"] - s[unStart, "start"]
+  s[unStart, "zRight"]    = s[unEnd,   "zRight"]
+  s[unStart, "distRight"] = s[unEnd,   "distRight"]
 
-  s$category[drop] = "other"
-  nua2 = sum(is.na(s$category))
+  catg[drop] = "other"
+  nua2 = sum(is.na(catg))
   
   ## 3b. Length requirement: 3 probes (24 bases)
-  s$category[ is.na(s$category) & (s$length<minNewSegmentLength)] = "other"
-  nua3 = sum(is.na(s$category))
+  catg[is.na(catg) & (s[,"length"]<minNewSegmentLength)] = "other"
+  nua3 = sum(is.na(catg))
 
   ## 3c. Require large z-scores on both sides
-  s$category[ is.na(s$category) & ((s$zLeft < zThresh)|(s$zRight < zThresh)) ] = "other"
+  catg[ is.na(catg) & ((s[,"zLeft"] < zThresh)|(s[,"zRight"] < zThresh)) ] = "other"
              
-  ## >>> Phase 4: assign to "unIso", "unAnti", or "unDubious"
-  s$category[ is.na(s$category) & s$isIsolated ] = "unIso"
-  s$category[ is.na(s$category) & s$oppositeExpression >= threshold] = "unDubious"
-  s$category[ is.na(s$category) ] = "unAnti"
+  ## >>> Phase 4: assign to "unIso", "unAnti", or "unAnti-dubious"
+  stopifnot(!any(s[,"isIsolatedOppo"] & s[,"oppositeFeature"]!=""))
+  catg[ is.na(catg) & s[,"isIsolatedSame"] & s[,"isIsolatedOppo" ] ] = "unIso"
+  catg[ is.na(catg) & s[,"isIsolatedSame"] & (s[,"oppositeFeature"]!="") & (s[,"oppositeExpression"] < threshold)] = "unAnti"
+  catg[ is.na(catg) & s[,"isIsolatedSame"] & (s[,"oppositeFeature"]!="") ] = "unAnti-dubious"
+  catg[ is.na(catg)  ] = "other"
 
-  tab = table(s$category)
+  tab = table(catg)
   count[names(tab), "observed"]  = tab
   count = count[-which(rownames(count) %in% c("other", "not expressed")), ]
 
@@ -133,6 +136,7 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
       nua4, "+", nua5, "=", nua4+nua5, ".\n\n",
       sep="")
   
+  s$category = catg
   list(s=s, count=count)
 }
 

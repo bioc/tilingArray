@@ -2,7 +2,7 @@ library("tilingArray")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = FALSE
+interact = TRUE # FALSE
 what     = c("pie", "wst", "length", "lvsx", "cons")
 
 if(!interact)

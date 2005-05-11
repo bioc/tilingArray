@@ -68,9 +68,10 @@ also hits otherwhere}
   sufficiently small, we can assume that there is no transcription at
   least on parts of the strand opposite the segment, hence it cannot be
   a reverse transcription artifact.}
-\item{isIsolated}{logical. TRUE if the distance between the segment and
-  and any annotated feature on either strands is
-  >= \code{params["minIsolatedDistance"]} bases.}
+\item{isIsolatedSame, isIsolatedOppo}{logical. TRUE if the distance
+  between the segment and and any annotated feature on the same or
+  opposite strand, respectively, is >=
+  \code{params["minIsolatedDistance"]} bases.}
 \item{utr3, utr5}{positive integer numbers. These are calculated only
   for segments which have exactly one gene in the geneInSegment
   list. They are calculated as the difference between start points of
