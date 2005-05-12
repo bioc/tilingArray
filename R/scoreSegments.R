@@ -181,22 +181,23 @@ scoreSegments = function(s, gff,
         }
         stopifnot(all(nm1 %in% nm2))
 
-        ## isolated ?
-        distSame = pmin(abs(endj  -same.gff$end), abs(  endj-same.gff$start),
-                        abs(startj-same.gff$end), abs(startj-same.gff$start))
-        isoSame[j] = all(distSame >= params[["minIsolatedDistance"]])
-        distOppo = pmin(abs(endj  -oppo.gff$end), abs(  endj-oppo.gff$start),
-                        abs(startj-oppo.gff$end), abs(startj-oppo.gff$start))
-        isoOppo[j] = all(distOppo >= params[["minIsolatedDistance"]])
-         
         ## distance to next features on the left and on the right:
         dl[j] = posMin(startj - same.gff$end)
         dr[j] = posMin(same.gff$start - endj)
+        dlOppo = posMin(startj - oppo.gff$end)
+        drOppo = posMin(oppo.gff$start - endj)
         
         ## annotated feature on opposite strand?
         overlapOppo = (pmin(endj, oppo.gff$end) - pmax(startj, oppo.gff$start))
         whOppo      = which( overlapOppo > 0 )
         ft3[j]      = paste(unique(oppo.gff$Name[whOppo]), collapse=", ")
+
+        ## isolated ?
+        isoSame[j] = (all(overlapSame<=0) && (dl[j]>=params[["minIsolatedDistance"]]) &&
+                                             (dr[j]>=params[["minIsolatedDistance"]]))
+
+        isoOppo[j] = (all(overlapOppo<=0) && (dlOppo>=params[["minIsolatedDistance"]]) &&
+                                             (drOppo>=params[["minIsolatedDistance"]]))
 
         ## expression on opposite strand?
         oe[j] = movingWindow(x=xOppo, y=yOppo, width=params[["oppositeWindow"]])

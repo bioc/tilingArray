@@ -16,7 +16,7 @@
 library("tilingArray")
 library("geneplotter")
 
-interact=FALSE ## TRUE
+interact=(!TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
@@ -27,8 +27,9 @@ source("scripts/categorizeSegments.R")
 source("scripts/writeSegmentTable.R")
 
 
+  fdim = c(10.5, 7)
 if(interact) {
-  x11(width = 14, height = 7)
+  x11(width = fdim[1], height = fdim[2])
   pch=16
 } else {
   sink("utrmap.txt")
@@ -39,28 +40,42 @@ cols = brewer.pal(12, "Paired")
 trsf = function(x) log(x+1, 10)
 ## trsf = function(x) sqrt(x)
 
-investigateExpressionVersusLength = function(lev, len, xlab) {
-  smoothScatter(trsf(len), lev, pch=pch, xlab=paste("log10 of", xlab), ylab="level")
-  tt=t.test(lev ~ len>median(len), var.equal=TRUE)
-  cat(xlab, ": p=", format.pval(tt$p.value, 2), "\n")
+investigateExpressionVersusLength = function(lev, len, main) {
+  theCut = cut(len, breaks=quantile(len, probs=c(0, 0.8, 0.95, 1)))
+  ## e = tapply(len, cut(lev, breaks=3), ecdf)
+  e = tapply(lev, theCut, ecdf)
+  theCol = cols[1]
+  plot(e[[1]], xlab="level", main=main)
+  for(i in 2:length(e)) {
+    theCol = cols[i*2]
+    lines(e[[i]], col.hor=theCol, col.points=theCol, col.vert=theCol)
+  }
 }
 
 utr = vector(mode="list", length=length(rnaTypes))
 names(utr)=rnaTypes
       
 for(rt in rnaTypes) {
+  cat("\n", rt, "\n-----\n", sep="")
   s = categorizeSegmentsUTRmap(get(rt))
   s = s[!is.na(s$goodUTR), ]
   
   ##
   ## WRITE THE SEGMENT TABLE
   ##
-  if(FALSE){
   fn = file.path(indir[rt], "viz", "utrmap.html")
-  cat("Writing", nrow(s), "UTRs to", fn, "\n")
-  writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn,
-                    sortBy = "goodUTR", sortDecreasing=TRUE)
+  if(TRUE){
+    cat("Writing", nrow(s), "UTRs to", fn, "\n")
+    writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn,
+                      sortBy = "goodUTR", sortDecreasing=TRUE)
+  } else {
+    cat(">>> Attention: not writing", fn, "<<<\n") 
   }
+
+  cat("5' UTR length distribution summary:\n")
+  print(summary(s$utr5))
+  cat("3' UTR length distribution summary:\n")
+  print(summary(s$utr3))
   
   z = cbind(s$utr5, s$utr3)
   rownames(z) = s$geneInSegment
@@ -68,12 +83,12 @@ for(rt in rnaTypes) {
   utr[[rt]] = z
 
   ##
-  ## HISTOGRAMS and PLOTS of lengths
+  ## LENGTH HISTOGRAM
   ##
   if(!interact) {
-    pdf(file=paste("utrmap-", rt, ".pdf", sep=""), width=14, height=7)
+    pdf(file=paste("utrmap-", rt, ".pdf", sep=""), width = fdim[1], height = fdim[2])
   }
-  par(mfrow = c(2, 4))
+  par(mfrow = c(2, 3))
   br=50
   hist(s$utr5[s$utr5<1000],
        col=cols[1], breaks=br, xlab="length of 5' UTR",
@@ -81,22 +96,17 @@ for(rt in rnaTypes) {
   hist(s$utr3[s$utr3<1000], xlab="length of 3' UTR",
        col=cols[3], breaks=br, main=paste(longNames[rt], ": 3' UTR", sep=""))
 
+  ##
+  ## GET THE CDS LENGTHS AS WELL
+  ##
   mt = match(s[,"geneInSegment"], gff[,"Name"])
   stopifnot(!any(is.na(mt)))
   cdslen = gff[mt, "end"]-gff[mt, "start"]
 
-  smoothScatter(trsf(s$utr5), trsf(cdslen), pch=pch, main="length",
-                xlab="log10 of length of 5' UTR", ylab="log10 of length of CDS")
-  smoothScatter(trsf(s$utr3), trsf(cdslen), pch=pch, main="length",
-                xlab="log10 of length of 3' UTR", ylab="log10 of length of CDS")
-
-  cat(">> ", rt, " ... t-test for difference in level between lower and upper 50% of length distributions:\n")
   investigateExpressionVersusLength(s$level, s$utr3, "length of 3' UTR")
   investigateExpressionVersusLength(s$level, s$utr5, "length of 5' UTR")
   investigateExpressionVersusLength(s$level, cdslen, "length of CDS")
 
-  plot(s$utr5, s$utr3, pch=pch, main=longNames[rt], xlab="length of 5' UTR",
-       ylab="length of 3' UTR", col=cols[2])
   if(!interact)
     dev.off()
 }
@@ -124,9 +134,17 @@ for(i in 1:2){
        main=paste("log10 of length of ", colnames(utr[[1]])[i], " (", length(comUTR), ")", sep=""),
        xlab=longNames[rnaTypes[1]], ylab=longNames[rnaTypes[2]])
   abline(a=0, b=1, col="#606060")
+
+  
 }
+
+w = (abs(utr[[1]][comUTR, 1] - utr[[2]][comUTR, 1]) < 10 &
+     abs(utr[[1]][comUTR, 2] - utr[[2]][comUTR, 2]) < 10 )
+u5 = utr[[1]][comUTR[w], 1]
+u3 = utr[[1]][comUTR[w], 2]
 
 if(!interact) {
   sink()
   dev.off()
 }
+

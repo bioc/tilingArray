@@ -46,8 +46,8 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
 
   ## results data structure: a factor which assigns a category to each segment:
   catg = factor(rep(NA, nrow(s)), 
-    levels = c("verified", "ncRNA", "uncharacterized", "dubious", "other",
-      "unIso", "unAnti", "unAnti-Dubious", "not expressed"))
+    levels = c("verified gene", "ncRNA", "uncharacterized gene", "dubious", "other",
+      "novel isolated", "novel antisense", "novel dubious", "not expressed"))
 
   count           = matrix(NA, nrow=length(levels(catg)), ncol=2)
   rownames(count) = levels(catg)
@@ -62,8 +62,8 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
   for(aCateg in levels(catg)[5:1]) {
     theseNames = switch(aCateg,
       ## orf_classification: applies to "gene", "CDS", and "intron"
-      "verified"        = gff$Name[gff$feature=="gene" & gff$orf_classification=="Verified"],
-      "uncharacterized" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Uncharacterized"],
+      "verified gene"   = gff$Name[gff$feature=="gene" & gff$orf_classification=="Verified"],
+      "uncharacterized gene" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Uncharacterized"],
       "ncRNA"           = gff$Name[gff$feature %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA")],
       "dubious"         = gff$Name[gff$feature=="gene" & gff$orf_classification=="Dubious"],
       "other"           = gff$Name[gff$feature %in% c("pseudogene", "transposable_element",
@@ -117,19 +117,19 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
   ## 3c. Require large z-scores on both sides
   catg[ is.na(catg) & ((s[,"zLeft"] < zThresh)|(s[,"zRight"] < zThresh)) ] = "other"
              
-  ## >>> Phase 4: assign to "unIso", "unAnti", or "unAnti-dubious"
+  ## >>> Phase 4: assign to "novel isolated", "novel antisense", or "novel dubious"
   stopifnot(!any(s[,"isIsolatedOppo"] & s[,"oppositeFeature"]!=""))
-  catg[ is.na(catg) & s[,"isIsolatedSame"] & s[,"isIsolatedOppo" ] ] = "unIso"
-  catg[ is.na(catg) & s[,"isIsolatedSame"] & (s[,"oppositeFeature"]!="") & (s[,"oppositeExpression"] < threshold)] = "unAnti"
-  catg[ is.na(catg) & s[,"isIsolatedSame"] & (s[,"oppositeFeature"]!="") ] = "unAnti-dubious"
+  catg[ is.na(catg) & s[,"isIsolatedSame"] & s[,"isIsolatedOppo" ] ] = "novel isolated"
+  catg[ is.na(catg) & s[,"isIsolatedSame"] & (s[,"oppositeFeature"]!="") & (s[,"oppositeExpression"] < threshold)] = "novel antisense"
+  catg[ is.na(catg) & s[,"isIsolatedSame"] & (s[,"oppositeFeature"]!="") ] = "novel dubious"
   catg[ is.na(catg)  ] = "other"
 
   tab = table(catg)
   count[names(tab), "observed"]  = tab
   count = count[-which(rownames(count) %in% c("other", "not expressed")), ]
 
-  nua4 = count["unAnti",1]
-  nua5 = count["unIso",1]
+  nua4 = count["novel antisense",1]
+  nua5 = count["novel isolated",1]
   cat("New segments: started with ", nua1, ", merging resulted in ",
       nua2, ",\n'length>=", minNewSegmentLength, "' filter resulted in ", nua3,
       ",\n'zLeft, zRight>=", zThresh, "' filter resulted in ",

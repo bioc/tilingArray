@@ -2,8 +2,8 @@ library("tilingArray")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = TRUE # FALSE
-what     = c("pie", "wst", "length", "lvsx", "cons")
+interact = TRUE
+what     = c("pie", "wst", "length", "lvsx", "cons")[5]
 
 if(!interact)
   sink("tableSegments.txt")
@@ -25,22 +25,24 @@ for(rt in rnaTypes) {
   cs[[rt]] = categorizeSegmentsPie(get(rt))
 }
 
+fillColors = c(brewer.pal(9, "Pastel1")[c(2:6, 1, 9)])
+names(fillColors) =c("verified gene", "ncRNA", "uncharacterized gene",
+   "dubious", "novel antisense", "novel isolated", "novel dubious")
 
-
-fillColors = c(brewer.pal(9, "Pastel1")[c(2:6, 1)])
-names(fillColors) =c("verified", "ncRNA", "uncharacterized", "dubious",
-      "unAnti", "unIso")
-
-lineColors = c(brewer.pal(9, "Set1"))[c(1, 5, 4, 3, 2, 9, 7)]
-names(lineColors) =c("verified", "uncharacterized", "ncRNA", 
-                 "unAnti", "unIso", "unannotated, unexpressed", "whole genome")
+lineColors = c(brewer.pal(9, "Set1"))[c(1, 4, 5, 3, 2, 8, 9, 7)]
+names(lineColors) =c("verified gene", "ncRNA", "uncharacterized gene",  
+   "novel antisense", "novel isolated", "novel dubious",
+   "isolated and unexpressed", "whole genome")
 
 ##
 ## PIE
 ##
 if("pie" %in% what){
-  if(!interact)
+  if(interact) {
+    x11(width=7*length(rnaTypes), height=4.8)
+  } else {
     pdf("tableSegments-pie.pdf", width=7*length(rnaTypes), height=4.8)
+  }
   par(mfrow=c(1, length(rnaTypes)))
   cat("Counts for the pie chart:\n",
       "=========================\n",
@@ -53,7 +55,8 @@ if("pie" %in% what){
       sep="")
   for(rt in rnaTypes) {
     cat("\n", rt, "\n-----\n", sep="")
-    selectedCategories = c("verified", "ncRNA", "uncharacterized", "dubious", "unIso", "unAnti")
+    selectedCategories = c("verified gene", "ncRNA", "uncharacterized gene", "dubious",
+      "novel isolated", "novel antisense", "novel dubious")
     stopifnot(all(selectedCategories %in% names(fillColors)))
     ct  = cs[[rt]]$count
     stopifnot(all(selectedCategories %in% rownames(ct)))
@@ -75,11 +78,12 @@ if("pie" %in% what){
 ##
 if("wst" %in% what){
   cat("\n\n")
-  selectedCategories = c("verified", "uncharacterized", "ncRNA", "unAnti", "unIso", "unDubious")
+  selectedCategories = c("verified gene", "uncharacterized gene", "ncRNA",
+    "novel antisense", "novel isolated", "novel dubious")
   for(rt in rnaTypes) {
     s   = cs[[rt]]$s
-    stopifnot(all(selectedCategories %in% levels(s$category)))
-    sel = (s$category %in% selectedCategories)
+    stopifnot(all(selectedCategories %in% levels(s[,"category"])))
+    sel = (s[,"category"] %in% selectedCategories)
     fn  = file.path(indir[rt], "viz", "index.html")
     writeSegmentTable(s[sel, ], title=longNames[rt], fn=fn, sortBy="category")
     rm(list=c("s", "sel", "fn"))
@@ -92,7 +96,8 @@ if("wst" %in% what){
 ##
 maxlen=5000
 if("length" %in% what){
-  selectedCategories = c("verified", "uncharacterized", "ncRNA", "unAnti", "unIso")
+  selectedCategories = c("verified gene", "uncharacterized gene", "ncRNA",
+    "novel antisense", "novel isolated")
   stopifnot(all(selectedCategories %in% names(fillColors)))
   if(!interact)
     pdf("tableSegments-lengths.pdf", width=14, height=length(rnaTypes)*3)
@@ -100,9 +105,9 @@ if("length" %in% what){
   br = seq(0, maxlen, by=200)
   for(rt in rnaTypes) {
     s   = cs[[rt]]$s
-    stopifnot(all(selectedCategories %in% levels(s$category)))
+    stopifnot(all(selectedCategories %in% levels(s[,"category"])))
     for(lev in selectedCategories) {
-      len = s$length[s$category == lev]
+      len = s[s[,"category"] == lev, "length"]
       len[len>maxlen]=maxlen
       hist(len, breaks=br, col=fillColors[lev], main=paste(rt, lev))
     }
@@ -124,17 +129,18 @@ if("lvsx" %in% what){
   par(mfrow=c(length(rnaTypes), 2))
   maxlen=5000
   br = seq(0, maxlen, by=200)
-  selectedCategories = c("verified", "unIso")
+  selectedCategories = c("verified gene", "novel isolated")
   for(rt in rnaTypes) {
     s   = cs[[rt]]$s
-    stopifnot(all(selectedCategories %in% levels(s$category)))
-    ylim = quantile(s$level[s$category %in% selectedCategories], probs=c(0.01, 0.99), na.rm=TRUE)
+    stopifnot(all(selectedCategories %in% levels(s[,"category"])))
+    ylim = quantile(s[,"level"][s[,"category"] %in% selectedCategories],
+      probs=c(0.01, 0.99), na.rm=TRUE)
     for(lev in selectedCategories) {
-      len = s$length[s$category == lev]
+      len = s[s[,"category"] == lev, "length"]
       len[len>maxlen] = maxlen
-      exl = s$level[s$category == lev]
-      
-      plot(len, exl, pch=pch, ylim=ylim, main=paste(longNames[rt], ": ", lev, sep=""),
+      exl = s[s[,"category"] == lev, "level"]
+      plot(len, exl, pch=pch, ylim=ylim,
+           main=paste(longNames[rt], ": ", lev, sep=""),
            ylab="expression level", xlab="length")
       lf = loess(exl ~ len)
       slen = sort(len)
@@ -169,8 +175,7 @@ calchit = function(sp, blrt, s) {
   for(b in 1:length(blrt)) {
     br  = blrt[[b]]
     ## 1 = Query Sequence ID, 3 = Percent identity, 4 = Alignment length 
-    fas = br[[3]] * br[[4]] / (s$length[br[[1]]]+1)
-    ## fas = br[[4]] / (s$length[br[[1]]]+1) * 100
+    fas = br[[3]] * br[[4]] / s$length[br[[1]]]
     ## fas = br[[3]] 
     stopifnot(all( fas>=0 & fas<=115 & !is.na(fas)))
     
@@ -179,10 +184,11 @@ calchit = function(sp, blrt, s) {
     spbyq   = split(1:nrow(br), br[[1]]) 
     theBest = sapply(spbyq, function(i) i[which.max(fas[i])])
     i.seg = br[[1]][theBest]
-      
+    
     ## mean of the ratios:
     alignableFrac = numeric(nrow(s))
-    alignableFrac[i.seg] = fas[theBest] 
+    ## alignableFrac[i.seg] = fas[theBest]
+    alignableFrac[i.seg] = 100
     
     hit[,b] = sapply(sp, function(segments) {
       mean(alignableFrac[segments]) 
@@ -203,16 +209,20 @@ if("cons" %in% what){
   theSplit = vector(mode="list", length=length(rnaTypes))
   names(theSplit) = rnaTypes
     
-  selectedCategories = c("verified", "uncharacterized" , "ncRNA",  "unAnti", "unIso")
+  selectedCategories = c("verified gene", "uncharacterized gene" ,
+    "ncRNA",  "novel antisense", "novel isolated")
   
   for(rt in rnaTypes) {
     s   = cs[[rt]]$s
-    stopifnot(all(selectedCategories %in% levels(s$category)))
-    sp = split(seq(along=s$category), s$category)
+    stopifnot(all(selectedCategories %in% levels(s[,"category"])))
+    sp = split(seq(along=s[,"category"]), s[,"category"])
     sp = sp[selectedCategories]
-    sp$"unannotated, unexpressed"  = which(s$overlappingFeature=="" &
-        s$oppositeFeature=="" & s$level <= quantile(s$level, 0.2, na.rm=TRUE))
-    sp$"whole genome" = seq(along=s$category)
+    sp$"isolated and unexpressed"  = which((s[,"overlappingFeature"]=="") &
+        (s[,"oppositeFeature"]=="") & s[, "isIsolatedSame"] & s[, "isIsolatedOppo"] &
+        (s[, "frac.dup"] < maxDuplicated) &
+        (s[,"level"] <= quantile(s[,"level"], 0.2, na.rm=TRUE)))
+    sp$"whole genome" = seq(along=s[,"category"])
+    browser()
     
     hit = calchit(sp, blastres[[rt]], s)
 
@@ -222,69 +232,63 @@ if("cons" %in% what){
   }
 
   nrlevs = 4
-  minlen = 200
+  minlen = 0 ; cat("OYEZ") ## 100
   cat("\n\nGrouping of conservation scores by expression, using ", nrlevs, "\n", 
       "quantile groups of equal size, respectively.\n",
       "Scores are calculated for segments with length >= ", minlen, ".\n",
       "==========================================================================\n", 
       sep="")
   
-  for(plotWhat in 1:2) {
-    if(interact) {
-      x11(width=6*length(rnaTypes), height=8)
-    } else {
-      pdf(paste("tableSegments-consex-", plotWhat, ".pdf", sep=""),
-          width=4*length(rnaTypes), height=8)
-    }
-    par(mfcol=c(1, length(rnaTypes)))
-    
-    for(rt in rnaTypes) {
-      cat("\n", rt, "\n-----\n", sep="")
-
-      sp = switch(plotWhat,
-        theSplit[[rt]][c("verified", "unIso")],
-        theSplit[[rt]][-which(names(theSplit[[rt]])=="unannotated, unexpressed")]
-        )
-        
-      names(longNames) = longNames = names(sp)
-      longNames[names(longNames)=="verified"] = "verified genes"
-      longNames[names(longNames)=="unIso"]    = "unannotated, isolated"
-                
-      fraction = matrix(NA, nrow=nrlevs, ncol=length(sp))
-      colnames(fraction) = names(sp)
-  
-      pchs = c(switch(plotWhat,
-        14+seq(along=sp),
-        rep(16, length(sp))
-        ), NA)
-      
-      s   = cs[[rt]]$s
-      for(j in seq(along=sp)) {
-        wh   = sp[[j]][s$length[sp[[j]]]>=minlen]
-        v    = s$level[wh]
-        br   = quantile(v, (0:nrlevs)/nrlevs, na.rm=TRUE)
-        spwh = split(wh, cut(v, breaks=br))
-        hit  = calchit(spwh, blastres[[rt]], s)
-        fraction[, names(sp)[j]] = hit$fraction
-        cat("\nby expression for:", names(sp)[j], "\n")
-        print(round(hit,1))
-      }
-      baseline = calchit(list(theSplit[[rt]]$"unannotated, unexpressed"), blastres[[rt]], s)
-
-      matplot(fraction, xaxt="n", type="b", main=longNames[rt],
-              lty=1, lwd=2, pch=pchs, col=lineColors[colnames(fraction)],
-              ylab="average identity (percent) ", xlab="transcript level",
-              ylim=c(0, 110))
-      abline(h=baseline, col=lineColors["unannotated, unexpressed"], lwd=2, type="l")
-      cutNames = paste("<=", round((1:nrlevs)/nrlevs*100), "%", sep="")
-      axis(side=1, at = 1:nrlevs, labels = cutNames)
-      if(rt=="polyA2")
-        legend(x=1, y=112, legend=c(longNames[colnames(fraction)], "unannotated, unexpressed"),
-               lty=1, lwd=2, pch=pchs, col=lineColors[c(colnames(fraction),"unannotated, unexpressed")])
-    }
-    if(!interact)
-      dev.off()
+  if(interact) {
+    x11(width=6*length(rnaTypes), height=8)
+  } else {
+    pdf(paste("tableSegments-consex.pdf", sep=""),
+        width=4*length(rnaTypes), height=8)
   }
+  par(mfcol=c(1, length(rnaTypes)))
+  
+  for(rt in rnaTypes) {
+    cat("\n", rt, "\n-----\n", sep="")
+    
+    sp = theSplit[[rt]]
+    s  = cs[[rt]]$s
+        
+    names(longNames) = longNames = names(sp)
+    fraction = matrix(NA, nrow=nrlevs, ncol=length(sp))
+    colnames(fraction) = names(sp)
+  
+    pchs = c(15, 5, 16:20)
+    stopifnot(length(pchs)==length(sp))
+    
+    for(j in seq(along=sp)) {
+      wh   = sp[[j]][s$length[sp[[j]]]>=minlen]
+      v    = s$level[wh]
+      br   = quantile(v, (0:nrlevs)/nrlevs, na.rm=TRUE)
+      spwh = split(wh, cut(v, breaks=br))
+      hit  = calchit(spwh, blastres[[rt]], s)
+      fraction[, names(sp)[j]] = hit$fraction
+      cat("\nby expression for:", names(sp)[j], "\n")
+      print(round(hit,1))
+    }
+    j = which(colnames(fraction)=="isolated and unexpressed")
+    stopifnot(length(j)==1)
+    baseline = mean(fraction[, j])
+    fraction = fraction[, -j]
+    
+    matplot(fraction, xaxt="n", type="b", main=longNames[rt],
+            lty=1, lwd=2, pch=pchs, col=lineColors[colnames(fraction)],
+            ylab="average identity (percent) ", xlab="transcript level",
+            ylim=c(0, 110))
+    abline(h=baseline, col=lineColors[["isolated and unexpressed"]], lwd=2, type="l")
+    cutNames = paste("<=", round((1:nrlevs)/nrlevs*100), "%", sep="")
+    axis(side=1, at = 1:nrlevs, labels = cutNames)
+    if(rt=="polyA2")
+      legend(x=1, y=112, legend=c(longNames[colnames(fraction)], "isolated and unexpressed"),
+             lty=1, lwd=2, pch=pchs, col=lineColors[c(colnames(fraction), "isolated and unexpressed")])
+  }
+  if(!interact)
+    dev.off()
+ 
 }
 
 if(!interact)
