@@ -14,13 +14,13 @@ qualityReport(x, hybeType, normRef = NULL, compress = TRUE, selectGenes, gff, pr
 \arguments{
   \item{x}{tiling array data,
     either a character vector, naming the CEL files to analyze, OR
-    an \code{\link{AffyBatch}} containing the unnormalized data}
+    an \code{\link[affy]{AffyBatch}} containing the unnormalized data}
   \item{hybeType}{character string, naming the type of hybridized data,
     either 'direct' for directly hybridized RNA (no normalization
     necessary) or 'reverse' for reverse-transcribed RNA}
   \item{normRef}{samples used for normalization of the data, either a
     character vector naming the CEL-files to use for normalization of
-    \code{x} of an \code{\link{AffyBatch}} containing the expression
+    \code{x} of an \code{\link[affy]{AffyBatch}} containing the expression
     data of those samples. \code{NULL} means 'no normalization'}
   \item{compress}{logical; if \code{x} and \code{normRef} were provided as
     character vectors, are the related CEL-files compressed?}
