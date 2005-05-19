@@ -8,11 +8,14 @@ if(!exists("gff")) {
   gff$gene               = getAttributeField(gff$attributes, "gene")
 }
 
-rnaTypes = c("polyA", "polyA2", "tot")[2:3]
-longNames=c(polyA="poly-A RNA single enriched", polyA2="poly-A RNA", tot="total RNA")
+rnaTypes = c("polyA", "polyA2", "tot", "polyAnn")[c(2,4)]
+longNames=c(polyA ="poly-A RNA single enriched",
+            polyA2="poly-A RNA",
+            polyAnn="poly-A RNA (new norm.)",
+            tot ="total RNA")
 
 indir = c("polyA"="segmentation-3polyA", "polyA2"="seg-polyA-050428",
-  "tot"="seg-tot-050421")
+  "tot"="seg-tot-050421", "polyAnn"="seg-polyA-050518")
 
 for(rt in rnaTypes) {
   if(!exists(rt)) {

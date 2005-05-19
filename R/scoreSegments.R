@@ -33,7 +33,7 @@ scoreSegments = function(s, gff,
   nrBasePerSeg = 1500, 
   probeLength  = 25,
   knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
-        "rRNA", "snRNA", "snoRNA", "tRNA",
+        "rRNA", "snRNA", "snoRNA", "tRNA", 
         "transposable_element", "transposable_element_gene"),
   params = c(minOverlapFractionSame = 0.8, minOverlapOppo = 40,
     minIsolatedDistance=100, oppositeWindow = 100, utrScoreWidth=100),
@@ -84,12 +84,11 @@ scoreSegments = function(s, gff,
         end                   = rep(as.integer(NA), cp),
         length                = rep(as.integer(NA), cp),
         level                 = rep(as.numeric(NA), cp),
-        geneInSegment         = I(character(cp)),
+        featureInSegment      = I(character(cp)),
+        mostOfFeatureInSegment= I(character(cp)),
         overlappingFeature    = I(character(cp)),
         oppositeFeature       = I(character(cp)),
         oppositeExpression    = rep(as.numeric(NA), cp),
-        isIsolatedSame        = rep(as.logical(NA), cp),
-        isIsolatedOppo        = rep(as.logical(NA), cp),
         utr5                  = rep(as.integer(NA), cp),
         utr3                  = rep(as.integer(NA), cp),
         distLeft              = rep(as.integer(NA), cp),
@@ -128,9 +127,8 @@ scoreSegments = function(s, gff,
           gff$feature %in% knownFeatures, ]
       
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
-      ft1 = ft2 = ft3 = character(cp)  
+      ft1 = ft2 = ft3 = ft4 = character(cp)  
       zl = zr = lev = oe = rep(as.numeric(NA), cp)
-      isoSame = isoOppo = rep(as.logical(NA), cp)
       
       stopifnot(all(diff(dat$x)>=0))
         
@@ -155,25 +153,26 @@ scoreSegments = function(s, gff,
         zr[j] = zscore(yr, cmym)
 
         ## genes that are fully contained in the segment
-        whGinS = which( same.gff$feature=="gene" &
-          same.gff$start >= startj &
-          same.gff$end   <= endj )
+        nm1 = nm2 = nm3 = character(0)
+        whGinS = which(
+          (same.gff$start >= startj) &
+          (same.gff$end   <= endj ))
         if(length(whGinS)>0) {
           nm1 = unique(same.gff$Name[whGinS])
           stopifnot(!any(duplicated(nm1)))
           ft1[j] = paste(nm1, collapse=", ")
           if(length(whGinS)==1) {
-            ## The segment contains exactly one feature:
-            utrLeft[j] =  same.gff$start[whGinS] - startj 
-            utrRight[j] = -same.gff$end[whGinS]   + endj 
+            if(same.gff$feature[whGinS]=="gene") {
+              ## The segment contains exactly one gene
+              utrLeft[j]  =  same.gff$start[whGinS] - startj 
+              utrRight[j] = -same.gff$end[whGinS]   + endj
+            }
           } 
-        } else {
-          nm1 = character(0)
         }
 
         ## features that have overlap with the segment
-        overlapSame   = pmin(endj, same.gff$end) - pmax(startj, same.gff$start)
-        smallerLength = pmin(endj-startj, same.gff$end-same.gff$start)
+        overlapSame   = pmin(endj, same.gff$end) - pmax(startj, same.gff$start) + 1
+        smallerLength = pmin(endj-startj, same.gff$end-same.gff$start) + 1
         whSinF = which( overlapSame/smallerLength >= params[["minOverlapFractionSame"]])
         if(length(whSinF)>0) {
           nm2    = unique(same.gff$Name[whSinF])
@@ -208,7 +207,7 @@ scoreSegments = function(s, gff,
                 "+" = c(utrLeft, utrRight),
                 "-" = c(utrRight, utrLeft))
 
-      segScore$geneInSegment[idx]      = ft1
+      segScore$featureInSegment[idx]   = ft1
       segScore$overlappingFeature[idx] = ft2
       segScore$oppositeFeature[idx]    = ft3
       segScore$oppositeExpression[idx] = oe

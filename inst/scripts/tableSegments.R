@@ -2,8 +2,8 @@ library("tilingArray")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = TRUE
-what     = c("pie", "wst", "length", "lvsx", "cons")[5]
+interact = (TRUE)
+what     = c("pie", "wst", "length", "lvsx", "cons")[1:3]
 
 if(!interact)
   sink("tableSegments.txt")
@@ -79,7 +79,7 @@ if("pie" %in% what){
 if("wst" %in% what){
   cat("\n\n")
   selectedCategories = c("verified gene", "uncharacterized gene", "ncRNA",
-    "novel antisense", "novel isolated", "novel dubious")
+    "novel antisense", "novel isolated", "novel dubious", "isolated and unexpressed")
   for(rt in rnaTypes) {
     s   = cs[[rt]]$s
     stopifnot(all(selectedCategories %in% levels(s[,"category"])))
@@ -155,6 +155,7 @@ if("lvsx" %in% what){
 ##
 ## CONSERVATION
 ##
+if("cons" %in% what){
 
 if(!exists("blastres")) {
   blastResultFiles = c("Sbay_contigs.out", "Smik_contigs.out",
@@ -175,7 +176,8 @@ calchit = function(sp, blrt, s) {
   for(b in 1:length(blrt)) {
     br  = blrt[[b]]
     ## 1 = Query Sequence ID, 3 = Percent identity, 4 = Alignment length 
-    fas = br[[3]] * br[[4]] / s$length[br[[1]]]
+    ## fas = br[[3]] * br[[4]] / s$length[br[[1]]]
+    fas = (br[[4]] / s$length[br[[1]]] > 0.5) * 100 
     ## fas = br[[3]] 
     stopifnot(all( fas>=0 & fas<=115 & !is.na(fas)))
     
@@ -187,8 +189,7 @@ calchit = function(sp, blrt, s) {
     
     ## mean of the ratios:
     alignableFrac = numeric(nrow(s))
-    ## alignableFrac[i.seg] = fas[theBest]
-    alignableFrac[i.seg] = 100
+    alignableFrac[i.seg] = fas[theBest]
     
     hit[,b] = sapply(sp, function(segments) {
       mean(alignableFrac[segments]) 
@@ -201,7 +202,6 @@ calchit = function(sp, blrt, s) {
 ## cons
 ##
 
-if("cons" %in% what){
   cat("Fraction of alignable sequence (percent):\n",
       "=========================================\n",
       "Here, 'number' is the number of segments.\n", sep="")
@@ -210,29 +210,23 @@ if("cons" %in% what){
   names(theSplit) = rnaTypes
     
   selectedCategories = c("verified gene", "uncharacterized gene" ,
-    "ncRNA",  "novel antisense", "novel isolated")
+    "ncRNA",  "novel antisense", "novel isolated", "isolated and unexpressed")
   
   for(rt in rnaTypes) {
     s   = cs[[rt]]$s
     stopifnot(all(selectedCategories %in% levels(s[,"category"])))
     sp = split(seq(along=s[,"category"]), s[,"category"])
     sp = sp[selectedCategories]
-    sp$"isolated and unexpressed"  = which((s[,"overlappingFeature"]=="") &
-        (s[,"oppositeFeature"]=="") & s[, "isIsolatedSame"] & s[, "isIsolatedOppo"] &
-        (s[, "frac.dup"] < maxDuplicated) &
-        (s[,"level"] <= quantile(s[,"level"], 0.2, na.rm=TRUE)))
-    sp$"whole genome" = seq(along=s[,"category"])
-    browser()
+    ## sp$"whole genome" = seq(along=s[,"category"])
     
     hit = calchit(sp, blastres[[rt]], s)
-
     theSplit[[rt]] = sp
     cat("\n", rt, "\n-----\n", sep="")
     print(round(hit,1))
   }
 
-  nrlevs = 4
-  minlen = 0 ; cat("OYEZ") ## 100
+  nrlevs = 3
+  minlen = 0 
   cat("\n\nGrouping of conservation scores by expression, using ", nrlevs, "\n", 
       "quantile groups of equal size, respectively.\n",
       "Scores are calculated for segments with length >= ", minlen, ".\n",
@@ -253,11 +247,10 @@ if("cons" %in% what){
     sp = theSplit[[rt]]
     s  = cs[[rt]]$s
         
-    names(longNames) = longNames = names(sp)
     fraction = matrix(NA, nrow=nrlevs, ncol=length(sp))
     colnames(fraction) = names(sp)
   
-    pchs = c(15, 5, 16:20)
+    pchs = c(15, 5, 16, 17, 19, 18) # 20
     stopifnot(length(pchs)==length(sp))
     
     for(j in seq(along=sp)) {
@@ -270,21 +263,21 @@ if("cons" %in% what){
       cat("\nby expression for:", names(sp)[j], "\n")
       print(round(hit,1))
     }
-    j = which(colnames(fraction)=="isolated and unexpressed")
-    stopifnot(length(j)==1)
-    baseline = mean(fraction[, j])
-    fraction = fraction[, -j]
+    #j = which(colnames(fraction)=="isolated and unexpressed")
+    #stopifnot(length(j)==1)
+    #baseline = mean(fraction[, j])
+    #fraction = fraction[, -j]
     
     matplot(fraction, xaxt="n", type="b", main=longNames[rt],
             lty=1, lwd=2, pch=pchs, col=lineColors[colnames(fraction)],
             ylab="average identity (percent) ", xlab="transcript level",
             ylim=c(0, 110))
-    abline(h=baseline, col=lineColors[["isolated and unexpressed"]], lwd=2, type="l")
+    #abline(h=baseline, col=lineColors[["isolated and unexpressed"]], lwd=2, type="l")
     cutNames = paste("<=", round((1:nrlevs)/nrlevs*100), "%", sep="")
     axis(side=1, at = 1:nrlevs, labels = cutNames)
     if(rt=="polyA2")
-      legend(x=1, y=112, legend=c(longNames[colnames(fraction)], "isolated and unexpressed"),
-             lty=1, lwd=2, pch=pchs, col=lineColors[c(colnames(fraction), "isolated and unexpressed")])
+      legend(x=1, y=112, legend=colnames(fraction),
+             lty=1, lwd=2, pch=pchs, col=lineColors[colnames(fraction)])
   }
   if(!interact)
     dev.off()

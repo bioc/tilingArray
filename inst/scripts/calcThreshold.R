@@ -50,8 +50,10 @@ for(rt in rnaTypes) {
   s = get("segScore", get(rt))
   isUnique = (s$frac.dup < maxDuplicated)
   isUnanno = (s$overlappingFeature=="" & isUnique)
-  thr = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
+
+    thr = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
   assign("threshold", thr, envir=get(rt))
+  assign("threshold.novel", thr, envir=get(rt))
 }
 
 if(!interact)

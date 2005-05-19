@@ -27,7 +27,7 @@ source("scripts/categorizeSegments.R")
 source("scripts/writeSegmentTable.R")
 
 
-  fdim = c(10.5, 7)
+fdim = c(10.5, 7)
 if(interact) {
   x11(width = fdim[1], height = fdim[2])
   pch=16

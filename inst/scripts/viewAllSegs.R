@@ -34,7 +34,7 @@ write.table(outtab, file="gff.txt",
 ##
 ## Write the pictures
 ## 
-for(rt in rnaTypes) {
+for(rt in rnaTypes[2]) {
   cat(">>>", rt, "<<<\n")
   convCmd = "#!/bin/sh"
 

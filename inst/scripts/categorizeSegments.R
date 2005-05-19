@@ -6,9 +6,9 @@
 goodGenes = gff$Name[gff$feature=="gene" &
   gff$orf_classification %in% c("Uncharacterized", "Verified")]
 
-splicedGenes1 = sort(gff$Name[gff$feature=="intron"])
-splicedGenes2 = names(which(table(gff$Name[gff$feature=="CDS"])>=2))
-goodGenes     = setdiff(goodGenes, union(splicedGenes1, splicedGenes2))
+#splicedGenes1 = sort(gff$Name[gff$feature=="intron"])
+#splicedGenes2 = names(which(table(gff$Name[gff$feature=="CDS"])>=2))
+#goodGenes     = setdiff(goodGenes, union(splicedGenes1, splicedGenes2))
 
 categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
   s = get("segScore", env)
@@ -19,10 +19,10 @@ categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
 
   isTranscribed = ((s[,"frac.dup"] < maxDuplicated) & (s[,"level"]>=threshold))
   hasGoodFlanks = (minZ >= zThresh)
-  isWellDefined = (listLen(strsplit(s[,"geneInSegment"], split=", "))==1)
-  isGoodGene    = (s[,"geneInSegment"] %in% goodGenes)   ## c
-
-  candidates = which(isTranscribed & hasGoodFlanks & isWellDefined & isGoodGene)
+  isWellDefined = (listLen(strsplit(s[,"featureInSegment"], split=", "))==1) & (s[,"overlappingFeature"]==s[,"featureInSegment"])
+  isGoodGene    = (s[,"featureInSegment"] %in% goodGenes)   ## c
+  isNuclear     = (s[,"chr"] <= 16)
+  candidates = which(isTranscribed & hasGoodFlanks & isWellDefined & isGoodGene & isNuclear)
 
   s$goodUTR = rep(as.integer(NA), nrow(s))
   s[candidates, "goodUTR"] = minZ[candidates]
@@ -35,7 +35,9 @@ categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
 ## For each segment, the factor 'category' contains an assignment to a category  
 
 categorizeSegmentsPie = function(env, maxDuplicated=0.5,
-  minNewSegmentLength=24, zThresh=1) {
+  ## minNewSegmentLength=24,
+  minNewSegmentLength = 100,
+  zThresh=1) {
 
   s = get("segScore", env)
   threshold = get("threshold", env)
@@ -47,14 +49,18 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
   ## results data structure: a factor which assigns a category to each segment:
   catg = factor(rep(NA, nrow(s)), 
     levels = c("verified gene", "ncRNA", "uncharacterized gene", "dubious", "other",
-      "novel isolated", "novel antisense", "novel dubious", "not expressed"))
+      "novel isolated", "novel antisense", "novel dubious",
+      "isolated and unexpressed"))
 
   count           = matrix(NA, nrow=length(levels(catg)), ncol=2)
   rownames(count) = levels(catg)
   colnames(count) = c("observed", "in genome")
   
   ## >>> Phase 1: everything which is not expressed
-  catg[-wh] = "not expressed"
+  isIso = ( s[, "isIsolatedSame"] & s[, "isIsolatedOppo"] &
+           (s[, "frac.dup"] < maxDuplicated) )
+  catg[!isTranscribed]         = "other"
+  catg[!isTranscribed & isIso] = "isolated and unexpressed"
 
   ## >>> Phase 2: segments that overlap annotated features
   ovF = strsplit(s[wh,"overlappingFeature"],  split=", ")
@@ -66,8 +72,7 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
       "uncharacterized gene" = gff$Name[gff$feature=="gene" & gff$orf_classification=="Uncharacterized"],
       "ncRNA"           = gff$Name[gff$feature %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA")],
       "dubious"         = gff$Name[gff$feature=="gene" & gff$orf_classification=="Dubious"],
-      "other"           = gff$Name[gff$feature %in% c("pseudogene", "transposable_element",
-                              "transposable_element_gene")],
+      "other"           = gff$Name[gff$feature %in% c("transposable_element", "transposable_element_gene")],
       stop("Zapperlot")
     )
     stopifnot(!is.null(theseNames))
@@ -114,11 +119,16 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
   catg[is.na(catg) & (s[,"length"]<minNewSegmentLength)] = "other"
   nua3 = sum(is.na(catg))
 
-  ## 3c. Require large z-scores on both sides
-  catg[ is.na(catg) & ((s[,"zLeft"] < zThresh)|(s[,"zRight"] < zThresh)) ] = "other"
-             
+  ## 3c. Require large z-scores on both sides, and minimum level
+  catg[ is.na(catg) & (
+        is.na(s[,"zLeft"])  | (s[,"zLeft"]  < zThresh) |
+        is.na(s[,"zRight"]) | (s[,"zRight"] < zThresh)) ] = "other"
+
+  threshold.novel = get("threshold.novel", env)
+  stopifnot(!any(is.na(catg) & is.na(s[,"level"])))
+  catg[is.na(catg) & (s[,"level"] <= threshold.novel)] = "other"
+  
   ## >>> Phase 4: assign to "novel isolated", "novel antisense", or "novel dubious"
-  stopifnot(!any(s[,"isIsolatedOppo"] & s[,"oppositeFeature"]!=""))
   catg[ is.na(catg) & s[,"isIsolatedSame"] & s[,"isIsolatedOppo" ] ] = "novel isolated"
   catg[ is.na(catg) & s[,"isIsolatedSame"] & (s[,"oppositeFeature"]!="") & (s[,"oppositeExpression"] < threshold)] = "novel antisense"
   catg[ is.na(catg) & s[,"isIsolatedSame"] & (s[,"oppositeFeature"]!="") ] = "novel dubious"

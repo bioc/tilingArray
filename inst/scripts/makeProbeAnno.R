@@ -1,25 +1,37 @@
 ##--------------------------------------------------------------------------------
-## 26.3.2005
+## Use the output from the BLAST of all probes on the chip vs genome to construct
+## probe annotaton datastructures
+##
+## 26.3.2005:
 ## Note: this script is such a memory hog that it currently only works on
 ## dijkstra (27 GB). On pavlov (16 GB) it will fail.
 ##
-## Use the output from the BLAST of all probes on chip vs genome to construct
-## a datastructure for along-chromosome analyses
-## - coord: coordinate (integer) 
-##   index: index (1...6553600) of the PM on the chip (integer) 
-##   unique: whether the probe hits multiple places (logical)
+## 13.5.2005:
+## Extended to also write arrayDesign.txt file for ArrayExpress
+##
+## The script has the following parts
+## 1. Read and process blastRes
+## 2. Write arrayDesign.txt
+## 3. Construct along-chromosome vectors for probeAnno environment:
+##    coord: coordinate (integer) 
+##    index: index (1...6553600) of the PM on the chip (integer) 
+##    unique: whether the probe hits multiple places (logical)
+## 4. Construct GFF dataframe
+## 5. Construct probeAnnoReverse and probeAnnoDirect lists
+## 6. Write 3-5 into probeAnno.rda
 ##--------------------------------------------------------------------------------
 library("tilingArray")
+library("Scerevisiaetilingprobe")
+
 options(error=recover)
 
 probeLength = 25
 arraySize   = 2560
 nrProbes    = arraySize*arraySize
 
-if(!exists("blastRes")) {
-  cat("Loading blastRes.rda.\n")
-  load("blastRes.rda")
-}
+##
+## PART 1
+##
 ## blastRes is a dataframe with  13,550,085 rows and 12 columns
 ##  1  Identity of query sequence  (integer)
 ##  2  Identity of subject sequence = matching sequence in database (character)
@@ -33,6 +45,10 @@ if(!exists("blastRes")) {
 ## 10  End of subject sequence (integer)
 ## 11  E-value (numeric)
 ## 12  Bit-score (numeric)
+if(!exists("blastRes")) {
+  cat("Loading blastRes.rda.\n")
+  load("blastRes.rda")
+}
 
 ## Mapping from column 2 to chromosome ID:
 ## 01 = ref|NC_001133|, 02 = ref|NC_001134|, ..., 16=ref|NC_001148|
@@ -43,18 +59,18 @@ if(!exists("chrNo")) {
   stopifnot(!any(is.na(chrNo)))
 }
 
-## Watson strand = antisense = "+" = typically plotted above
-## Crick strand = sense = "-" = typically plotted below
+## Watson strand = "+" = typically plotted above
+## Crick strand  = "-" = typically plotted below
 if(!exists("strand")) {
   cat("Calculating cstart and cend.\n")
   cstart = blastRes[[9]]
   cend   = blastRes[[10]]
-  is.antisense = (cend < cstart)    
-  strand = factor(c("+", "-")[ 1 + is.antisense])
+  isMinusStrand = (cend < cstart)    
+  strand = factor(c("+", "-")[ 1 + isMinusStrand])
   ## swap
-  tmp = cstart[is.antisense]
-  cstart[is.antisense] =  cend[is.antisense] 
-  cend[is.antisense] = tmp
+  tmp = cstart[isMinusStrand]
+  cstart[isMinusStrand] =  cend[isMinusStrand] 
+  cend[isMinusStrand] = tmp
 }
 
 
@@ -67,7 +83,10 @@ if(!exists("whPM")) {
 
   whPM = which(is.25mer & (blastRes[[3]]==100) & (blastRes[[5]] == 0))
   whMM = which(is.25mer & (blastRes[[3]]==096) & (blastRes[[5]] == 1))
-    
+
+
+  stop("INTERRUPT")
+  
   ## double-check
   stopifnot(all(cend[c(whPM, whMM)]-cstart[c(whPM, whMM)]==(probeLength-1)))
   
@@ -75,18 +94,51 @@ if(!exists("whPM")) {
   MMIndexFromPM = function(i) i + arraySize
   stopifnot(all(MMIndexFromPM(blastRes[[1]][whPM] %in% blastRes[[1]][whMM])))
 
+  ## See which ones have multiple hits
+  PMindex = blastRes[[1]][whPM]
+  dupProbes = PMindex[duplicated(PMindex)]
+  
+  ## group PMs by chromosome and strand
+  sp = split(whPM, list(chr=chrNo[whPM], strand=strand[whPM]))
+  
   cat("found", length(whPM), "perfect match and", length(whMM),
       "mismatch BLAST hits.\n")
 }
 
-## See which ones have multiple hits
-PMindex = blastRes[[1]][whPM]
-dupProbes = PMindex[duplicated(PMindex)]
+##
+## Part 2
+## 
+  
+idx = as.integer(Scerevisiaetilingprobe$y*2560 + Scerevisiaetilingprobe$x + 1)
+stopifnot(identical(idx, 1:length(Scerevisiaetilingprobe$x)))
+            
+mt = whPM[match(idx, blastRes[[1]][whPM])]
 
-## group PMs by chromosome and strand
-sp = split(whPM, list(chr=chrNo[whPM], strand=strand[whPM]))
+out = c(paste("Row","Column","Reporter.name",
+  "Reporter.Sequence",
+  "Target.Name",
+  "Target.Start",
+  "Target.End",
+       sep="\t"), 
+  paste(Scerevisiaetilingprobe$y,
+        Scerevisiaetilingprobe$x,
+        idx,
+        reverseSeq(Scerevisiaetilingprobe$sequence),
+        blastRes[[2]][mt],
+        blastRes[[9]][mt],
+        blastRes[[10]][mt],
+  sep="\t"))
+
+con = gzfile("ForArrayExpress/arrayDesign.txt.gz", open="wt")
+writeLines(out, con=con)
+close(con)
+
+stop("Stopped after Part 2.")
 
 ##--------------------------------------------------
+##
+## Part 3
+##
 ## The along-chromosome data in 'probeAnno'
 ##--------------------------------------------------
 if(!exists("probeAnno")) {
@@ -105,7 +157,7 @@ if(!exists("probeAnno")) {
 }
 
 ##--------------------------------------------------
-## gff
+## Part 4: gff
 ##--------------------------------------------------
 if(!exists("gff")) {
   gffFile="SGD/saccharomyces_cerevisiae.gff"
@@ -127,7 +179,7 @@ if(!exists("gff")) {
 }
 
 ##--------------------------------------------------
-## The per-probe data in 'probeAnno'
+## Part 5: the per-probe data in 'probeAnno'
 ##--------------------------------------------------
 featNames = c("no_feature", "CDS", "ncRNA", "nc_primary_transcript",
               "rRNA", "snRNA", "snoRNA", "tRNA")
@@ -194,7 +246,8 @@ for(hybeType in c("Reverse", "Direct")) {
 } ## for hybetype
 
 cat("\n")
-
-
+##
+##  Part 6
+##
 save(probeAnno, MMIndexFromPM, gff, chrSeqname, file="probeAnno.rda", compress=TRUE)
 cat("Finished.\n")

@@ -129,7 +129,8 @@ plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
   stopifnot(!is.na(chrName))
 
   ## the expression data. use two viewports for different clipping behavior
-  rgy = range(y, na.rm=TRUE)
+  ## rgy = range(y, na.rm=TRUE)
+  rgy = quantile(y, probs=c(0.01, 0.99), na.rm=TRUE)
   vpr = which(names(VP)==sprintf("expr%d", istrand))
   pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="off",
     layout.pos.col=1, layout.pos.row=vpr))
