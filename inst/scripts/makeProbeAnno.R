@@ -2,12 +2,11 @@
 ## Use the output from the BLAST of all probes on the chip vs genome to construct
 ## probe annotaton datastructures
 ##
-## 26.3.2005:
-## Note: this script is such a memory hog that it currently only works on
-## dijkstra (27 GB). On pavlov (16 GB) it will fail.
-##
 ## 13.5.2005:
 ## Extended to also write arrayDesign.txt file for ArrayExpress
+##
+## 21.5.2005:
+## Use also probes shorter than 25 bases
 ##
 ## The script has the following parts
 ## 1. Read and process blastRes
@@ -25,7 +24,6 @@ library("Scerevisiaetilingprobe")
 
 options(error=recover)
 
-probeLength = 25
 arraySize   = 2560
 nrProbes    = arraySize*arraySize
 
@@ -73,26 +71,21 @@ if(!exists("strand")) {
   cend[isMinusStrand] = tmp
 }
 
-
 if(!exists("whPM")) {
   cat("Calculating whPM: ")
-  is.25mer = ((blastRes[[4]] == probeLength) &    ## alignment length
-              (blastRes[[6]] == 0) &              ## number of gaps
-              (blastRes[[7]] == 1) &              ## start of query
-              (blastRes[[8]] == probeLength))     ## end of query
 
-  whPM = which(is.25mer & (blastRes[[3]]==100) & (blastRes[[5]] == 0))
-  whMM = which(is.25mer & (blastRes[[3]]==096) & (blastRes[[5]] == 1))
+  whPM = which((blastRes[[6]]==0) &  ## number of gaps
+    (blastRes[[7]] == 1  ) &   ## start of query
+    (blastRes[[3]] == 100) &   ## percent identity
+    (blastRes[[5]] == 0  ) &   ## number of mismatches        
+    (blastRes[[4]] >= 21 ))    ## alignment length
 
-
-  stop("INTERRUPT")
-  
   ## double-check
-  stopifnot(all(cend[c(whPM, whMM)]-cstart[c(whPM, whMM)]==(probeLength-1)))
+  stopifnot(all(cend[whPM]-cstart[whPM]==(blastRes[[4]][whPM]-1)))
   
   ## MM are always below PM!
-  MMIndexFromPM = function(i) i + arraySize
-  stopifnot(all(MMIndexFromPM(blastRes[[1]][whPM] %in% blastRes[[1]][whMM])))
+  ## MMIndexFromPM = function(i) i + arraySize
+  ## stopifnot(all(MMIndexFromPM(blastRes[[1]][whPM] %in% blastRes[[1]][whMM])))
 
   ## See which ones have multiple hits
   PMindex = blastRes[[1]][whPM]
@@ -101,14 +94,16 @@ if(!exists("whPM")) {
   ## group PMs by chromosome and strand
   sp = split(whPM, list(chr=chrNo[whPM], strand=strand[whPM]))
   
-  cat("found", length(whPM), "perfect match and", length(whMM),
-      "mismatch BLAST hits.\n")
+  cat("found", length(whPM), "perfect match",
+      "BLAST hits. Length distribution:\n")
+  print(table(cend[whPM]-cstart[whPM]+1))
 }
 
 ##
 ## Part 2
-## 
-  
+##
+aefn = "ForArrayExpress/arrayDesign.txt.gz"
+cat("Writing", aefn, "\n")
 idx = as.integer(Scerevisiaetilingprobe$y*2560 + Scerevisiaetilingprobe$x + 1)
 stopifnot(identical(idx, 1:length(Scerevisiaetilingprobe$x)))
             
@@ -129,11 +124,9 @@ out = c(paste("Row","Column","Reporter.name",
         blastRes[[10]][mt],
   sep="\t"))
 
-con = gzfile("ForArrayExpress/arrayDesign.txt.gz", open="wt")
+con = gzfile(aefn, open="wt")
 writeLines(out, con=con)
 close(con)
-
-stop("Stopped after Part 2.")
 
 ##--------------------------------------------------
 ##
@@ -150,6 +143,7 @@ if(!exists("probeAnno")) {
     cat(nm, "")
     PMindex = blastRes[[1]][whc]
     assign(paste(nm, "start", sep="."),  cstart[whc], envir=probeAnno)
+    assign(paste(nm, "end", sep="."),    cend[whc], envir=probeAnno)
     assign(paste(nm, "index", sep="."),  PMindex, envir=probeAnno)
     assign(paste(nm, "unique", sep="."), !(PMindex %in% dupProbes), envir=probeAnno)
   }
@@ -159,6 +153,7 @@ if(!exists("probeAnno")) {
 ##--------------------------------------------------
 ## Part 4: gff
 ##--------------------------------------------------
+nrchr = 17
 if(!exists("gff")) {
   gffFile="SGD/saccharomyces_cerevisiae.gff"
   cat("Reading gff: ")
@@ -170,12 +165,20 @@ if(!exists("gff")) {
             "score", "strand", "frame", "attributes")
   cat("found", nrow(gff), "rows with classes", paste(sapply(gff, class), collapse=" "), ".\n")
   stopifnot(!any(is.na(gff$start)), !any(is.na(gff$end)))
-  
-  chrSeqname = 
+
+  ## Add additional useful fields
+  gff$Name = getAttributeField(gff$attributes, "Name")
+  theID    = getAttributeField(gff$attributes, "ID")
+  stopifnot(all(gff$Name == theID, na.rm=TRUE))
+  gff$orf_classification = getAttributeField(gff$attributes, "orf_classification")
+  gff$gene               = getAttributeField(gff$attributes, "gene")
+
+  gff$chr = match(gff$seqname,
     c("chrI", "chrII", "chrIII", "chrIV",
       "chrV", "chrVI", "chrVII", "chrVIII", "chrIX",
       "chrX", "chrXI", "chrXII", "chrXIII", "chrXIV",
-      "chrXV","chrXVI", "chrMito")
+      "chrXV","chrXVI", "chrMito"))
+  stopifnot(!any(is.na(gff$chr)), !any(gff$chr<1), !any(gff$chr>nrchr))
 }
 
 ##--------------------------------------------------
@@ -189,51 +192,44 @@ sgff    = gff[selGff, ]
 stopifnot(nrow(sgff)>1000)
 stopifnot(all(sgff$strand %in% c("+", "-")))  
 
-mseq = match(sgff$seqname, chrSeqname)
-stopifnot(!any(is.na(mseq)), !any(mseq<1), !any(mseq>17))
-
 for(hybeType in c("Reverse", "Direct")) {
   cat("-----", hybeType, "-----\n")
   p = lapply(featNames, function(i) character(nrProbes))
   names(p) = featNames
+
   ## loop over chromosomes and strands
-  for(chr in 1:length(chrSeqname)) {
-    for(s in c("+", "-")) {
-      ifeat  = which(sgff$strand == s & mseq == chr)
+  for(s in c("+", "-")) {
+    pas = switch(hybeType,
+      Reverse = s,
+      Direct  = otherStrand(s)
+      )
+    for(chr in 1:nrchr) {
+      ifeat  = which(sgff$strand == s & sgff$chr == chr)
       cat(chr, s, ": ", length(ifeat), " features\n", sep="")
 
-      k1 = sgff$start[ifeat]
-      k2 = sgff$end[ifeat]
+      k1   = sgff[ifeat, "start"]
+      k2   = sgff[ifeat, "end"]
+      Name = sgff[ifeat, "Name"]
+      feat = as.character(sgff[ifeat, "feature"])
       stopifnot(all(k1<=k2))
-   
-      Name = getAttributeField(sgff$attributes[ifeat], "Name")
 
-      pas = switch(hybeType,
-        Reverse = s,
-        Direct  = otherStrand(s)
-      )
       sta = get(paste(chr, pas, "start", sep="."), envir=probeAnno)
+      end = get(paste(chr, pas, "end",   sep="."), envir=probeAnno)
       ind = get(paste(chr, pas, "index", sep="."), envir=probeAnno)
-      sel = isWithinInterval(sta+(probeLength-1)/2, k1, k2)
-      wh  = which(colSums(sel)==0)
-      ## if(length(wh)>0) {
-      ##	cat("\nNo probes for i=", ifeat[wh], "\n")
-      ##	print(sgff[ifeat[wh], 1:8])
-      ## }
-      ## print(table(rowSums(sel)))
-       
+
       for(i in seq(along=ifeat)) {
-	fi = ifeat[i]
-	p[[as.character(sgff$feature[fi])]] [ind[sel[, i]]]  = Name[i]
+        sel = (sta>=k1[i] & end<=k2[i])
+	p[[feat[i]]][ind[sel]] = Name[i]
       } ## for i
-    } ## for s
-  } ## for chr
+    } ## for chr
+  } ## for s
 
   ## now set 'no_feature' to all PMs that are not something else:
   anyFeature = which(0 < rowSums(sapply(p, function(s) s!="")))
-  allProbes = unlist(mget(paste(rep(seq(along=chrSeqname), each=2),
-                              rep(c("+", "-"), length(chrSeqname)), "index", sep="."),
-    envir=probeAnno))
+  allProbes = unique(unlist(mget(paste(
+    rep(1:nrchr, each=2), rep(c("+", "-"), nrchr), "index", sep="."),
+    envir=probeAnno)))
+  
   p[["no_feature"]][setdiff(allProbes, anyFeature)] = "no" 
   cat("length(allProbes)=", length(allProbes),
       "length(anyFeature)=", length(anyFeature),
@@ -244,10 +240,10 @@ for(hybeType in c("Reverse", "Direct")) {
 
   assign(paste("probe", hybeType, sep=""), p, envir=probeAnno)
 } ## for hybetype
-
 cat("\n")
+
 ##
 ##  Part 6
 ##
-save(probeAnno, MMIndexFromPM, gff, chrSeqname, file="probeAnno.rda", compress=TRUE)
+save(probeAnno, gff, file="probeAnno.rda", compress=TRUE)
 cat("Finished.\n")

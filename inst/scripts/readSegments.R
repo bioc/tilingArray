@@ -1,11 +1,6 @@
 if(!exists("gff")) {
   cat("Loading probeAnno.rda\n")
   load("probeAnno.rda")
-  gff$Name = getAttributeField(gff$attributes, "Name")
-  theID    = getAttributeField(gff$attributes, "ID")
-  stopifnot(all(gff$Name == theID, na.rm=TRUE))
-  gff$orf_classification = getAttributeField(gff$attributes, "orf_classification")
-  gff$gene               = getAttributeField(gff$attributes, "gene")
 }
 
 rnaTypes = c("polyA", "polyA2", "tot", "polyAnn")[c(2,4)]
