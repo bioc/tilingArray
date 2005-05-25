@@ -4,7 +4,7 @@
   numbers to keep a certain spacing}
 \description{
   Given a vector of ascending numbers and a step width, the function
-  determines a subset of those numbers such that there are no
+  determines a subset of those numbers such that no
   consecutive triplet of numbers is within an interval \code{step}.
 }
 \usage{
