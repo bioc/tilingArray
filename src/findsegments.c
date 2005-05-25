@@ -14,6 +14,9 @@
 
 #define MAT_ELT(x, i, j, nrow) x[(long)(i)+(long)(j)*(long)(nrow)]
 
+/* from sampleSteps.c */
+SEXP sampleStep(SEXP _x, SEXP _step);
+
 /*  Global variables */
 double *G;  /* cost matrix */
 int maxk;   /* number of rows of G:    maximum length of segments */
@@ -241,6 +244,9 @@ extern void R_unload_tilingArray( DllInfo *info );
 static R_CallMethodDef callMethods[] = {
     { "findsegments", ( DL_FUNC ) &findsegments, 3,
         /* { REALSXP, INTSXP, INTSXP } */ },
+    { NULL, NULL, 0 },
+    { "sampleStep", ( DL_FUNC ) &sampleStep, 2,
+        /* { REALSXP, REALSXP } */ },
     { NULL, NULL, 0 }
 };
 
