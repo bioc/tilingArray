@@ -37,7 +37,7 @@ SEXP sampleStep(SEXP _x, SEXP _step)
   SEXP ans;   /* return value    */
   double *x;
   double step;
-  int n; /* length of x */
+  int n;      /* length of x */
 
   /* check input arguments */
   if((!isReal(_x)))
@@ -47,6 +47,7 @@ SEXP sampleStep(SEXP _x, SEXP _step)
 
   if(!isReal(_step) || length(_step)!=1)
       error("Invalid argument '_step', must be real of length 1.");
+  step = REAL(_step)[0];
 
   /* return value: a logical vector of length n */
   PROTECT(ans = allocVector(LGLSXP, n));
