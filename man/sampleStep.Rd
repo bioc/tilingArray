@@ -1,11 +1,10 @@
 \name{sampleStep}
 \alias{sampleStep}
-\title{Given a vector of ascending numbers and a step width, sample the
-  numbers to keep a certain spacing}
+\title{Sampling of ascending numbers to ensure minimal spacing.}
 \description{
-  Given a vector of ascending numbers and a step width, the function
-  determines a subset of those numbers such that no
-  consecutive triplet of numbers is within an interval \code{step}.
+  Given a vector of ascending numbers and a step width, sample the
+  numbers such that the difference between consecutive numbers is greater
+  than or equal to \code{step}.
 }
 \usage{
 sampleStep(x, step)
@@ -14,7 +13,11 @@ sampleStep(x, step)
   \item{x}{Numeric or integer vector.}
   \item{step}{Numeric scalar.}
 }
-\details{None yet.}
+\details{The simple algorithm works greedily from \code{x[1]} to
+  \code{x[length(x)]}. First, \code{x[1]} is selected. Then, if \code{x[i]}
+  is selected, all numbers \code{x[j]} with \code{j>i} and
+  \code{x[j]-x[i]<step} are dropped. Then, \code{i} is set to the
+  smallest j with \code{x[j]-x[i]>=step}.}
 \value{
   A logical vector of the same length as \code{x}, representing the
   selected subsample.
@@ -23,10 +26,10 @@ sampleStep(x, step)
 \author{W. Huber <huber@ebi.ac.uk>}
 
 \examples{
- x = sort(as.integer(runif(20)*100))
+ x   = sort(as.integer(runif(20)*100))
  sel = sampleStep(x, step=10)
- table(diff(x))
- table(diff(x[sel]))
+ x
+ x[sel]
 
 }
 \keyword{manip}

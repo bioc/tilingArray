@@ -15,36 +15,6 @@ chrstr = paste(rep(1:17, each=2),
                rep(c("+", "-"), 17), sep=".")
 
 ## ------------------------------------------------------------
-## fuction subsample
-## ------------------------------------------------------------
-subSample = function(x, step=7) {
-  stopifnot(all(diff(x)>=0))
-  keep = rep(TRUE, length(x))
-  done = FALSE
-
-  i = 1
-  while(!done) {
-    xk =x[keep] 
-    ## distance to second next neighbour
-    d2 = xk[3:length(xk)] - xk[1:(length(xk)-2)]
-    tooClose = c(FALSE, (d2<step), FALSE)
-    ## but only if the preceding probe was not not too close
-    ## itself
-    tooClose = tooClose & !c(tooClose[-1], FALSE)
-    if(any(tooClose)) {
-      keep[keep][tooClose] = FALSE
-    } else {
-      done = TRUE
-    }
-    cat(i, sum(!keep), "\n")
-  }
-  browser()
-
-  
-  return(keep)
-}
-
-## ------------------------------------------------------------
 ## main
 ## ------------------------------------------------------------
 
@@ -56,12 +26,11 @@ for(outdir in outdirList) {
 
   for(ichr in seq(along=chrstr)) {
     chr = chrstr[ichr]
-    #if(ichr==1) {
-    #  load(file.path(outdir, "xn.rda"))
-    #  lxj = exprs(xn)
-    #  stopifnot(ncol(lxj) %in% c(2,3))
-    #} 
-    cat("OOOOOOPPPSSS!!!!\n")
+    if(ichr==1) {
+      load(file.path(outdir, "xn.rda"))
+      lxj = exprs(xn)
+      stopifnot(ncol(lxj) %in% c(2,3))
+    } 
     
     datfn = file.path(outdir, paste(chr, ".rda", sep=""))
     if(!file.exists(datfn)) {
@@ -80,7 +49,8 @@ for(outdir in outdirList) {
       uni = get(paste(chr, "unique", sep="."), probeAnno)[ord]
       yraw = lxj[ind, ]
 
-      ss = subSample(sta)
+      ss = sampleStep(sta, step=7)
+      browser()
       
       ## use approx
       mids = (sta+end)/2

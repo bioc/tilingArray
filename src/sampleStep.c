@@ -11,7 +11,7 @@
 
 void sampleStep_c(double* x, int n, double step, SEXP ans)
 {
-  int i,j,imax, jmax;
+  int i,j,imax;
 
   for(i=0; i<n; i++) 
     LOGICAL(ans)[i] = TRUE;
@@ -21,10 +21,9 @@ void sampleStep_c(double* x, int n, double step, SEXP ans)
       error("Elements of x must be in ascending order.");
   }
 
-  imax = n-2;
-  jmax = n-1;
+  imax = n-1;
   for(i=0; i<imax; ) {
-    for(j=i+1; (j<jmax) && (x[j+1]-x[i]<step); j++)
+    for(j=i+1; (j<n) && (x[j]-x[i]<step); j++)
       LOGICAL(ans)[j] = FALSE;
     i=j;  
   }
