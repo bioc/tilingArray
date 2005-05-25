@@ -47,24 +47,18 @@ for(outdir in outdirList) {
       end = get(paste(chr, "end", sep="."), probeAnno)[ord]
       ind = get(paste(chr, "index", sep="."), probeAnno)[ord]
       uni = get(paste(chr, "unique", sep="."), probeAnno)[ord]
-      yraw = lxj[ind, ]
+      y   = lxj[ind, ]
 
-      ss = sampleStep(sta, step=7)
-      browser()
+      ss = sampleStep( (sta+end)/2, step=7)
       
-      ## use approx
-      mids = (sta+end)/2
-      dat  = list(start = sta, end = end, yraw = yraw, unique = uni,
-        x=seq(min(mids), max(mids), by=8))
-      dat$y        = apply(yraw, 2, function(y) { approx(mids, y, xout=dat$x, ties=mean)$y } )
-      dat$xunique  = as.logical(round(approx(mids, uni, xout=dat$x, ties=mean)$y))
+      dat  = list(start = sta, end = end, y = y, unique = uni, ss = ss)
      
       ## see plotFeatSize: the longest structure CDS in yeast is
       ## 15k bases long, corresponding to about 2000 consecutive probes
       maxk  = 1500
-      maxcp = round(diff(range(dat$x)) / nrBasesPerSeg)
+      maxcp = round( (max(end)-min(sta)) / nrBasesPerSeg)
       
-      seg = findSegments(dat$y, maxk=maxk, maxcp=maxcp, verbose=99)
+      seg = findSegments(dat$y[ss, ], maxk=maxk, maxcp=maxcp, verbose=99)
       
       save(seg, dat, file=datfn, compress=TRUE)
     } else {
