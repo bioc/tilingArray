@@ -14,6 +14,9 @@ outdirList = c("polyA2" = "seg-polyA-050525",
 chrstr = paste(rep(1:17, each=2),
                rep(c("+", "-"), 17), sep=".")
 
+allPM = unique(unlist(lapply(chrstr, function(chr)
+  get(paste(chr, "index", sep="."), probeAnno))))
+
 ## ------------------------------------------------------------
 ## main
 ## ------------------------------------------------------------
@@ -30,6 +33,7 @@ for(outdir in outdirList) {
       load(file.path(outdir, "xn.rda"))
       lxj = exprs(xn)
       stopifnot(ncol(lxj) %in% c(2,3))
+      refSigThresh = quantile(refSig[allPM], probs=0.05)
     } 
     
     datfn = file.path(outdir, paste(chr, ".rda", sep=""))
@@ -39,19 +43,31 @@ for(outdir in outdirList) {
       con = file(datfn, open="wt")
       writeLines(date(), con)
       close(con)
-    
+      
       ## get data
       sta = get(paste(chr, "start", sep="."), probeAnno)
-      ord = order(sta)
+      end = get(paste(chr, "end", sep="."), probeAnno)
+      mid = (sta+end)/2
+      ord = order(mid)
+
       sta = sta[ord]
-      end = get(paste(chr, "end", sep="."), probeAnno)[ord]
+      end = end[ord]
+      mid = mid[ord]
       ind = get(paste(chr, "index", sep="."), probeAnno)[ord]
       uni = get(paste(chr, "unique", sep="."), probeAnno)[ord]
       y   = lxj[ind, ]
 
-      ss = sampleStep( (sta+end)/2, step=7)
+      ## eliminate the bad probes
+      sel = (refSig[ind] >= refSigThresh)
+
+      ## subsample to keep spacing around 8
+      ss = sampleStep( mid[sel], step=7)
       
-      dat  = list(start = sta, end = end, y = y, unique = uni, ss = ss)
+      dat  = list(start  = sta[sel],
+                  end    = end[sel],
+                  y      = y[sel,],
+                  unique = uni[sel],
+                  ss     = ss)
      
       ## see plotFeatSize: the longest structure CDS in yeast is
       ## 15k bases long, corresponding to about 2000 consecutive probes

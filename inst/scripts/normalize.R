@@ -1,11 +1,8 @@
 library("vsn")
-source("~/madman/Rpacks/vsn/R/vsn.R")
-
 library("genefilter")
+
 if(!exists("a"))load("a.rda")
 if(!exists("probeAnno"))load("probeAnno.rda")
-
-what = "polyA2"
 
 hybeSets = list(
   "polyA2" = c("05_04_27_2xpolyA_NAP3.cel.gz",
@@ -17,14 +14,23 @@ hybeSets = list(
   "tot2" = c("050331_totcDNA_15ug_S96.cel.gz",
     "050411_totcDNA_20ug_affy.cel.gz",
     "050415_totcDNA_20ug_Affy11.cel.gz"),
-  "dir" = "050507_dirRNA_10ug_F1.cel.gz")[-4]
+  "dir" = "050507_dirRNA_10ug_F1.cel.gz")[4]
 
 outdir = c("polyA2" = "seg-polyA-050521",
            "tot"    = "seg-tot-050521",
            "tot2"   = "seg-tot2-050521",
-           "dir"    = "seg-dir-050521")[-4]
+           "dir"    = "seg-dir-050521")[4]
 
-stopifnot(length(outdir)==length(hybeSets))
+normMethod = c(rep("vsn", 3), "shiftlog")[4]
+names(normMethod) = names(outdir)
+
+##
+## check
+##
+stopifnot(length(outdir)==length(hybeSets),
+          names(hybeSets)==names(outdir),
+          length(hybeSets)==length(normMethod),
+          names(hybeSets)==names(normMethod))
           
 ##
 ## DNA hybes
@@ -46,7 +52,7 @@ if(!exists("allPM")) {
   cat("Selected", length(allPM), "intergenic PM probes.\n")
 }
 
-if(!exists("strata")) {
+if(!exists("refSigPM")) {
   ## DNA-normalization factor:
   refSig    = rowMeans(log(exprs(a)[, jref, drop=FALSE], 2))
   refSigPM  = refSig[allPM]
@@ -81,11 +87,21 @@ for(hs in seq(along=hybeSets)) {
 
   ## vsn with strata? Not sure whether this is useful
   ## vsr = vsn(yn, lts.quantile=0.95, strata=as.integer(strata), subsample=1e5)
-  
-  ## vsn without strata
-  xn = vsn(yn, lts.quantile=0.95, subsample=2e5)
-  exprs(xn)    = exprs(xn)/log(2)
-  phenoData(xn) = phenoData=phenoData(a)[fn, ]
+
+  switch(normMethod[hs],
+       vsn = {
+         ## vsn without strata
+         xn = vsn(yn, lts.quantile=0.95, subsample=2e5)
+         exprs(xn)    = exprs(xn)/log(2)
+         phenoData(xn) = phenoData(a)[fn, ]
+       },
+       shiftlog = {
+         offset = 0.5
+         stopifnot(!any(yn+offset <= 0))
+         xn = new("exprSet", exprs = log(yn+offset, 2), phenoData=phenoData(a)[fn, ])
+       },
+       stop("Zapperlot")
+  )
 
   save(xn, refSig, file=file.path(outdir[hs], "xn.rda"), compress=TRUE)
 }

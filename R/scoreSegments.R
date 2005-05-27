@@ -1,7 +1,9 @@
 ##------------------------------------------------------------
 ## Copyright (2005) Wolfgang Huber
 ##------------------------------------------------------------
-vectornorm = function(x) sqrt(mean(x*x))
+vectornorm = function(x) {
+  sqrt(mean(x*x))
+}
 
 zscore = function(x, x0) {
   if(nrow(x)>2) {
@@ -13,7 +15,6 @@ zscore = function(x, x0) {
 
 movingWindow =function(x, y, width) {
   stopifnot(length(x)==nrow(y))
-  
   w = which(x+width-1 <= x[length(x)])
   if(length(w)==0) {
     res = +Inf
@@ -35,19 +36,9 @@ scoreSegments = function(s, gff,
   knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
         "rRNA", "snRNA", "snoRNA", "tRNA", 
         "transposable_element", "transposable_element_gene"),
-  params = c(minOverlapFractionSame = 0.8, minOverlapOppo = 40,
-    minIsolatedDistance=100, oppositeWindow = 100, utrScoreWidth=100),
+  params = c(overlapFraction = 0.5, oppositeWindow = 100, utrScoreWidth=100),
   verbose = TRUE) {
 
-  ## minOverlapFractionSame: minimal overlap fraction (between 0 and 1) of a feature
-  ##   with the current segment
-
-  if(!"Name" %in% names(gff))
-    gff$Name   = getAttributeField(gff$attributes, "Name")
-  if(!"length" %in% names(gff))
-    gff$length = gff$end - gff$start +1
-
-  probeMiddle = (probeLength-1)/2
   rv = NULL
   for(chr in chrs) {
     for(strand in c("+", "-")) {
@@ -58,24 +49,26 @@ scoreSegments = function(s, gff,
         "-" = {
           distleft="dist3"; distright="dist5"
         },
-        stop("Sapperlot"))
+        stop("Sapperlot")
+      ) ## end of switch
       
       dat     = get(paste(chr, strand, "dat", sep="."), s)
       datOppo = get(paste(chr, otherStrand(strand), "dat", sep="."), s)
       seg     = get(paste(chr, strand, "seg", sep="."), s)
-      cp      = round(max(dat$x)/nrBasePerSeg)
+
+      lengthChr = dat[["end"]][length(dat[["end"]])]
+      cp        = round(lengthChr/nrBasePerSeg)
       
-      dzz = cp - nrow(seg$th)
+      dzz = cp - nrow(seg[["th"]])
       if(dzz>0) {
         if(dzz<=2) {
-           cp = nrow(seg$th)
+           cp = nrow(seg[["th"]])
          } else {
            stop("'nrBasePerSeg' is too small for 's'")
          }
       }
       if(verbose)
-        cat(chr, ".", strand, ": ", paste(range(dat$x), collapse="..."),
-            ", ", cp, " segments. ", sep="")
+        cat(chr, ".", strand, ": length=", lengthChr, ", ", cp, " segments. ", sep="")
 
       segScore = data.frame(
         chr                   = rep(as.integer(NA), cp),
@@ -99,125 +92,141 @@ scoreSegments = function(s, gff,
       
       ## th[i] is 1 + (end point of segment i) which is the same as
       ## the start point of segment (i-1).
-      th =  c(1, seg$th[cp, 1:cp])
+      th =  c(1, seg[["th"]][cp, 1:cp])
       i1 = th[-length(th)]         ## start points
       i2 = th[-1] - 1              ## end points
-      
-      ## idx: indices of the segments in the result table
-      idx = 1:cp  
-      segScore$chr[idx]      = chr
-      segScore$strand[idx]   = strand
-      segScore$start[idx]    = dat$x[i1]
-      segScore$end[idx]      = dat$x[i2]
-      segScore$length[idx]   = dat$x[i2]-dat$x[i1]
-      segScore$frac.dup[idx] = mapply(function(h1, h2) {
-        z = dat$xunique[h1:h2]
-        1-sum(z)/length(z)
-      }, i1, i2)
-      
-      segStart = segScore$start[idx]+probeMiddle
-      segEnd   = segScore$end[idx]+probeMiddle
 
-      same.gff = gff[ gff$seqname == chrSeqname[chr] &
-         gff$strand  == strand &
-          gff$feature %in% knownFeatures, ]
+      ## extract relevant data from "dat"
+      wh = which(dat[["ss"]])
+      dStart = dat[["start"]][wh][i1] ## start base of leftmost probe
+      dEnd   = dat[["end"]][wh][i2]   ## end base of rightmost probe
+      dUniq  = dat[["unique"]][wh]
+      dY     = dat[["y"]][wh,, drop=FALSE]
+
+      ## extract relevant data from "datOppo"
+      wh = which(datOppo[["ss"]])
+      dOppoStart = datOppo[["start"]][wh][i1] ## start base of leftmost probe
+      dOppoEnd   = datOppo[["end"]][wh][i2]   ## end base of rightmost probe
+      dOppoY     = datOppo[["y"]][wh,, drop=FALSE]
+
+      ## double-check: ascending?
+      stopifnot(all(diff(dStart+dEnd)>=0), all(diff(dOppoStart+dOppoEnd)>=0))
+
+      ## ... and insert into the results table
+      segScore[, "chr"]      = chr
+      segScore[, "strand"]   = strand
+      segScore[, "start"]    = dStart
+      segScore[, "end"]      = dEnd
+      segScore[, "length"]   = dEnd-dStart+1
+      segScore[, "frac.dup"] = mapply(function(h1, h2) {
+        1 - mean(dUniq[h1:h2])
+      }, i1, i2)
+
+      same.gff = gff[ gff[, "chr"]==chr & gff[, "strand"]==strand &
+          gff[, "feature"] %in% knownFeatures, ]
       
-      oppo.gff = gff[ gff$seqname == chrSeqname[chr] &
-          gff$strand  == otherStrand(strand) &
-          gff$feature %in% knownFeatures, ]
+      oppo.gff = gff[ gff[, "chr"] == chr & gff[, "strand"]==otherStrand(strand) &
+          gff[, "feature"] %in% knownFeatures, ]
       
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = ft4 = character(cp)  
       zl = zr = lev = oe = rep(as.numeric(NA), cp)
       
-      stopifnot(all(diff(dat$x)>=0))
-        
       for(j in 1:cp) {
-        startj = segStart[j]
-        endj   = segEnd[j]
+        startj = dStart[j]
+        endj   = dEnd[j]
 
         ## data from segment, and opposite
-        ym     = dat$y[dat$xunique & (dat$x   >= dat$x[i1[j]]) & (dat$x    <=dat$x[i2[j]]),, drop=FALSE]
-        ksel   = datOppo$xunique & (datOppo$x >= dat$x[i1[j]]) & (datOppo$x<=dat$x[i2[j]])
-        xOppo  = datOppo$x[ksel]
-        yOppo  = datOppo$y[ksel,,drop=FALSE]
+        ksel   = dUniq & (dStart>=dStart[i1[j]]) & (dEnd<=dEnd[i2[j]])
+        ym     = dY[ksel,,drop=FALSE]
+        
+        ksel   = dOppoUniq & (dOppoStart >= dStart[i1[j]]) & (dOppoEnd<=dEnd[i2[j]])
+        xOppo  = (dOppoStart[ksel]+dOppoEnd[ksel])/2
+        yOppo  = dOppoY[ksel,,drop=FALSE]
+        
         cmym   = colMeans(ym)
         lev[j] = mean(cmym)
         
         ## data from flanks, for segment quality scores
-        yr = dat$y[dat$xunique & (dat$x >  dat$x[i2[j]]) &
-          (dat$x<=dat$x[i2[j]]+params[["utrScoreWidth"]]), , drop=FALSE]
-        yl = dat$y[dat$xunique & (dat$x <  dat$x[i1[j]]) &
-          (dat$x>=dat$x[i1[j]]-params[["utrScoreWidth"]]), , drop=FALSE]
+        Ll = Lr = params[["utrScoreWidth"]]
+        if(j>1) {
+          Ll = min(Ll, segScore[j-1, "length"])
+        }
+        if(j<cp) {
+          Lr = min(Lr, segScore[j+1, "length"])
+        }
+
+        yr = dY[ dUniq & (dStart>dEnd[i2[j]])   & (dEnd  <=dEnd[i2[j]]+Lr),, drop=FALSE]
+        yl = dY[ dUniq & (dEnd  <dStart[i1[j]]) & (dStart>=dStart[i1[j]]-Ll),, drop=FALSE]
         zl[j] = zscore(yl, cmym)
         zr[j] = zscore(yr, cmym)
 
-        ## genes that are fully contained in the segment
-        nm1 = nm2 = nm3 = character(0)
-        whGinS = which(
-          (same.gff$start >= startj) &
-          (same.gff$end   <= endj ))
-        if(length(whGinS)>0) {
-          nm1 = unique(same.gff$Name[whGinS])
+        ## distance to next features on the left and on the right:
+        dl[j]  = posMin(startj - same.gff[, "end"])
+        dr[j]  = posMin(same.gff[, "start"] - endj)
+        dlOppo = posMin(startj - oppo.gff[, "end"])
+        drOppo = posMin(oppo.gff[, "start"] - endj)
+        
+        nm1 = nm2 = nm3 = nm4 = character(0)
+        ## featureInSegment: fully contained in the segment
+        whFinS = which(
+          (same.gff[, "start"] >= startj) &
+          (same.gff[, "end"]   <= endj ))
+        if(length(whFinS)>0) {
+          nm1 = unique(same.gff[whFinS, "Name"])
           stopifnot(!any(duplicated(nm1)))
           ft1[j] = paste(nm1, collapse=", ")
-          if(length(whGinS)==1) {
-            if(same.gff$feature[whGinS]=="gene") {
+          if(length(whFinS)==1) {
+            if(same.gff[whFinS, "feature"]=="gene") {
               ## The segment contains exactly one gene
-              utrLeft[j]  =  same.gff$start[whGinS] - startj 
-              utrRight[j] = -same.gff$end[whGinS]   + endj
+              utrLeft[j]  = same.gff[whFinS, "start"] - startj 
+              utrRight[j] = endj - same.gff[whFinS, "end"]
             }
           } 
         }
 
-        ## features that have overlap with the segment
-        overlapSame   = pmin(endj, same.gff$end) - pmax(startj, same.gff$start) + 1
-        smallerLength = pmin(endj-startj, same.gff$end-same.gff$start) + 1
-        whSinF = which( overlapSame/smallerLength >= params[["minOverlapFractionSame"]])
-        if(length(whSinF)>0) {
-          nm2    = unique(same.gff$Name[whSinF])
+        ## mostOfFeatureInSegment: more than 50% (="overlapFraction") overlap with the segment
+        overlapSame   = pmin(endj, same.gff[,"end"]) - pmax(startj, same.gff[,"start"]) + 1 
+        wh2 = which( overlapSame / (same.gff[,"end"]-same.gff[,"start"]+1) >= params[["overlapFraction"]])
+        if(length(wh2)>0) {
+          nm2    = unique(same.gff[wh2, "Name"])
           ft2[j] = paste(nm2, collapse=", ")
         }
         stopifnot(all(nm1 %in% nm2))
 
-        ## distance to next features on the left and on the right:
-        dl[j] = posMin(startj - same.gff$end)
-        dr[j] = posMin(same.gff$start - endj)
-        dlOppo = posMin(startj - oppo.gff$end)
-        drOppo = posMin(oppo.gff$start - endj)
-        
-        ## annotated feature on opposite strand?
-        overlapOppo = (pmin(endj, oppo.gff$end) - pmax(startj, oppo.gff$start))
-        whOppo      = which( overlapOppo > 0 )
-        ft3[j]      = paste(unique(oppo.gff$Name[whOppo]), collapse=", ")
+        ## overlappingFeature: any overlap with the segment
+        wh3 = which( overlapSame > 0)
+        if(length(wh3)>0) {
+          nm3    = unique(same.gff[wh3, "Name"])
+          ft3[j] = paste(nm3, collapse=", ")
+        }
+        stopifnot(all(nm2 %in% nm3))
 
-        ## isolated ?
-        isoSame[j] = (all(overlapSame<=0) && (dl[j]>=params[["minIsolatedDistance"]]) &&
-                                             (dr[j]>=params[["minIsolatedDistance"]]))
-
-        isoOppo[j] = (all(overlapOppo<=0) && (dlOppo>=params[["minIsolatedDistance"]]) &&
-                                             (drOppo>=params[["minIsolatedDistance"]]))
+        ## oppositeFeature 
+        overlapOppo = (pmin(endj, oppo.gff[, "end"]) - pmax(startj, oppo.gff[,"start"]))
+        wh4         = which( overlapOppo > 0 )
+        if(length(wh4)>0)
+          ft4[j] = paste(unique(oppo.gff[wh4, "Name"]), collapse=", ")
 
         ## expression on opposite strand?
         oe[j] = movingWindow(x=xOppo, y=yOppo, width=params[["oppositeWindow"]])
 
       } ## for j
 
-      segScore[idx, c("utr5", "utr3")]  = switch(strand,
+      segScore[, c("utr5", "utr3")]  = switch(strand,
                 "+" = c(utrLeft, utrRight),
                 "-" = c(utrRight, utrLeft))
-
-      segScore$featureInSegment[idx]   = ft1
-      segScore$overlappingFeature[idx] = ft2
-      segScore$oppositeFeature[idx]    = ft3
-      segScore$oppositeExpression[idx] = oe
-      segScore$isIsolatedSame[idx]     = isoSame
-      segScore$isIsolatedOppo[idx]     = isoOppo
-      segScore$level[idx]              = lev
-      segScore$distLeft[idx]           = dl
-      segScore$distRight[idx]          = dr
-      segScore$zLeft[idx]              = zl
-      segScore$zRight[idx]             = zr
+      segScore[, "featureInSegment"]       = ft1
+      segScore[, "mostOfFeatureInSegment"] = ft2
+      segScore[, "overlappingFeature"]     = ft3
+      segScore[, "oppositeFeature"]        = ft4
+      segScore[, "oppositeExpression"] = oe
+      segScore[, "level"]              = lev
+      segScore[, "distLeft"]           = dl
+      segScore[, "distRight"]          = dr
+      segScore[, "zLeft"]              = zl
+      segScore[, "zRight"]             = zr
+        
       rv = rbind(rv, segScore)
 
       if(verbose)

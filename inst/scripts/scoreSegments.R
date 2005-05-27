@@ -2,16 +2,13 @@ options(error=recover, warn=2)
 library("tilingArray")
 source("/homes/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 
-if(!exists("gff")) {
-  cat("Loading probeanno.rda ")
-  load("probeAnno.rda")
-}
+doNotLoadSegScore=TRUE
+source("scripts/readSegments.R")
 
 if(!exists("x")) {
-  cat("x.rda\n")
+  cat("Loading x.rda\n")
   load("x.rda")
 }
-
 
 addDirectHybe = function(s) {
   dhl = numeric(nrow(s))
@@ -30,37 +27,15 @@ addDirectHybe = function(s) {
   return(s)
 }
 
-chrs = 1:17
-indirList = c("segmentation-3polyA", "seg-polyA-050428", "seg-tot-050421", "seg-polyA-050518")[4]
-nrbpsList = c(1500, 2000)[1]
+nrbpsList = c(1500)
 
-
-for(indir in indirList) {
-  cat(indir, "\n")
-
-  if(TRUE) {
-    s  = new.env()
-    cat("Loading ")
-    for(chr in chrs) {
-      cat(chr, "")
-      for(strand in c("+", "-")) {
-        fn = file.path(indir, paste(chr, strand, "rda", sep="."))
-        load(fn)
-        assign(paste(chr, strand, "seg", sep="."), seg, envir=s)
-        assign(paste(chr, strand, "dat", sep="."), dat, envir=s)
-      }
-    } ## for chr
-    cat("\n")
-  } else {
-    cat("NOT LOADING DATA FILES!\n")
-  }
-  
+for(rt in rnaTypes) {
   for(nrbps in nrbpsList) {
-    cat(">> ", nrbps, "<<\n")
-    segScore = scoreSegments(s, gff=gff, nrBasePerSeg=nrbps)
+    cat(">> ", rt, nrbps, "<<\n")
+    segScore = scoreSegments(get(rt), gff=gff, nrBasePerSeg=nrbps)
     ## segScore = addDirectHybe(segScore)
     cat("NOT ADDING DIRECT HYBE\n")
-    save(segScore, file=file.path(indir, sprintf("segScore-%d.rda", as.integer(nrbps))),
+    save(segScore, file=file.path(indir[rt], sprintf("segScore-%d.rda", as.integer(nrbps))),
          compress=TRUE)
-  }  
+  } 
 }

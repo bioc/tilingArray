@@ -3,14 +3,11 @@ if(!exists("gff")) {
   load("probeAnno.rda")
 }
 
-rnaTypes = c("polyA", "polyA2", "tot", "polyAnn")[c(2,4)]
-longNames=c(polyA ="poly-A RNA single enriched",
-            polyA2="poly-A RNA",
-            polyAnn="poly-A RNA (new norm.)",
-            tot ="total RNA")
+rnaTypes = c("poly-A RNA" = "seg-polyA-050525",
+  "total RNA (v1)" = "seg-tot-050525",
+  "total RNA (v2)" = "seg-tot2-050525")
 
-indir = c("polyA"="segmentation-3polyA", "polyA2"="seg-polyA-050428",
-  "tot"="seg-tot-050421", "polyAnn"="seg-polyA-050518")
+names(indir) = indir = rnaTypes
 
 for(rt in rnaTypes) {
   if(!exists(rt)) {
@@ -26,9 +23,12 @@ for(rt in rnaTypes) {
         assign(paste(chr, strand, "dat", sep="."), dat, envir=get(rt))
       }
     } ## for chr
-    fn="segScore-1500.rda"
-    cat(fn, "\n")
-    load(file.path(indir[rt], fn), envir=get(rt))
+    if(!exists("doNotLoadSegScore")) {
+      fn="segScore-1500.rda"
+      cat(fn)
+      load(file.path(indir[rt], fn), envir=get(rt))
+    }
+    cat("\n")
   } ## if
 } ## rnaTypes
 
