@@ -98,15 +98,16 @@ scoreSegments = function(s, gff,
 
       ## extract relevant data from "dat"
       wh = which(dat[["ss"]])
-      dStart = dat[["start"]][wh][i1] ## start base of leftmost probe
-      dEnd   = dat[["end"]][wh][i2]   ## end base of rightmost probe
+      dStart = dat[["start"]][wh]      ## start base of all probes 
+      dEnd   = dat[["end"]][wh]        ## end base of all probes
       dUniq  = dat[["unique"]][wh]
       dY     = dat[["y"]][wh,, drop=FALSE]
 
       ## extract relevant data from "datOppo"
       wh = which(datOppo[["ss"]])
-      dOppoStart = datOppo[["start"]][wh][i1] ## start base of leftmost probe
-      dOppoEnd   = datOppo[["end"]][wh][i2]   ## end base of rightmost probe
+      dOppoStart = datOppo[["start"]][wh] ## start base of all probes
+      dOppoEnd   = datOppo[["end"]][wh]   ## end base of all probes
+      dOppoUniq  = datOppo[["unique"]][wh]
       dOppoY     = datOppo[["y"]][wh,, drop=FALSE]
 
       ## double-check: ascending?
@@ -115,9 +116,9 @@ scoreSegments = function(s, gff,
       ## ... and insert into the results table
       segScore[, "chr"]      = chr
       segScore[, "strand"]   = strand
-      segScore[, "start"]    = dStart
-      segScore[, "end"]      = dEnd
-      segScore[, "length"]   = dEnd-dStart+1
+      segScore[, "start"]    = dStart[i1]
+      segScore[, "end"]      = dEnd[i2]
+      segScore[, "length"]   = dEnd[i2]-dStart[i1]+1
       segScore[, "frac.dup"] = mapply(function(h1, h2) {
         1 - mean(dUniq[h1:h2])
       }, i1, i2)
@@ -133,14 +134,14 @@ scoreSegments = function(s, gff,
       zl = zr = lev = oe = rep(as.numeric(NA), cp)
       
       for(j in 1:cp) {
-        startj = dStart[j]
-        endj   = dEnd[j]
+        startj = dStart[i1[j]]
+        endj   = dEnd[i2[j]]
 
         ## data from segment, and opposite
-        ksel   = dUniq & (dStart>=dStart[i1[j]]) & (dEnd<=dEnd[i2[j]])
+        ksel   = dUniq & (dStart>=startj) & (dEnd<=endj)
         ym     = dY[ksel,,drop=FALSE]
         
-        ksel   = dOppoUniq & (dOppoStart >= dStart[i1[j]]) & (dOppoEnd<=dEnd[i2[j]])
+        ksel   = dOppoUniq & (dOppoStart>=startj) & (dOppoEnd<=endj)
         xOppo  = (dOppoStart[ksel]+dOppoEnd[ksel])/2
         yOppo  = dOppoY[ksel,,drop=FALSE]
         
@@ -156,8 +157,8 @@ scoreSegments = function(s, gff,
           Lr = min(Lr, segScore[j+1, "length"])
         }
 
-        yr = dY[ dUniq & (dStart>dEnd[i2[j]])   & (dEnd  <=dEnd[i2[j]]+Lr),, drop=FALSE]
-        yl = dY[ dUniq & (dEnd  <dStart[i1[j]]) & (dStart>=dStart[i1[j]]-Ll),, drop=FALSE]
+        yr = dY[ dUniq & (dStart>endj)   & (dEnd  <=endj+Lr),, drop=FALSE]
+        yl = dY[ dUniq & (dEnd  <startj) & (dStart>=startj-Ll),, drop=FALSE]
         zl[j] = zscore(yl, cmym)
         zr[j] = zscore(yr, cmym)
 
