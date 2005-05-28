@@ -105,7 +105,7 @@ for(rt in rnaTypes) {
   
   cdslen = gff[mt, "end"]-gff[mt, "start"]
   if(any(is.na(mt))) {
-    cat("!!!!!!!!!!!!!ZAPPERLOT!!!!!!!!!!!!!!\n")
+    cat("\n\n\n\n!!!!!!!!!!!!!ZAPPERLOT!!!!!!!!!!!!!!\n\n\n")
     cdslen[is.na(mt)]=-1
   }
   investigateExpressionVersusLength(s[,"level"], s[,"utr3"], "length of 3' UTR")

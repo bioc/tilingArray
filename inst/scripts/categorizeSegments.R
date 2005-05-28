@@ -2,7 +2,6 @@
 ## categorize segments for the UTR mapping
 ##
 categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
-
   s = categorizeSegmentsPie(env, maxDuplicated=maxDuplicated)
 
   minZ =  pmin(s[,"zLeft"], s[,"zRight"])
@@ -13,7 +12,6 @@ categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
          !is.na(s[, "utr3"]) & !is.na(s[, "utr5"]) & (s[,"chr"] <= 16))
 
   s$goodUTR = ifelse(sel, minZ, as.numeric(NA))
-
   return(s)
 }
 
@@ -39,7 +37,9 @@ categorizeSegmentsPie = function(env, maxDuplicated=0.5,
   catg[ s[,"frac.dup"] >= maxDuplicated ] = "excluded"
 
   ## Step 2: untranscribed
-  catg[ is.na(catg) & s[,"level"] < threshold ] = "untranscribed"
+  sel = (is.na(catg) & s[,"level"] < threshold)
+  catg[ sel ] = "untranscribed"
+  s$isUnIso = (sel & (s[, "overlappingFeature"]=="") & (s[,"oppositeFeature"]==""))
 
   ## step 3: annotated
   wh  = which(is.na(catg))

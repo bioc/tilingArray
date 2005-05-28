@@ -2,8 +2,8 @@ library("tilingArray")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = (TRUE)
-what     = c("pie", "wst", "length", "lvsx", "cons")[5]
+interact = (!TRUE)
+what     = c("pie", "wst", "length", "lvsx", "cons")
 
 if(!interact)
   sink("tableSegments.txt")
@@ -27,9 +27,9 @@ fillColors = c(brewer.pal(9, "Pastel1")[c(2:5, 1, 9)])
 names(fillColors) =c("annotated ORF", "ncRNA", "other annotation",
    "novel antisense", "novel isolated", "excluded")
 
-lineColors = c(brewer.pal(9, "Set1"))[c(1, 4, 5, 3, 2, 8, 9, 7)]
+lineColors = c(brewer.pal(9, "Set1"))[c(1, 4, 5, 3, 2, 8)]
 names(lineColors) =c("annotated ORF", "ncRNA", "other annotation",  
-   "novel antisense", "novel isolated", "isolated and unexpressed")
+   "novel antisense", "novel isolated", "unexpressed isolated")
 
 ##
 ## PIE
@@ -61,6 +61,7 @@ if("pie" %in% what){
   rownames(counts)=names(px)
   cat("Segment counts:\n")
   print(counts)
+  cat("\n\n")
 }
 
 ##
@@ -198,15 +199,19 @@ calchit = function(sp, blrt, s) {
   theSplit = vector(mode="list", length=length(rnaTypes))
   names(theSplit) = rnaTypes
     
-  selectedCategories = c("annotated ORF",
-    "ncRNA",  "novel antisense", "novel isolated", "isolated and unexpressed")
-  
+  selectedCategories = c("annotated ORF", "ncRNA",
+    "novel antisense", "novel isolated", "unexpressed isolated")
+
   for(rt in rnaTypes) {
     s   = cs[[rt]]
-    stopifnot(all(selectedCategories %in% levels(s[,"category"])))
-    sp = split(seq(along=s[,"category"]), s[,"category"])
+
+    catg = s[,"category"]
+    levels(catg) = c(levels(catg), "unexpressed isolated")
+    catg[s[,"isUnIso"]] = "unexpressed isolated"
+
+    stopifnot(all(selectedCategories %in% levels(catg)))
+    sp = split(seq(along=catg), catg)
     sp = sp[selectedCategories]
-    ## sp$"whole genome" = seq(along=s[,"category"])
     
     hit = calchit(sp, blastres[[rt]], s)
     theSplit[[rt]] = sp
@@ -215,11 +220,9 @@ calchit = function(sp, blrt, s) {
   }
 
   nrlevs = 3
-  minlen = 0 
   cat("\n\nGrouping of conservation scores by expression, using ", nrlevs, "\n", 
-      "quantile groups of equal size, respectively.\n",
-      "Scores are calculated for segments with length >= ", minlen, ".\n",
-      "==========================================================================\n", 
+      "quantile groups of equal size.\n",
+      "=====================================================================\n", 
       sep="")
   
   if(interact) {
@@ -229,9 +232,11 @@ calchit = function(sp, blrt, s) {
         width=4*length(rnaTypes), height=8)
   }
   par(mfcol=c(1, length(rnaTypes)))
-  
-  for(rt in rnaTypes) {
-    cat("\n", rt, "\n-----\n", sep="")
+  stopifnot(all(selectedCategories %in% names(lineColors)))
+
+  for(i in seq(along=rnaTypes)) {
+    rt=rnaTypes[i]
+    cat("\n", rt, "\n------------\n", sep="")
     
     sp = theSplit[[rt]]
     s  = cs[[rt]]
@@ -239,11 +244,11 @@ calchit = function(sp, blrt, s) {
     fraction = matrix(NA, nrow=nrlevs, ncol=length(sp))
     colnames(fraction) = names(sp)
   
-    pchs = c(15, 5, 16, 17, 19, 18) # 20
+    pchs = c(15, 5, 16, 17, 19) # 20
     stopifnot(length(pchs)==length(sp))
     
     for(j in seq(along=sp)) {
-      wh   = sp[[j]][s$length[sp[[j]]]>=minlen]
+      wh   = sp[[j]]
       v    = s$level[wh]
       br   = quantile(v, (0:nrlevs)/nrlevs, na.rm=TRUE)
       spwh = split(wh, cut(v, breaks=br))
@@ -264,7 +269,7 @@ calchit = function(sp, blrt, s) {
     #abline(h=baseline, col=lineColors[["isolated and unexpressed"]], lwd=2, type="l")
     cutNames = paste("<=", round((1:nrlevs)/nrlevs*100), "%", sep="")
     axis(side=1, at = 1:nrlevs, labels = cutNames)
-    if(rt=="polyA2")
+    if(i==1)
       legend(x=1, y=112, legend=colnames(fraction),
              lty=1, lwd=2, pch=pchs, col=lineColors[colnames(fraction)])
   }

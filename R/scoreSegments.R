@@ -187,7 +187,7 @@ scoreSegments = function(s, gff,
           ## Does the segment contain exactly one gene (and possibly several CDSs)
           feats = same.gff[whFinS, "feature"]
           wh1 = whFinS[ feats=="gene" ]
-          if((length(wh1)==1) && all(feats %in% c("gene", "CDS"))) {
+          if((length(nm1)==1) && (length(wh1)==1) && all(feats %in% c("gene", "CDS"))) {
             utrLeft[j]  = same.gff[wh1, "start"] - startj 
             utrRight[j] = endj - same.gff[wh1, "end"]
           }
