@@ -16,7 +16,7 @@
 library("tilingArray")
 library("geneplotter")
 
-interact=(!TRUE)
+interact=(TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
@@ -56,10 +56,15 @@ utr = vector(mode="list", length=length(rnaTypes))
 names(utr)=rnaTypes
       
 for(rt in rnaTypes) {
-  cat("\n", rt, "\n-----\n", sep="")
+  cat("\n", rt, "\n------------------\n", sep="")
   s = categorizeSegmentsUTRmap(get(rt))
-  s = s[!is.na(s$goodUTR), ]
+  s = s[!is.na(s[,"goodUTR"]), ]
   
+  z = s[, c("utr5", "utr3")]
+  rownames(z) = s[, "featureInSegment"]
+  colnames(z) = c("5' UTR", "3' UTR")
+  utr[[rt]] = z
+
   ##
   ## WRITE THE SEGMENT TABLE
   ##
@@ -73,14 +78,10 @@ for(rt in rnaTypes) {
   }
 
   cat("5' UTR length distribution summary:\n")
-  print(summary(s$utr5))
+  print(summary(s[, "utr5"]))
   cat("3' UTR length distribution summary:\n")
-  print(summary(s$utr3))
+  print(summary(s[, "utr3"]))
   
-  z = cbind(s$utr5, s$utr3)
-  rownames(z) = s$geneInSegment
-  colnames(z) = c("5' UTR", "3' UTR")
-  utr[[rt]] = z
 
   ##
   ## LENGTH HISTOGRAM
@@ -90,22 +91,26 @@ for(rt in rnaTypes) {
   }
   par(mfrow = c(2, 3))
   br=50
-  hist(s$utr5[s$utr5<1000],
+  hist(s[ s[, "utr5"]<1000, "utr5"],
        col=cols[1], breaks=br, xlab="length of 5' UTR",
-       main=paste(longNames[rt], ": 5' UTR", " (", length(s$utr5), ")", sep=""))
-  hist(s$utr3[s$utr3<1000], xlab="length of 3' UTR",
+       main=paste(longNames[rt], ": 5' UTR", " (", length(s[, "utr5"]), ")", sep=""))
+  hist(s[ s[,"utr3"]<1000, "utr3"], xlab="length of 3' UTR",
        col=cols[3], breaks=br, main=paste(longNames[rt], ": 3' UTR", sep=""))
 
   ##
   ## GET THE CDS LENGTHS AS WELL
   ##
-  mt = match(s[,"geneInSegment"], gff[,"Name"])
-  stopifnot(!any(is.na(mt)))
+  mt = match(s[,"featureInSegment"], gff[,"Name"])
+  ## stopifnot(!any(is.na(mt)))
+  
   cdslen = gff[mt, "end"]-gff[mt, "start"]
-
-  investigateExpressionVersusLength(s$level, s$utr3, "length of 3' UTR")
-  investigateExpressionVersusLength(s$level, s$utr5, "length of 5' UTR")
-  investigateExpressionVersusLength(s$level, cdslen, "length of CDS")
+  if(any(is.na(mt))) {
+    cat("!!!!!!!!!!!!!ZAPPERLOT!!!!!!!!!!!!!!\n")
+    cdslen[is.na(mt)]=-1
+  }
+  investigateExpressionVersusLength(s[,"level"], s[,"utr3"], "length of 3' UTR")
+  investigateExpressionVersusLength(s[,"level"], s[, "utr5"], "length of 5' UTR")
+  investigateExpressionVersusLength(s[,"level"], cdslen, "length of CDS")
 
   if(!interact)
     dev.off()

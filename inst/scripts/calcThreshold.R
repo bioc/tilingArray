@@ -22,7 +22,7 @@ calcThreshold = function(x, sel, pthresh=0.05, showPlot=FALSE, main) {
   thresh = min(x[sel][selfdr], na.rm=TRUE)
 
   if(showPlot) {
-    d1 = density(x[!sel], na.rm=TRUE, from=-2, to=6, n=512)
+    d1 = density(x[!sel], na.rm=TRUE, n=128)
     n  = length(d1$x)
     d2 = density(levu, na.rm=TRUE, from=d1$x[1], to=d1$x[n], n=n)
     plot(d2, col="grey", lwd=2, main=main)
@@ -39,7 +39,7 @@ cat("Calculating Thresholds:\n",
     "=======================\n", sep="")
 
 if(interact) {
-  x11(width=10, height=length(rnaTypes)*3)
+  ## x11(width=10, height=length(rnaTypes)*3)
 } else {
   pdf(file="tableSegments-thresh.pdf", width=11, height=length(rnaTypes)*4)
 }
@@ -48,12 +48,9 @@ par(mfrow=c(length(rnaTypes),1))
 maxDuplicated = 0.5
 for(rt in rnaTypes) {
   s = get("segScore", get(rt))
-  isUnique = (s$frac.dup < maxDuplicated)
-  isUnanno = (s$overlappingFeature=="" & isUnique)
-
-    thr = calcThreshold(s$level, sel=isUnanno, showPlot=TRUE, main=rt)
+  sel = (s[, "frac.dup"] < maxDuplicated) & (s[, "overlappingFeature"] == "")
+  thr = calcThreshold(s[, "level"], sel = sel, showPlot=!interact, main=rt)
   assign("threshold", thr, envir=get(rt))
-  assign("threshold.novel", thr, envir=get(rt))
 }
 
 if(!interact)

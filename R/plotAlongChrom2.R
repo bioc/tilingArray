@@ -33,13 +33,18 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
 
     if(!missing(y)) {
       index = get(paste(chr, strand, "index", sep="."), envir=probeAnno)
-      dat = list(start  = get(paste(chr, strand, "start", sep="."), envir=probeAnno),
-                 yraw   = y[index],
+      sta   = get(paste(chr, strand, "start", sep="."), envir=probeAnno)
+      end   = get(paste(chr, strand, "end",   sep="."), envir=probeAnno)
+      dat = list(mid = (sta+end)/2,
+                 y   = y[index],
                  unique = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
+      lengthChr = end[length(end)]
       sgs = NULL     
     } else {
       dat = get(paste(chr, strand, "dat", sep="."), segObj)
-
+      dat$mid   = (dat[["start"]] + dat[["end"]])/2
+      lengthChr = dat[["end"]][length(dat[["end"]])]
+      
       if("threshold" %in% ls(segObj))
         threshold = get("threshold", segObj)
       
@@ -51,22 +56,23 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
         if(missing(nrBasesPerSeg))
           stop("Please specify 'nrBasesPerSeg' ('segScore' was not found in 'segObj')")
         seg = get(paste(chr, strand, "seg", sep="."), segObj)
-        cp = round(max(dat$x)/nrBasesPerSeg)
-        th=c(1, seg$th[cp, 1:cp])
+        cp  = round( lengthChr / nrBasesPerSeg)
+        th  = c(1, seg$th[cp, 1:cp])
         sgs = data.frame(
           chr    = I(rep(chr, cp)),
           strand = I(rep(strand, cp)),
-          start  = dat$x[th[-length(th)]],
-          end    = dat$x[th[-1]]-1)
+          start  = dat[["start"]][dat[["ss"]]][th[-length(th)]],
+          end    = dat[["end"]][dat[["ss"]]][th[-1]]-1)
       }
     } 
     
     if(missing(coord))
-      coord = range(dat$start)
+      coord = c(1, lengthChr)
 
-    plotSegmentation(x=dat$start, y=dat$yraw, coord=coord, uniq=dat$unique,
+    plotSegmentation(x= dat[["mid"]],
+                     y= dat[["y"]], coord=coord, uniq=dat$unique,
                      segScore=sgs, threshold=threshold, scoreShow=scoreShow,
-                     gff=gff, chr=chr, chrSeqname=chrSeqname, strand=strand,
+                     gff=gff, chr=chr, strand=strand,
                      VP=VP, colors=colors)
     
   }
@@ -106,7 +112,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
 ## gff and chrSeqname into an environment or object?
 
 plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
-  gff, chr, chrSeqname, strand, VP, colors) {
+  gff, chr, strand, VP, colors, probeLength=25) {
 
   ## could this be done better?
   if(is.matrix(y))
@@ -125,8 +131,6 @@ plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
   
   istrand = match(strand, c("+", "-"))
   stopifnot(length(strand)==1, !is.na(istrand))
-  chrName = chrSeqname[chr]
-  stopifnot(!is.na(chrName))
 
   ## the expression data. use two viewports for different clipping behavior
   ## rgy = range(y, na.rm=TRUE)
@@ -148,11 +152,14 @@ plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
   
   if(!is.null(segScore)) {
     segSel   = which(segScore$chr==chr & segScore$strand==strand)
-    segstart = segScore$start[segSel]
-    segend   = segScore$end[segSel]
-    stopifnot(all(segstart[-1] > segend[-length(segend)]))
-    grid.segments(x0 = unit(segstart, "native"), x1 = unit(segstart, "native"),
-                  y0 = unit(0.1, "npc"),      y1 = unit(0.9, "npc"),
+    segstart = segScore[segSel, "start"]
+    segend   = segScore[segSel, "end"]
+    diffss =  segstart[-1] - segend[-length(segend)]
+    meanss = (segstart[-1] + segend[-length(segend)])/2
+    stopifnot(all(diffss>=(-probeLength)))
+    
+    grid.segments(x0 = unit(meanss, "native"), x1 = unit(meanss, "native"),
+                  y0 = unit(0.1, "npc"),       y1 = unit(0.9, "npc"),
                   gp = gpar(col=colors["cp"]))
   }
   popViewport(2)
@@ -189,14 +196,14 @@ plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
   pushViewport(dataViewport(xData=coord, yscale=c(-1.2,1.2),  extension=0, 
     layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("gff%d", istrand))))
 
-  stopifnot(all(gff$start <= gff$end))
-  sel = which(gff$seqname == chrName &
-              gff$strand  == strand &
-              gff$start <= coord[2] &
-              gff$end   >= coord[1])
+  stopifnot(all(gff[,"start"] <= gff[, "end"]))
+  sel = which(gff[, "chr"] == chr &
+              gff[, "strand"]  == strand &
+              gff[, "start"] <= coord[2] &
+              gff[, "end"]   >= coord[1])
 
-  nam1    = getAttributeField(gff$attributes[sel], "gene")
-  featnam = getAttributeField(gff$attributes[sel], "Name")
+  nam1    = gff[sel, "gene"]
+  featnam = gff[sel, "Name"]
   featnam[!is.na(nam1)] = nam1[!is.na(nam1)]
   featsp  = split(seq(along=sel), gff$feature[sel])
 

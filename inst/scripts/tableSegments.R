@@ -3,7 +3,7 @@ library("tilingArray")
 graphics.off()
 options(error=recover, warn=2)
 interact = (TRUE)
-what     = c("pie", "wst", "length", "lvsx", "cons")[1:3]
+what     = c("pie", "wst", "length", "lvsx", "cons")[5]
 
 if(!interact)
   sink("tableSegments.txt")
@@ -19,20 +19,17 @@ source("scripts/writeSegmentTable.R")
 cs = vector(mode="list", length=length(rnaTypes))
 names(cs)=rnaTypes
 
-cat("Categorizing segments:\n",
-    "======================\n", sep="")
 for(rt in rnaTypes) {
   cs[[rt]] = categorizeSegmentsPie(get(rt))
 }
 
-fillColors = c(brewer.pal(9, "Pastel1")[c(2:6, 1, 9)])
-names(fillColors) =c("verified gene", "ncRNA", "uncharacterized gene",
-   "dubious", "novel antisense", "novel isolated", "novel dubious")
+fillColors = c(brewer.pal(9, "Pastel1")[c(2:5, 1, 9)])
+names(fillColors) =c("annotated ORF", "ncRNA", "other annotation",
+   "novel antisense", "novel isolated", "excluded")
 
 lineColors = c(brewer.pal(9, "Set1"))[c(1, 4, 5, 3, 2, 8, 9, 7)]
-names(lineColors) =c("verified gene", "ncRNA", "uncharacterized gene",  
-   "novel antisense", "novel isolated", "novel dubious",
-   "isolated and unexpressed", "whole genome")
+names(lineColors) =c("annotated ORF", "ncRNA", "other annotation",  
+   "novel antisense", "novel isolated", "isolated and unexpressed")
 
 ##
 ## PIE
@@ -44,49 +41,41 @@ if("pie" %in% what){
     pdf("tableSegments-pie.pdf", width=7*length(rnaTypes), height=4.8)
   }
   par(mfrow=c(1, length(rnaTypes)))
-  cat("Counts for the pie chart:\n",
-      "=========================\n",
-      "For known features, counts are unique IDs. While in typical cases\n",
-      "there is a 1:1 mapping between segments and IDs, this is not always\n",
-      "the case: there can be several IDs per segment, and several segments\n",
-      "per ID.\n",
-      "For new segments, counts are non-consecutive blocks of one or several\n",
-      "expressed segments flanked by a non-expressed segment on each side.\n",
-      sep="")
+  counts = NULL
   for(rt in rnaTypes) {
-    cat("\n", rt, "\n-----\n", sep="")
-    selectedCategories = c("verified gene", "ncRNA", "uncharacterized gene", "dubious",
-      "novel isolated", "novel antisense", "novel dubious")
+    selectedCategories = c("annotated ORF", "ncRNA", "other annotation",
+      "novel isolated", "novel antisense") ##  "excluded"
     stopifnot(all(selectedCategories %in% names(fillColors)))
-    ct  = cs[[rt]]$count
-    stopifnot(all(selectedCategories %in% rownames(ct)))
-
-    print(cbind(ct, "percent" = round(100*ct[,1]/ct[,2], 1)))
-
-    px = ct[selectedCategories, "observed"]
-    pie(px, radius=0.75, main=longNames[rt],
-        col=fillColors[selectedCategories],
-        labels=paste(selectedCategories, " (", px, ")", sep=""))
-    rm(list=c("ct", "px", "selectedCategories"))
+    s  = cs[[rt]]
+    px  = table(s[, "category"])[selectedCategories]
+    counts = cbind(counts, px)
+    pie(px, radius=0.75, main=longNames[rt], 
+        col = fillColors[selectedCategories],
+        labels = paste(selectedCategories, " (", px, ")", sep=""))
   }
   if(!interact)
     dev.off()
+
+  
+  colnames(counts)=rnaTypes
+  rownames(counts)=names(px)
+  cat("Segment counts:\n")
+  print(counts)
 }
 
 ##
 ## WRITE THE SEGMENT TABLE
 ##
 if("wst" %in% what){
-  cat("\n\n")
-  selectedCategories = c("verified gene", "uncharacterized gene", "ncRNA",
-    "novel antisense", "novel isolated", "novel dubious", "isolated and unexpressed")
+  selectedCategories = c("annotated ORF", "ncRNA", "other annotation",
+    "novel isolated", "novel antisense") 
   for(rt in rnaTypes) {
-    s   = cs[[rt]]$s
+    s   = cs[[rt]]
     stopifnot(all(selectedCategories %in% levels(s[,"category"])))
     sel = (s[,"category"] %in% selectedCategories)
     fn  = file.path(indir[rt], "viz", "index.html")
-    writeSegmentTable(s[sel, ], title=longNames[rt], fn=fn, sortBy="category")
-    rm(list=c("s", "sel", "fn"))
+    writeSegmentTable(s[sel, ], fn=fn, sortBy="category",
+      title=paste(rt, " (", longNames[rt], ")", sep=""))
   }
   cat("\n\n")
 }
@@ -96,15 +85,15 @@ if("wst" %in% what){
 ##
 maxlen=5000
 if("length" %in% what){
-  selectedCategories = c("verified gene", "uncharacterized gene", "ncRNA",
-    "novel antisense", "novel isolated")
+  selectedCategories = c("annotated ORF", "ncRNA", "other annotation",
+    "novel isolated", "novel antisense") 
   stopifnot(all(selectedCategories %in% names(fillColors)))
   if(!interact)
     pdf("tableSegments-lengths.pdf", width=14, height=length(rnaTypes)*3)
   par(mfrow=c(length(rnaTypes),5))
   br = seq(0, maxlen, by=200)
   for(rt in rnaTypes) {
-    s   = cs[[rt]]$s
+    s   = cs[[rt]]
     stopifnot(all(selectedCategories %in% levels(s[,"category"])))
     for(lev in selectedCategories) {
       len = s[s[,"category"] == lev, "length"]
@@ -129,9 +118,9 @@ if("lvsx" %in% what){
   par(mfrow=c(length(rnaTypes), 2))
   maxlen=5000
   br = seq(0, maxlen, by=200)
-  selectedCategories = c("verified gene", "novel isolated")
+  selectedCategories = c("annotated ORF", "novel isolated")
   for(rt in rnaTypes) {
-    s   = cs[[rt]]$s
+    s   = cs[[rt]]
     stopifnot(all(selectedCategories %in% levels(s[,"category"])))
     ylim = quantile(s[,"level"][s[,"category"] %in% selectedCategories],
       probs=c(0.01, 0.99), na.rm=TRUE)
@@ -209,11 +198,11 @@ calchit = function(sp, blrt, s) {
   theSplit = vector(mode="list", length=length(rnaTypes))
   names(theSplit) = rnaTypes
     
-  selectedCategories = c("verified gene", "uncharacterized gene" ,
+  selectedCategories = c("annotated ORF",
     "ncRNA",  "novel antisense", "novel isolated", "isolated and unexpressed")
   
   for(rt in rnaTypes) {
-    s   = cs[[rt]]$s
+    s   = cs[[rt]]
     stopifnot(all(selectedCategories %in% levels(s[,"category"])))
     sp = split(seq(along=s[,"category"]), s[,"category"])
     sp = sp[selectedCategories]
@@ -245,7 +234,7 @@ calchit = function(sp, blrt, s) {
     cat("\n", rt, "\n-----\n", sep="")
     
     sp = theSplit[[rt]]
-    s  = cs[[rt]]$s
+    s  = cs[[rt]]
         
     fraction = matrix(NA, nrow=nrlevs, ncol=length(sp))
     colnames(fraction) = names(sp)

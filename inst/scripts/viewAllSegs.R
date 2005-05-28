@@ -12,8 +12,6 @@ nrChr = 16
 ##
 ## Prepare and write the GFF-table
 ##
-if(!"chr" %in% names(gff))
-  gff$chr = match(gff$seqname, chrSeqname)
 if(!"Ontology_term" %in% names(gff))
   gff$Ontology_term = getAttributeField(gff$attributes, "Ontology_term")
 if(!"Note" %in% names(gff)) {
@@ -34,7 +32,7 @@ write.table(outtab, file="gff.txt",
 ##
 ## Write the pictures
 ## 
-for(rt in rnaTypes[2]) {
+for(rt in rnaTypes[3]) {
   cat(">>>", rt, "<<<\n")
   convCmd = "#!/bin/sh"
 
@@ -43,7 +41,7 @@ for(rt in rnaTypes[2]) {
     stop(paste("Output directory", outdir, "does not exist."))
 
   for(chr in 1:nrChr) {
-    startPoints = seq(0, max(gff$end[gff$chr==chr]), by=alongChromStep)
+    startPoints = seq(0, max(gff[gff[, "chr"]==chr, "end"]), by=alongChromStep)
     for(i in seq(along=startPoints)) {
       start = startPoints[i]
       nm = mapCoord2Plot(chr, start+alongChromWidth/2, start+alongChromWidth/2)

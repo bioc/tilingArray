@@ -5,21 +5,24 @@ source("/homes/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 doNotLoadSegScore=TRUE
 source("scripts/readSegments.R")
 
-if(!exists("x")) {
-  cat("Loading x.rda\n")
-  load("x.rda")
+if(!exists("xn")) {
+  fn = "seg-dir-050521/xn.rda"
+  cat("Loading", fn, "\n")
+  load(fn)
 }
 
 addDirectHybe = function(s) {
   dhl = numeric(nrow(s))
   strand = otherStrand(s$strand)
-  y = exprs(x)[, "050507_dirRNA_10ug_F1.cel.gz"]
+  y = exprs(xn)[, "050507_dirRNA_10ug_F1.cel.gz"]
   cat("Adding direct hybe: ")
   for(i in 1:nrow(s)) {
     if(i%%1000==0)cat(i, "")
-    ind = get(paste(s$chr[i], strand[i], "index", sep="."), probeAnno)
-    sta = get(paste(s$chr[i], strand[i], "start", sep="."), probeAnno)
-    sel = ind[(sta >= s[i, "start"]) & (sta <= s[i, "end"])]
+    uni = get(paste(s$chr[i], strand[i], "unique", sep="."), probeAnno)
+    ind = get(paste(s$chr[i], strand[i], "index",  sep="."), probeAnno)
+    sta = get(paste(s$chr[i], strand[i], "start",  sep="."), probeAnno)
+    end = get(paste(s$chr[i], strand[i], "end",    sep="."), probeAnno)
+    sel = ind[uni & (sta >= s[i, "start"]) & (end <= s[i, "end"])]
     dhl[i] = mean(y[sel])
   }
   cat("\n")
@@ -29,12 +32,11 @@ addDirectHybe = function(s) {
 
 nrbpsList = c(1500)
 
-for(rt in rnaTypes) {
+for(rt in rnaTypes[RRR]) {
   for(nrbps in nrbpsList) {
     cat(">> ", rt, nrbps, "<<\n")
     segScore = scoreSegments(get(rt), gff=gff, nrBasePerSeg=nrbps)
-    ## segScore = addDirectHybe(segScore)
-    cat("NOT ADDING DIRECT HYBE\n")
+    segScore = addDirectHybe(segScore)
     save(segScore, file=file.path(indir[rt], sprintf("segScore-%d.rda", as.integer(nrbps))),
          compress=TRUE)
   } 

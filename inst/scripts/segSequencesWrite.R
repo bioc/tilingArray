@@ -8,7 +8,7 @@ library("tilingArray")
 if(!exists("gff"))
   load("probeAnno.rda")
 
-segmentationDirs  = c("segmentation-3polyA", "seg-tot-050421", "seg-polyA-050428")[3]
+segmentationDirs  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")
 segScoreFile      = c("segScore-1500.rda")
 seqDir = "SGD"
 
@@ -16,8 +16,12 @@ outdir = "fasta"
 
 for(d in segmentationDirs) {
   df = file.path(d, outdir)
-  if(!file.exists(df) || !file.info(df)$isdir)
-    stop(paste("Output directory", outdir, "does not exist."))
+  if(!file.exists(df)) {
+    cat("Creating output directory", df, ".\n")
+    dir.create(df)
+  }
+  if(!file.info(df)$isdir)
+    stop(paste(outdir, "is not a directory."))
 }
 
 if(!exists("fsa")) {
@@ -42,7 +46,7 @@ chrLengths = chrLengths[order(as.numeric(names(chrLengths)))]
 ## double-check
 sgff = gff[ gff$feature=="telomere", ]
 for(i in 1:16) {
-  w = which(sgff$seqname==chrSeqname[i])
+  w = which(sgff$chr==i)
   stopifnot(length(w)==2)
   stopifnot(chrLengths[i]==sgff$end[w[2]])
 }

@@ -36,7 +36,7 @@ scoreSegments = function(s, gff,
   knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
         "rRNA", "snRNA", "snoRNA", "tRNA", 
         "transposable_element", "transposable_element_gene"),
-  params = c(overlapFraction = 0.5, oppositeWindow = 100, utrScoreWidth=100),
+  params = c(overlapFraction = 0.5, oppositeWindow = 100, flankProbes=10),
   verbose = TRUE) {
 
   rv = NULL
@@ -132,6 +132,7 @@ scoreSegments = function(s, gff,
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = ft4 = character(cp)  
       zl = zr = lev = oe = rep(as.numeric(NA), cp)
+      nrFlankProbes = params["flankProbes"]
       
       for(j in 1:cp) {
         startj = dStart[i1[j]]
@@ -149,18 +150,23 @@ scoreSegments = function(s, gff,
         lev[j] = mean(cmym)
         
         ## data from flanks, for segment quality scores
-        Ll = Lr = params[["utrScoreWidth"]]
         if(j>1) {
-          Ll = min(Ll, segScore[j-1, "length"])
+          probesLeft = which(dUniq & (dEnd<startj) & (dStart>=dStart[i1[j-1]]))
+          if(length(probesLeft) > nrFlankProbes)
+            probesLeft = probesLeft[1:nrFlankProbes]
+          yl = dY[probesLeft,, drop=FALSE]
+          zl[j] = zscore(yl, cmym)
+          ## if(is.na(zl[j]))browser()
         }
         if(j<cp) {
-          Lr = min(Lr, segScore[j+1, "length"])
-        }
-
-        yr = dY[ dUniq & (dStart>endj)   & (dEnd  <=endj+Lr),, drop=FALSE]
-        yl = dY[ dUniq & (dEnd  <startj) & (dStart>=startj-Ll),, drop=FALSE]
-        zl[j] = zscore(yl, cmym)
-        zr[j] = zscore(yr, cmym)
+          probesRight = which(dUniq & (dStart>endj) & (dEnd<=dEnd[i2[j+1]]))
+          if(length(probesRight) > nrFlankProbes)
+            probesRight = probesRight[1:nrFlankProbes]
+          yr    = dY[probesRight,, drop=FALSE]
+          zr[j] = zscore(yr, cmym)
+          ## if(is.na(zr[j]))browser()
+        } 
+        ## check whether probes are ascending
 
         ## distance to next features on the left and on the right:
         dl[j]  = posMin(startj - same.gff[, "end"])
@@ -177,16 +183,17 @@ scoreSegments = function(s, gff,
           nm1 = unique(same.gff[whFinS, "Name"])
           stopifnot(!any(duplicated(nm1)))
           ft1[j] = paste(nm1, collapse=", ")
-          if(length(whFinS)==1) {
-            if(same.gff[whFinS, "feature"]=="gene") {
-              ## The segment contains exactly one gene
-              utrLeft[j]  = same.gff[whFinS, "start"] - startj 
-              utrRight[j] = endj - same.gff[whFinS, "end"]
-            }
-          } 
+
+          ## Does the segment contain exactly one gene (and possibly several CDSs)
+          feats = same.gff[whFinS, "feature"]
+          wh1 = whFinS[ feats=="gene" ]
+          if((length(wh1)==1) && all(feats %in% c("gene", "CDS"))) {
+            utrLeft[j]  = same.gff[wh1, "start"] - startj 
+            utrRight[j] = endj - same.gff[wh1, "end"]
+          }
         }
 
-        ## mostOfFeatureInSegment: more than 50% (="overlapFraction") overlap with the segment
+        ## mostOfFeatureInSegment: overlap is more than 50% of feature length
         overlapSame   = pmin(endj, same.gff[,"end"]) - pmax(startj, same.gff[,"start"]) + 1 
         wh2 = which( overlapSame / (same.gff[,"end"]-same.gff[,"start"]+1) >= params[["overlapFraction"]])
         if(length(wh2)>0) {
@@ -214,9 +221,8 @@ scoreSegments = function(s, gff,
 
       } ## for j
 
-      segScore[, c("utr5", "utr3")]  = switch(strand,
-                "+" = c(utrLeft, utrRight),
-                "-" = c(utrRight, utrLeft))
+      segScore[, "utr5"] = switch(strand, "+"=utrLeft,  "-"=utrRight)
+      segScore[, "utr3"] = switch(strand, "+"=utrRight, "-"=utrLeft)
       segScore[, "featureInSegment"]       = ft1
       segScore[, "mostOfFeatureInSegment"] = ft2
       segScore[, "overlappingFeature"]     = ft3
