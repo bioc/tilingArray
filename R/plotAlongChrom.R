@@ -1,12 +1,8 @@
 
 ## gff and chrSeqname into an environment or object?
 
-plotAlongChrom = function(y, hybeType, chr, from, to, extend=0, gff, chrSeqname,
+plotAlongChrom = function(y, hybeType, chr, from, to, extend=0, gff, 
   probeAnno, probeLength=25) {
-  if(is.character(chr)) {
-    chr = match(chr, chrSeqname)
-    stopifnot(!is.na(chr))
-  }
     
   if(from>to) {
     tmp=from;to=from;from=tmp
@@ -18,9 +14,7 @@ plotAlongChrom = function(y, hybeType, chr, from, to, extend=0, gff, chrSeqname,
   y    = y - rgy[1]
   maxy = diff(rgy)
 
-  thegff = gff[ (gff$seqname == chrSeqname[chr]) &
-                (gff$feature == "CDS"), ]
-  stopifnot(!is.null(gff$Name))
+  thegff = gff[ (gff[, "chr"]==chr) & (gff[, "feature"]=="CDS"), ]
   
   plot(c(start, end), c(-1,1)*maxy, type="n", 
        xlab=paste("Chr", chr, sep=""), ylab="")
@@ -66,8 +60,8 @@ plotAlongChrom = function(y, hybeType, chr, from, to, extend=0, gff, chrSeqname,
     ax[strd=="-", ] = ax[strd=="-", 2:1]
     arrows(x0=ax[,1], y0=y, x1=ax[,2], y1=y, lwd=2, length=0.1, col="black", code=2)
         ##   col=colors[strd]
-    text(x=(thegff$start[featsel]+thegff$end[featsel])/2, y=-1+seq(along=which(featsel))%%3,
-         labels=thegff$Name[featsel])
+    text(x=(thegff[featsel, "start"]+thegff[featsel, "end"])/2, y=-1+seq(along=which(featsel))%%3,
+         labels=thegff[featsel, "Name"])
   }
 }
 

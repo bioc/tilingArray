@@ -1,11 +1,10 @@
 options(error=recover, warn=0)
-interact =  FALSE
+interact =  !TRUE
 library("tilingArray")
 source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 ## source("colorRamp.R")  ## can go with R 2.1
 source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
-source("scripts/writeSegmentTable.R")
 
 nrChr = 16
 
@@ -32,7 +31,7 @@ write.table(outtab, file="gff.txt",
 ##
 ## Write the pictures
 ## 
-for(rt in rnaTypes[3]) {
+for(rt in rnaTypes[1:2]) {
   cat(">>>", rt, "<<<\n")
   convCmd = "#!/bin/sh"
 
@@ -40,6 +39,14 @@ for(rt in rnaTypes[3]) {
   if(!file.exists(outdir) || !file.info(outdir)$isdir)
     stop(paste("Output directory", outdir, "does not exist."))
 
+  allY = unlist(lapply(1:nrChr, function(chr) {
+    lapply(c("-", "+"), function(strand) {
+      dat = get(paste(chr, strand, "dat", sep="."), get(rt))
+      dat[["y"]][ dat[["ss"]], ]
+    })
+  }))
+  ylim = quantile(allY, probs=c(0.001, 0.999))
+  
   for(chr in 1:nrChr) {
     startPoints = seq(0, max(gff[gff[, "chr"]==chr, "end"]), by=alongChromStep)
     for(i in seq(along=startPoints)) {
@@ -56,9 +63,7 @@ for(rt in rnaTypes[3]) {
       }
       grid.newpage()
       plotAlongChrom2(chr=chr, coord=c(start, start+alongChromWidth),
-                      segObj = get(rt), gff = gff)
-      if(interact)
-        locator()
+                      segObj = get(rt), gff = gff, ylim=ylim)
       dev.off()
       
       convCmd = c(convCmd, paste("convert -density 120", pdfname, "-quality 100", pixname))

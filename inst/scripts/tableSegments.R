@@ -3,7 +3,7 @@ library("tilingArray")
 graphics.off()
 options(error=recover, warn=2)
 interact = (!TRUE)
-what     = c("pie", "wst", "length", "lvsx", "cons")
+what     = c("pie", "wst", "length", "lvsx", "cons")[1:2]
 
 if(!interact)
   sink("tableSegments.txt")
@@ -20,6 +20,7 @@ cs = vector(mode="list", length=length(rnaTypes))
 names(cs)=rnaTypes
 
 for(rt in rnaTypes) {
+  cat(">>>>>>>>>", rt, "<<<<<<<<<<<<\n")
   cs[[rt]] = categorizeSegmentsPie(get(rt))
 }
 
@@ -59,7 +60,7 @@ if("pie" %in% what){
   
   colnames(counts)=rnaTypes
   rownames(counts)=names(px)
-  cat("Segment counts:\n")
+  cat("\nSegment counts:\n")
   print(counts)
   cat("\n\n")
 }
@@ -75,10 +76,11 @@ if("wst" %in% what){
     stopifnot(all(selectedCategories %in% levels(s[,"category"])))
     sel = (s[,"category"] %in% selectedCategories)
     fn  = file.path(indir[rt], "viz", "index.html")
+    cat("Writing", fn, "\n")
     writeSegmentTable(s[sel, ], fn=fn, sortBy="category",
       title=paste(rt, " (", longNames[rt], ")", sep=""))
   }
-  cat("\n\n")
+  cat("\n")
 }
 
 ##

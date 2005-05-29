@@ -24,20 +24,20 @@ if(!TRUE) {
                 gff = gff, highlight= list(coord=c(142621, 143365),strand="+"))
 } else {
   ## if(!exists("a"))load("a.rda")
-  if(!exists("xn"))load("seg-polyA-050518/xn.rda")
+  if(!exists("xn"))load("seg-dir-050521/xn.rda")
   if(!exists("probeAnno"))load("probeAnno.rda")
-  fn = c("05_04_27_2xpolyA_NAP3.cel.gz",
-    "05_04_26_2xpolyA_NAP2.cel.gz",
-    "05_04_20_2xpolyA_NAP_2to1.cel.gz")
-  ## y = log(exprs(a)[, fn[1]], 2)
-  ## y = log(exprs(a)[, 1:3], 2)
-  y = exprs(xn)
+  fn =  "050507_dirRNA_10ug_F1.cel.gz"
+  ## c("05_04_27_2xpolyA_NAP3.cel.gz","05_04_26_2xpolyA_NAP2.cel.gz","05_04_20_2xpolyA_NAP_2to1.cel.gz")
+  y = log(exprs(a)[, fn], 2)
+  ## y = exprs(x)[, fn]
+  ## y = exprs(xn)
   plotAlongChrom2(## 6, coord = c(19000, 19200),
                   ## 7, coord = c(971000, 980000),
-                  1, coord = c(184, 185)*1e3,
+                  4, coord = c(30, 100)*1e3,
                   ## 3, coord = c(35, 50)*1e3,
                   y = y, 
                   probeAnno = probeAnno,
+                  isDirectHybe=TRUE,
                   gff = gff)#  highlight= list(coord=c(142621, 143365),strand="+"))
 }
 

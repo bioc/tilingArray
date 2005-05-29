@@ -5,11 +5,11 @@ source("/homes/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 doNotLoadSegScore=TRUE
 source("scripts/readSegments.R")
 
-if(!exists("xn")) {
-  fn = "seg-dir-050521/xn.rda"
-  cat("Loading", fn, "\n")
-  load(fn)
-}
+##if(!exists("xn")) {
+##  fn = "seg-dir-050521/xn.rda"
+##  cat("Loading", fn, "\n")
+##  load(fn)
+##}
 
 addDirectHybe = function(s) {
   dhl = numeric(nrow(s))
@@ -32,11 +32,11 @@ addDirectHybe = function(s) {
 
 nrbpsList = c(1500)
 
-for(rt in rnaTypes[RRR]) {
+for(rt in rnaTypes) {
   for(nrbps in nrbpsList) {
     cat(">> ", rt, nrbps, "<<\n")
     segScore = scoreSegments(get(rt), gff=gff, nrBasePerSeg=nrbps)
-    segScore = addDirectHybe(segScore)
+    ## segScore = addDirectHybe(segScore)
     save(segScore, file=file.path(indir[rt], sprintf("segScore-%d.rda", as.integer(nrbps))),
          compress=TRUE)
   } 

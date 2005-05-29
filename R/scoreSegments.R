@@ -13,7 +13,7 @@ zscore = function(x, x0) {
   }
 }
 
-movingWindow =function(x, y, width) {
+movingWindow = function(x, y, width) {
   stopifnot(length(x)==nrow(y))
   w = which(x+width-1 <= x[length(x)])
   if(length(w)==0) {
@@ -102,6 +102,7 @@ scoreSegments = function(s, gff,
       dEnd   = dat[["end"]][wh]        ## end base of all probes
       dUniq  = dat[["unique"]][wh]
       dY     = dat[["y"]][wh,, drop=FALSE]
+      dUniqFun = approxfun((dStart+dEnd)/2, dUniq, rule=2)
 
       ## extract relevant data from "datOppo"
       wh = which(datOppo[["ss"]])
@@ -109,7 +110,7 @@ scoreSegments = function(s, gff,
       dOppoEnd   = datOppo[["end"]][wh]   ## end base of all probes
       dOppoUniq  = datOppo[["unique"]][wh]
       dOppoY     = datOppo[["y"]][wh,, drop=FALSE]
-
+        
       ## double-check: ascending?
       stopifnot(all(diff(dStart+dEnd)>=0), all(diff(dOppoStart+dOppoEnd)>=0))
 
@@ -119,9 +120,6 @@ scoreSegments = function(s, gff,
       segScore[, "start"]    = dStart[i1]
       segScore[, "end"]      = dEnd[i2]
       segScore[, "length"]   = dEnd[i2]-dStart[i1]+1
-      segScore[, "frac.dup"] = mapply(function(h1, h2) {
-        1 - mean(dUniq[h1:h2])
-      }, i1, i2)
 
       same.gff = gff[ gff[, "chr"]==chr & gff[, "strand"]==strand &
           gff[, "feature"] %in% knownFeatures, ]
@@ -131,13 +129,16 @@ scoreSegments = function(s, gff,
       
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = ft4 = character(cp)  
-      zl = zr = lev = oe = rep(as.numeric(NA), cp)
+      zl = zr = lev = oe = fd = rep(as.numeric(NA), cp)
       nrFlankProbes = params["flankProbes"]
       
       for(j in 1:cp) {
         startj = dStart[i1[j]]
         endj   = dEnd[i2[j]]
 
+        ## frac.dup
+        fd[j]  = 1-mean(dUniqFun(seq(startj, endj, by=8)))
+        
         ## data from segment, and opposite
         ksel   = dUniq & (dStart>=startj) & (dEnd<=endj)
         ym     = dY[ksel,,drop=FALSE]
@@ -156,7 +157,6 @@ scoreSegments = function(s, gff,
             probesLeft = probesLeft[1:nrFlankProbes]
           yl = dY[probesLeft,, drop=FALSE]
           zl[j] = zscore(yl, cmym)
-          ## if(is.na(zl[j]))browser()
         }
         if(j<cp) {
           probesRight = which(dUniq & (dStart>endj) & (dEnd<=dEnd[i2[j+1]]))
@@ -164,9 +164,7 @@ scoreSegments = function(s, gff,
             probesRight = probesRight[1:nrFlankProbes]
           yr    = dY[probesRight,, drop=FALSE]
           zr[j] = zscore(yr, cmym)
-          ## if(is.na(zr[j]))browser()
         } 
-        ## check whether probes are ascending
 
         ## distance to next features on the left and on the right:
         dl[j]  = posMin(startj - same.gff[, "end"])
@@ -221,6 +219,8 @@ scoreSegments = function(s, gff,
 
       } ## for j
 
+      stopifnot(!any(is.na(fd)))
+      
       segScore[, "utr5"] = switch(strand, "+"=utrLeft,  "-"=utrRight)
       segScore[, "utr3"] = switch(strand, "+"=utrRight, "-"=utrLeft)
       segScore[, "featureInSegment"]       = ft1
@@ -233,6 +233,7 @@ scoreSegments = function(s, gff,
       segScore[, "distRight"]          = dr
       segScore[, "zLeft"]              = zl
       segScore[, "zRight"]             = zr
+      segScore[, "frac.dup"]           = fd
         
       rv = rbind(rv, segScore)
 

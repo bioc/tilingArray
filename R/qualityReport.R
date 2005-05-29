@@ -35,8 +35,8 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
   if(!is(x, "AffyBatch"))
     stop("'x' must be an AffyBatch")
 
-  if(length(hybeType)!=nrow(pData(x)) || !all(hybeType %in% c("Direct", "Reverse")))
-    stop(paste("'hybeType' must have same length as the number of arrays, and be",
+  if(length(hybeType)!=1 || !(hybeType %in% c("Direct", "Reverse")))
+    stop(paste("'hybeType' must have same length 1 and be",
                "either 'Direct' or 'Reverse'."))
   
   ## log2
@@ -44,7 +44,7 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
 
   ## normalize if applicable
   if(hybeType=="Direct") {
-    cat("--> Not normalizing since it is a Direct hybe. <--\n")
+    cat("--> Not normalizing since hybeType=Direct. <--\n")
     normRef = NULL
   }
   if(!is.null(normRef)) {
@@ -81,13 +81,12 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
     for (i in seq(along=selG)) {
       wh = selG[i]
       plotAlongChrom(y    = exprs(x)[,s],
-                     hybeType = hybeType[s],
-                     chr  = as.character(gff$seqname[wh]), 
+                     hybeType = hybeType,
+                     chr  = gff$chr[wh], 
                      from = gff$start[wh],
                      to   = gff$end[wh],
                      extend=3000,
                      gff  = gff,
-                     chrSeqname = get("chrSeqname", envir=probeAnno),
                      probeAnno = probeAnno)
       if(output == "HTML") {
         HTMLplot(file=out, Width=700, Height=300, GraphDirectory=graphicsDir,
@@ -97,7 +96,7 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
     } ## for i
 
     ## calculate scores
-    probe = get(paste("probe", hybeType[s], sep=""), probeAnno)
+    probe = get(paste("probe", hybeType, sep=""), probeAnno)
     nsc = calcScores(exprs(x), probe)
 
     ## compare with unnomalized score (if applicable)
@@ -154,6 +153,7 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
 
 ## t-scores and standard deviations for annotated CDSs
 calcScores = function(x, probe) {
+  browser()
   baseline = median(x[probe$no_feature=="no"])
   x = x-baseline
   xs    = split(x, probe$CDS)

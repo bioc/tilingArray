@@ -16,7 +16,7 @@
 library("tilingArray")
 library("geneplotter")
 
-interact=(TRUE)
+interact=(!TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
@@ -101,13 +101,9 @@ for(rt in rnaTypes) {
   ## GET THE CDS LENGTHS AS WELL
   ##
   mt = match(s[,"featureInSegment"], gff[,"Name"])
-  ## stopifnot(!any(is.na(mt)))
+  stopifnot(!any(is.na(mt)))
   
   cdslen = gff[mt, "end"]-gff[mt, "start"]
-  if(any(is.na(mt))) {
-    cat("\n\n\n\n!!!!!!!!!!!!!ZAPPERLOT!!!!!!!!!!!!!!\n\n\n")
-    cdslen[is.na(mt)]=-1
-  }
   investigateExpressionVersusLength(s[,"level"], s[,"utr3"], "length of 3' UTR")
   investigateExpressionVersusLength(s[,"level"], s[, "utr5"], "length of 5' UTR")
   investigateExpressionVersusLength(s[,"level"], cdslen, "length of CDS")

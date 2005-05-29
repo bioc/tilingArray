@@ -1,4 +1,4 @@
-plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno, 
+plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, isDirectHybe=FALSE,
   scoreShow="pt", nrBasesPerSeg, gff, haveLegend=TRUE) {
   
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
@@ -68,11 +68,15 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
     
     if(missing(coord))
       coord = c(1, lengthChr)
+    if(missing(ylim))
+      ylim = range(dat[["y"]])
 
+   
     plotSegmentation(x= dat[["mid"]],
-                     y= dat[["y"]], coord=coord, uniq=dat$unique,
+                     y= dat[["y"]], xlim=coord, ylim=ylim, uniq=dat$unique,
                      segScore=sgs, threshold=threshold, scoreShow=scoreShow,
-                     gff=gff, chr=chr, strand=strand,
+                     gff=gff, chr=chr,
+                     strand=ifelse(isDirectHybe, otherStrand(strand), strand),
                      VP=VP, colors=colors)
     
   }
@@ -111,7 +115,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, probeAnno,
 
 ## gff and chrSeqname into an environment or object?
 
-plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
+plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreShow,
   gff, chr, strand, VP, colors, probeLength=25) {
 
   ## could this be done better?
@@ -120,10 +124,10 @@ plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
     
   stopifnot(length(x)==length(y), length(x)==length(uniq))
 
-  if(missing(coord)) {
-    coord=range(x)
+  if(missing(xlim)) {
+    xlim=range(x)
   } else {
-    sel = (x>=coord[1])&(x<=coord[2])
+    sel = (x>=xlim[1])&(x<=xlim[2])
     x = x[sel]
     y = y[sel]
     uniq = uniq[sel]
@@ -133,14 +137,12 @@ plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
   stopifnot(length(strand)==1, !is.na(istrand))
 
   ## the expression data. use two viewports for different clipping behavior
-  ## rgy = range(y, na.rm=TRUE)
-  rgy = quantile(y, probs=c(0.001, 0.999), na.rm=TRUE)
   vpr = which(names(VP)==sprintf("expr%d", istrand))
-  pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="off",
+  pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
     layout.pos.col=1, layout.pos.row=vpr))
   grid.yaxis()
   
-  pushViewport(dataViewport(xData=coord, yData=rgy, extension=0, clip="on",
+  pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=vpr))
 
   ord  = c(which(!uniq), which(uniq))
@@ -166,7 +168,7 @@ plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
 
   if(FALSE) {
   ## if(!is.null(segScore)) {
-    pushViewport(dataViewport(xData=coord, yscale=c(0,2), extension=0, clip="on",
+    pushViewport(dataViewport(xData=xlim, yscale=c(0,2), extension=0, clip="on",
        layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("z%d", istrand))))
 
     deckel = function(p, pmax=10) {
@@ -193,14 +195,14 @@ plotSegmentation = function(x, y, coord, uniq, segScore, threshold, scoreShow,
     popViewport(1)
   }
   
-  pushViewport(dataViewport(xData=coord, yscale=c(-1.2,1.2),  extension=0, 
+  pushViewport(dataViewport(xData=xlim, yscale=c(-1.2,1.2),  extension=0, 
     layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("gff%d", istrand))))
 
   stopifnot(all(gff[,"start"] <= gff[, "end"]))
   sel = which(gff[, "chr"] == chr &
               gff[, "strand"]  == strand &
-              gff[, "start"] <= coord[2] &
-              gff[, "end"]   >= coord[1])
+              gff[, "start"] <= xlim[2] &
+              gff[, "end"]   >= xlim[1])
 
   nam1    = gff[sel, "gene"]
   featnam = gff[sel, "Name"]
@@ -337,7 +339,7 @@ plotAlongChromLegend = function(vpr) {
 ##------------------------------------------------------------
 ## plotDuplication
 ##------------------------------------------------------------
-plotDuplication = function(coord, chr, strand, probeAnno, VP) { 
+plotDuplication = function(xlim, chr, strand, probeAnno, VP) { 
 
   istrand = match(strand, c("+", "-"))
   stopifnot(length(strand)==1, !is.na(istrand))
@@ -360,7 +362,7 @@ plotDuplication = function(coord, chr, strand, probeAnno, VP) {
   stopifnot(length(x0)==length(x1))
   stopifnot(all(x1>x0))
   
-  pushViewport(dataViewport(xData=coord, yscale=c(-1,1),  extension=0,  clip="on",
+  pushViewport(dataViewport(xData=xlim, yscale=c(-1,1),  extension=0,  clip="on",
     layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("dup%d", istrand), "id")))
 
   grid.segments(x0=sta[x0], x1=sta[x1], y0=0, y1=0, default.units = "native",
