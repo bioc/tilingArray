@@ -1,6 +1,6 @@
 useDynLib(tilingArray)
 
 export("findSegments", "sampleStep", "scoreSegments", "costMatrix", 
-       "isWithinInterval", "posMin", "getAttributeField", "otherStrand", 
+       "isWithinInterval", "posMin", "getAttributeField", "otherStrand",
        "qualityReport", "plotAlongChrom", "plotAlongChrom2")
 

@@ -33,12 +33,11 @@ movingWindow = function(x, y, width) {
 scoreSegments = function(s, gff, 
   nrBasePerSeg = 1500, 
   probeLength  = 25,
-  knownFeatures = c("CDS", "gene", "ncRNA", "nc_primary_transcript",
-        "rRNA", "snRNA", "snoRNA", "tRNA", 
-        "transposable_element", "transposable_element_gene"),
   params = c(overlapFraction = 0.5, oppositeWindow = 100, flankProbes=10),
   verbose = TRUE) {
 
+  data(transcribedFeatures)
+  
   rv = NULL
   for(chr in chrs) {
     for(strand in c("+", "-")) {
@@ -121,11 +120,9 @@ scoreSegments = function(s, gff,
       segScore[, "end"]      = dEnd[i2]
       segScore[, "length"]   = dEnd[i2]-dStart[i1]+1
 
-      same.gff = gff[ gff[, "chr"]==chr & gff[, "strand"]==strand &
-          gff[, "feature"] %in% knownFeatures, ]
-      
-      oppo.gff = gff[ gff[, "chr"] == chr & gff[, "strand"]==otherStrand(strand) &
-          gff[, "feature"] %in% knownFeatures, ]
+      sel = (gff[, "chr"]==chr) & (gff[, "feature"] %in% transcribedFeatures)
+      same.gff = gff[ sel & gff[, "strand"]==strand, ]
+      oppo.gff = gff[ sel & gff[, "strand"]==otherStrand(strand), ]
       
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = ft4 = character(cp)  
@@ -173,10 +170,13 @@ scoreSegments = function(s, gff,
         drOppo = posMin(oppo.gff[, "start"] - endj)
         
         nm1 = nm2 = nm3 = nm4 = character(0)
-        ## featureInSegment: fully contained in the segment
+        ## featureInSegment: feature is fully contained in the segment
+        ## a 'feature' is one of the things in 'known_features', except 'CDS'
+        ## (since we want the whole gene, not just its exons)
         whFinS = which(
           (same.gff[, "start"] >= startj) &
-          (same.gff[, "end"]   <= endj ))
+          (same.gff[, "end"]   <= endj ) &
+          (same.gff[, "feature"] != "CDS"))
         if(length(whFinS)>0) {
           nm1 = unique(same.gff[whFinS, "Name"])
           stopifnot(!any(duplicated(nm1)))
