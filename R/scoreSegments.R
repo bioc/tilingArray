@@ -123,6 +123,10 @@ scoreSegments = function(s, gff,
       sel = (gff[, "chr"]==chr) & (gff[, "feature"] %in% transcribedFeatures)
       same.gff = gff[ sel & gff[, "strand"]==strand, ]
       oppo.gff = gff[ sel & gff[, "strand"]==otherStrand(strand), ]
+
+      ## is used below, in the definition of "featureInSegment"
+      CDSfeature ="CDS"
+      stopifnot(CDSfeature %in% transcribedFeatures)
       
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = ft4 = character(cp)  
@@ -173,19 +177,18 @@ scoreSegments = function(s, gff,
         ## featureInSegment: feature is fully contained in the segment
         ## a 'feature' is one of the things in 'known_features', except 'CDS'
         ## (since we want the whole gene, not just its exons)
-        whFinS = which(
+        wh1 = which(
           (same.gff[, "start"] >= startj) &
           (same.gff[, "end"]   <= endj ) &
-          (same.gff[, "feature"] != "CDS"))
-        if(length(whFinS)>0) {
-          nm1 = unique(same.gff[whFinS, "Name"])
+          (same.gff[, "feature"] != CDSfeature))
+        if(length(wh1)>0) {
+          nm1 = unique(same.gff[wh1, "Name"])
           stopifnot(!any(duplicated(nm1)))
           ft1[j] = paste(nm1, collapse=", ")
 
-          ## Does the segment contain exactly one gene (and possibly several CDSs)
-          feats = same.gff[whFinS, "feature"]
-          wh1 = whFinS[ feats=="gene" ]
-          if((length(nm1)==1) && (length(wh1)==1) && all(feats %in% c("gene", "CDS"))) {
+          ## Does the segment contain exactly one gene
+          if((length(wh1)==1) && (same.gff[wh1, "feature"]=="gene")) {
+            stopifnot(length(nm1)==1)
             utrLeft[j]  = same.gff[wh1, "start"] - startj 
             utrRight[j] = endj - same.gff[wh1, "end"]
           }

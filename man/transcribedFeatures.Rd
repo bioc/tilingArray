@@ -8,7 +8,7 @@ data(transcribedFeatures)
 }
 \format{A character vector}
 \author{W. Huber <huber@ebi.ac.uk>}
-\examples{data(
+\examples{
 data(transcribedFeatures)
 }
 \keyword{datasets}
