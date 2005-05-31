@@ -84,15 +84,16 @@ if("pie" %in% what){
         labels = paste(names(px), " (", px, ")", sep=""))
 
     cat(">>>>>>>>>", rt, "<<<<<<<<<<<<\n")
+    category[category %in% c("snoRNA", "snRNA", "tRNA", "rRNA")] = "ncRNA"
     tab = table(category, overlap)
     tab = tab[rowSums(tab)!=0, ]
 
     ## add a column "in genome"
     featg = as.character(gff[, "feature"])
     for(grx in c("Dubious", "Verified", "Uncharacterized"))
-      feati[ (feati=="gene") & (gff[, "orf_classification"]==grx) ] = paste(tolower(grx), "gene")
+      featg[ (featg=="gene") & (gff[, "orf_classification"]==grx) ] = paste(tolower(grx), "gene")
     tab = cbind(tab, "in genome" = sapply(rownames(tab), function(ft)
-                       length(unique(gff[ feati==ft, "Name"]))))
+                       length(unique(gff[ featg==ft, "Name"]))))
       
     print(tab)
     cat("\n\n")

@@ -22,8 +22,8 @@ categorizeSegments = function(env, maxDuplicated=0.5,
   minNewSegmentLength=24,
   zThresh=1) {
 
-  feat1 = c("transposable_element", "transposable_element_gene", "ncRNA","snoRNA","snRNA", "tRNA", "rRNA")
-  feat2 = c("dubious gene", "uncharacterized gene", "verified gene")
+  feat1 = c("verified gene", "uncharacterized gene", "dubious gene")
+  feat2 = c("tRNA", "rRNA", "snoRNA","snRNA", "ncRNA","transposable_element_gene", "transposable_element")
   
   ## results data structure: a factor which assigns a category to each segment:
   overlap = factor(rep(NA, nrow(s)),
@@ -60,10 +60,10 @@ categorizeSegments = function(env, maxDuplicated=0.5,
 #         "ncRNA"           = gff$Name[ (gff[, "feature"] %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA"))], 
 #         "annotated ORF"   = gff$Name[ (gff[, "feature"]=="gene") & (gff[, "orf_classification"] %in% c("Verified", "Uncharacterized"))])
 
-  categIDs = vector(mode="list", length = length(feat1)+3)
+  categIDs = vector(mode="list", length = length(feat1)+length(feat2))
   names(categIDs) = c(feat1, feat2)
   
-  for(f in feat1)
+  for(f in feat2)
     categIDs[[f]] = gff[ gff[, "feature"]==f, "Name" ]
 
   sel = gff[, "feature"]=="gene"
@@ -78,7 +78,7 @@ categorizeSegments = function(env, maxDuplicated=0.5,
     ovF = strsplit(s[wh, attrName[i]],  split=", ")
 
     ## Loop over three annotation classes
-    for(j in seq(along=categIDs)) {
+    for(j in rev(seq(along=categIDs))) {
       ## find features that this segment is contained in
                    sel = sapply(ovF, function(x) any(x %in% categIDs[[j]]))
          catg[wh[sel]] = names(categIDs)[j]

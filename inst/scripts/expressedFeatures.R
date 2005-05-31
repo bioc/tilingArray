@@ -48,7 +48,7 @@ testExp = function(index) {
 }
 
 data(transcribedFeatures)
-feats = c(transcribedFeatures[transcribedFeatures!="gene"], "control")
+feats = transcribedFeatures[transcribedFeatures!="gene"]
 
 for(rt in rnaTypes) {
   cat("\n=====", rt, "=====\n")
@@ -82,7 +82,7 @@ for(rt in rnaTypes) {
     ctrlIndex = lapply(index, function(x) sample(intergenic, length(x)))
     ctrlExp = testExp(ctrlIndex)
     
-    cat(sprintf("%21s: %4d of %4d (%3.1f percent), control: %4d\n", 
+    cat(sprintf("%25s: %4d of %4d (%3.1f percent), control: %4d\n", 
                 ft, as.integer(sum(isExp)), length(isExp), signif(100*mean(isExp)),
                 as.integer(sum(ctrlExp))))
   }
