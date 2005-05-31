@@ -22,13 +22,16 @@ categorizeSegments = function(env, maxDuplicated=0.5,
   minNewSegmentLength=24,
   zThresh=1) {
 
+  feat1 = c("transposable_element", "transposable_element_gene", "ncRNA","snoRNA","snRNA", "tRNA", "rRNA")
+  feat2 = c("dubious gene", "uncharacterized gene", "verified gene")
+  
   ## results data structure: a factor which assigns a category to each segment:
   overlap = factor(rep(NA, nrow(s)),
     levels = c("<50%", ">=50%, <100%", "100%"))
 
   catg = factor(rep(NA, nrow(s)), 
     levels = c("excluded", "untranscribed",
-      "annotated ORF", "ncRNA", "other annotation",
+      feat1, feat2, 
       "novel isolated - filtered", "novel isolated - excluded",
       "novel antisense - filtered", "novel antisense - excluded")) 
 
@@ -51,12 +54,24 @@ categorizeSegments = function(env, maxDuplicated=0.5,
                ">=50%, <100%" = "mostOfFeatureInSegment",
                "100%"         = "featureInSegment")
 
-  categIDs = list(
-        "other annotation"= gff$Name[((gff[, "feature"]=="gene") & (gff[, "orf_classification"]=="Dubious")) |
-                                      (gff[, "feature"] %in% c("transposable_element", "transposable_element_gene"))],
-        "ncRNA"           = gff$Name[ (gff[, "feature"] %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA"))], 
-        "annotated ORF"   = gff$Name[ (gff[, "feature"]=="gene") & (gff[, "orf_classification"] %in% c("Verified", "Uncharacterized"))])
-   stopifnot(all(listLen(categIDs)>0))
+#   categIDs = list(
+#         "other annotation"= gff$Name[((gff[, "feature"]=="gene") & (gff[, "orf_classification"]=="Dubious")) |
+#                                       (gff[, "feature"] %in% c("transposable_element", "transposable_element_gene"))],
+#         "ncRNA"           = gff$Name[ (gff[, "feature"] %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA"))], 
+#         "annotated ORF"   = gff$Name[ (gff[, "feature"]=="gene") & (gff[, "orf_classification"] %in% c("Verified", "Uncharacterized"))])
+
+  categIDs = vector(mode="list", length = length(feat1)+3)
+  names(categIDs) = c(feat1, feat2)
+  
+  for(f in feat1)
+    categIDs[[f]] = gff[ gff[, "feature"]==f, "Name" ]
+
+  sel = gff[, "feature"]=="gene"
+  categIDs[["dubious gene"]]         = gff[ sel & gff[, "orf_classification"]=="Dubious", "Name"]
+  categIDs[["uncharacterized gene"]] = gff[ sel & gff[, "orf_classification"]=="Uncharacterized", "Name"]
+  categIDs[["verified gene"]]        = gff[ sel & gff[, "orf_classification"]=="Verified", "Name"]
+
+  stopifnot(all(listLen(categIDs)>0))
 
   ## Loop over <50%, 50-100%, 100%:
   for(i in seq(along=attrName)) {

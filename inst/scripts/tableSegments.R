@@ -3,15 +3,17 @@ library("tilingArray")
 graphics.off()
 options(error=recover, warn=2)
 interact = (!TRUE)
-what     = c("pie", "wst", "length", "lvsx", "cons")
-
-if(!interact)
-  sink("tableSegments.txt")
+what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")
 
 source("scripts/readSegments.R") 
 source("scripts/calcThreshold.R") 
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
+
+if(!interact){
+  sink("tableSegments.txt")
+  cat("Made on", date(), "\n\n")
+}
 
 ##
 ## CATEGORIZE
@@ -19,13 +21,20 @@ source("scripts/writeSegmentTable.R")
 cs = vector(mode="list", length=length(rnaTypes))
 names(cs)=rnaTypes
 
-for(rt in rnaTypes) {
-  cs[[rt]] = categorizeSegments(get(rt))
-}
+simpleCategories = c("annotated ORF", "ncRNA", "excluded", "untranscribed", "dubious gene",
+  "novel isolated - filtered",  "novel isolated - excluded",
+  "novel antisense - filtered", "novel antisense - excluded")
 
-#fillColors = , 1, 9)])
-#names(fillColors) =c("annotated ORF", "ncRNA", "other annotation",
-#   "novel antisense", "novel isolated", "excluded")
+for(rt in rnaTypes) {
+  s = categorizeSegments(get(rt))
+  catg = factor(rep(NA, nrow(s)), levels=simpleCategories)
+  catg[ s[,"category"] %in% c("uncharacterized gene", "verified gene")] = "annotated ORF"
+  catg[ s[,"category"] %in% c("ncRNA","snoRNA","snRNA","tRNA","rRNA")]  = "ncRNA"
+  for(lev in simpleCategories[-(1:2)])
+    catg[ s[,"category"]==lev] = lev
+  s$simpleCatg = catg
+  cs[[rt]] =s
+}
 
 fillColors = c(brewer.pal(8, "Paired")[c(1,2,6,8)], brewer.pal(8, "Paired")[5:8],
                brewer.pal(9, "Pastel1")[c(2:3)])
@@ -39,38 +48,34 @@ names(lineColors) =c("annotated ORF", "ncRNA",
    "novel antisense - filtered", "novel isolated - filtered", "unexpressed isolated")
 
 ##
-## PIE: 4 classes
+## PIE: Four classes
 ##
 if("pie" %in% what){
 
-  for(kindOfPie in 1:2) {
-  
   if(interact) {
     x11(width=7*length(rnaTypes), height=4.8)
   } else {
     ## pdf("tableSegments-pie.pdf", width=7*length(rnaTypes), height=4.8)
-    pdf(paste("tableSegments-pie-", kindOfPie, ".pdf", sep=""), width=7*length(rnaTypes), height=4.8)
+    pdf(paste("tableSegments-pie.pdf", sep=""), width=7*length(rnaTypes), height=4.8)
   }
 
   par(mfrow=c(1, length(rnaTypes)))
   counts = NULL
   for(rt in rnaTypes) {
-    s  = cs[[rt]]
+    s  = cs[[rt]] 
     category = s[, "category"]
     overlap  = s[, "overlap"]
 
-    px = switch(kindOfPie,
-      c("overlap >=50%"   = sum(overlap  %in% c(">=50%, <100%", "100%")),
-        "overlap < 50%"   = sum(overlap  %in% c("<50%")),
-        "novel isolated - filtered"  = sum(category %in% c("novel isolated - filtered")),
-        "novel isolated - excluded"  = sum(category %in% c("novel isolated - excluded")),
-        "novel antisense - filtered" = sum(category %in% c("novel antisense - filtered")),
-        "novel antisense - excluded" = sum(category %in% c("novel antisense - excluded"))),
-      c("overlap >=50%"   = sum(overlap  %in% c(">=50%, <100%", "100%")),
-        "overlap < 50%"   = sum(overlap  %in% c("<50%")),
-        "novel isolated"  = sum(category %in% c("novel isolated - filtered", "novel isolated - excluded")),
-        "novel antisense" = sum(category %in% c("novel antisense - filtered", "novel antisense - excluded"))),
-      stop("Sapperlot"))
+    px = c("overlap >=50%"         = sum(overlap  %in% c(">=50%, <100%", "100%")),
+      "overlap < 50%"              = sum(overlap  %in% c("<50%")),
+      "novel isolated - filtered"  = sum(category %in% c("novel isolated - filtered")),
+      "novel isolated - excluded"  = sum(category %in% c("novel isolated - excluded")),
+      "novel antisense - filtered" = sum(category %in% c("novel antisense - filtered")),
+      "novel antisense - excluded" = sum(category %in% c("novel antisense - excluded")))
+##   c("overlap >=50%"   = sum(overlap  %in% c(">=50%, <100%", "100%")),
+##     "overlap < 50%"   = sum(overlap  %in% c("<50%")),
+##     "novel isolated"  = sum(category %in% c("novel isolated - filtered", "novel isolated - excluded")),
+##     "novel antisense" = sum(category %in% c("novel antisense - filtered", "novel antisense - excluded"))),
     
     stopifnot(all(names(px) %in% names(fillColors)))
     counts = cbind(counts, px)
@@ -78,40 +83,79 @@ if("pie" %in% what){
         col = fillColors[names(px)],
         labels = paste(names(px), " (", px, ")", sep=""))
 
-    if(kindOfPie==1){
-      cat(">>>>>>>>>", rt, "<<<<<<<<<<<<\n")
-      tab = table(category, overlap)
-      tab = tab[rowSums(tab)!=0, ]
-      print(tab)
-      cat("\n\n")
-    }
-    
+    cat(">>>>>>>>>", rt, "<<<<<<<<<<<<\n")
+    tab = table(category, overlap)
+    tab = tab[rowSums(tab)!=0, ]
+
+    ## add a column "in genome"
+    featg = as.character(gff[, "feature"])
+    for(grx in c("Dubious", "Verified", "Uncharacterized"))
+      feati[ (feati=="gene") & (gff[, "orf_classification"]==grx) ] = paste(tolower(grx), "gene")
+    tab = cbind(tab, "in genome" = sapply(rownames(tab), function(ft)
+                       length(unique(gff[ feati==ft, "Name"]))))
+      
+    print(tab)
+    cat("\n\n")
   }
   if(!interact)
     dev.off()
 
-  cat(c("With", "Without")[kindOfPie], "Filtering:\n----------------------------\n")
   colnames(counts)=rnaTypes
   rownames(counts)=names(px)
   cat("\nSegment counts:\n")
   print(counts)
   cat("\n\n")
-} ## for kindofPie
 } ## if
 
+
+##
+## What fraction of basepairs in the genome are transcribed
+## and how many genes do we find expressed
+##
+if("wst" %in% what){
+  data(transcribedFeatures)
+  feats = transcribedFeatures[transcribedFeatures!="gene"]
+  nrChr = 16
+  
+  for(rt in rnaTypes) {
+    cat("\n=====", rt, "=====\n")
+
+    s = cs[[rt]]
+    threshold = get("threshold", get(rt))
+    
+    chrlen = sapply(1:nrChr, function(chr)
+      max(gff[gff[, "chr"]==chr , "end"]))
+      
+    isTrans = lapply(1:nrChr, function(chr) {
+      res  = logical(chrlen[chr])
+      selt = which(s[, "chr"]==chr & s$level>=threshold)
+      for(i in selt)
+        res[s$start[i]:s$end[i]] = TRUE
+      res
+    })
+
+    isAnno = lapply(1:nrChr, function(chr) {
+      res  = logical(chrlen[chr])
+      selg = which((gff[, "chr"]==chr) & (gff[, "feature"] %in% transcribedFeatures))
+      for(j in selg)
+        res[gff$start[j]:gff$end[j]] = TRUE
+      res
+    })
+
+    cat("Transcribed: ", signif(mean(unlist(isTrans))*100, 3), "%.\n", sep="")
+    cat("Annotated:   ", signif(mean(unlist(isAnno))*100, 3), "%.\n", sep="")
+  }
+}
 
 ##
 ## WRITE THE SEGMENT TABLE
 ##
 if("wst" %in% what){
-  selectedCategories = c(
-     "annotated ORF", "ncRNA", "other annotation",
-      "novel isolated - filtered", 
-      "novel antisense - filtered")
+  notUse = c("excluded", "untranscribed")
   for(rt in rnaTypes) {
-    s   = cs[[rt]]
-    stopifnot(all(selectedCategories %in% levels(s[,"category"])))
-    sel = (s[,"category"] %in% selectedCategories)
+    s = cs[[rt]]
+    stopifnot(all(notUse %in% levels(s[,"category"])))
+    sel = !(s[,"category"] %in% notUse)
     fn  = file.path(indir[rt], "viz", "index.html")
     cat("Writing", fn, "\n")
     writeSegmentTable(s[sel, ], fn=fn, sortBy="category",
@@ -127,19 +171,19 @@ maxlen=5000
 if("length" %in% what){
   selectedCategories = c(
      "annotated ORF", "ncRNA", 
-      "novel isolated - filtered", 
-      "novel antisense - filtered")
+     "novel isolated - filtered", 
+     "novel antisense - filtered")
 
   stopifnot(all(selectedCategories %in% names(fillColors)))
   if(!interact)
     pdf("tableSegments-lengths.pdf", width=14, height=length(rnaTypes)*3)
-  par(mfrow=c(length(rnaTypes),5))
+  par(mfrow=c(length(rnaTypes), length(selectedCategories)))
   br = seq(0, maxlen, by=200)
   for(rt in rnaTypes) {
-    s   = cs[[rt]]
-    stopifnot(all(selectedCategories %in% levels(s[,"category"])))
+    s = cs[[rt]]
+    stopifnot(all(selectedCategories %in% levels(s[,"simpleCatg"])))
     for(lev in selectedCategories) {
-      len = s[s[,"category"] == lev, "length"]
+      len = s[ s[, "simpleCatg"]==lev, "length"]
       len[len>maxlen]=maxlen
       hist(len, breaks=br, col=fillColors[lev], main=paste(rt, lev))
     }
@@ -163,14 +207,14 @@ if("lvsx" %in% what){
   br = seq(0, maxlen, by=200)
   selectedCategories = c("annotated ORF", "novel isolated - filtered")
   for(rt in rnaTypes) {
-    s   = cs[[rt]]
-    stopifnot(all(selectedCategories %in% levels(s[,"category"])))
-    ylim = quantile(s[,"level"][s[,"category"] %in% selectedCategories],
+    s = cs[[rt]]
+    stopifnot(all(selectedCategories %in% levels(s[,"simpleCatg"])))
+    ylim = quantile(s[,"level"][s[,"simpleCatg"] %in% selectedCategories],
       probs=c(0.01, 0.99), na.rm=TRUE)
     for(lev in selectedCategories) {
-      len = s[s[,"category"] == lev, "length"]
+      len = s[s[,"simpleCatg"] == lev, "length"]
+      exl = s[s[,"simpleCatg"] == lev, "level"]
       len[len>maxlen] = maxlen
-      exl = s[s[,"category"] == lev, "level"]
       plot(len, exl, pch=pch, ylim=ylim,
            main=paste(longNames[rt], ": ", lev, sep=""),
            ylab="expression level", xlab="length")
@@ -247,7 +291,7 @@ calchit = function(sp, blrt, s) {
   for(rt in rnaTypes) {
     s   = cs[[rt]]
 
-    catg = s[,"category"]
+    catg = s[,"simpleCatg"]
     levels(catg) = c(levels(catg), "unexpressed isolated")
     catg[s[,"isUnIso"]] = "unexpressed isolated"
 
