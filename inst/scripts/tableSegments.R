@@ -2,11 +2,10 @@ library("tilingArray")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = (!TRUE)
-what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")
+interact = (TRUE)
+what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")[2]
 
 source("scripts/readSegments.R") 
-source("scripts/calcThreshold.R") 
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
 
@@ -14,6 +13,8 @@ if(!interact){
   sink("tableSegments.txt")
   cat("Made on", date(), "\n\n")
 }
+
+source("scripts/calcThreshold.R") 
 
 ##
 ## CATEGORIZE
@@ -83,7 +84,7 @@ if("pie" %in% what){
         col = fillColors[names(px)],
         labels = paste(names(px), " (", px, ")", sep=""))
 
-    cat(">>>>>>>>>", rt, "<<<<<<<<<<<<\n")
+    cat("=====", rt, "=====\n")
     category[category %in% c("snoRNA", "snRNA", "tRNA", "rRNA")] = "ncRNA"
     tab = table(category, overlap)
     tab = tab[rowSums(tab)!=0, ]
@@ -113,21 +114,33 @@ if("pie" %in% what){
 ## What fraction of basepairs in the genome are transcribed
 ## and how many genes do we find expressed
 ##
-if("wst" %in% what){
+if("wpt" %in% what){
   data(transcribedFeatures)
   feats = transcribedFeatures[transcribedFeatures!="gene"]
   nrChr = 16
+
+  chrlen = sapply(1:nrChr, function(chr)
+    max(gff[gff[, "chr"]==chr , "end"]))
+
+  isAnno = lapply(1:nrChr, function(chr) {
+    res  = logical(chrlen[chr])
+    selg = which((gff[, "chr"]==chr) & (gff[, "feature"] %in% transcribedFeatures))
+    for(j in selg)
+      res[gff$start[j]:gff$end[j]] = TRUE
+    res
+  })
+
+  isAnno = unlist(isAnno)
+
+  isTrans = vector(mode="list", length=length(rnaTypes))
+  names(isTrans)=rnaTypes
   
   for(rt in rnaTypes) {
-    cat("\n=====", rt, "=====\n")
 
     s = cs[[rt]]
     threshold = get("threshold", get(rt))
-    
-    chrlen = sapply(1:nrChr, function(chr)
-      max(gff[gff[, "chr"]==chr , "end"]))
       
-    isTrans = lapply(1:nrChr, function(chr) {
+    res = lapply(1:nrChr, function(chr) {
       res  = logical(chrlen[chr])
       selt = which(s[, "chr"]==chr & s$level>=threshold)
       for(i in selt)
@@ -135,17 +148,15 @@ if("wst" %in% what){
       res
     })
 
-    isAnno = lapply(1:nrChr, function(chr) {
-      res  = logical(chrlen[chr])
-      selg = which((gff[, "chr"]==chr) & (gff[, "feature"] %in% transcribedFeatures))
-      for(j in selg)
-        res[gff$start[j]:gff$end[j]] = TRUE
-      res
-    })
-
-    cat("Transcribed: ", signif(mean(unlist(isTrans))*100, 3), "%.\n", sep="")
-    cat("Annotated:   ", signif(mean(unlist(isAnno))*100, 3), "%.\n", sep="")
+    isTrans[[rt]]=unlist(res)
+    
   }
+
+  cat("Annotated:                 ", signif(mean(isAnno)*100, 3), "%.\n", sep="")
+  for(rt in rnaTypes)
+    cat("Transcribed in", rt, ": ", signif(mean(isTrans[[rt]])*100, 3), "%.\n", sep="")
+  cat("Union of both: ", signif(mean(isTrans[[1]]|isTrans[[2]])*100, 3), "%.\n", sep="")
+
 }
 
 ##
