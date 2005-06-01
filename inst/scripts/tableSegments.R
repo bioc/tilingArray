@@ -2,8 +2,8 @@ library("tilingArray")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = (TRUE)
-what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")[2]
+interact = (!TRUE)
+what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")
 
 source("scripts/readSegments.R") 
 source("scripts/categorizeSegments.R") 
@@ -19,34 +19,38 @@ source("scripts/calcThreshold.R")
 ##
 ## CATEGORIZE
 ##
-cs = vector(mode="list", length=length(rnaTypes))
-names(cs)=rnaTypes
+if(!exists("cs")) {
+  cs = vector(mode="list", length=length(rnaTypes))
+  names(cs)=rnaTypes
+  
+  simpleCategories = c("annotated ORF", "ncRNA(all)", "excluded", "untranscribed", "dubious gene",
+    "novel isolated - filtered",  "novel isolated - excluded",
+    "novel antisense - filtered", "novel antisense - excluded")
 
-simpleCategories = c("annotated ORF", "ncRNA", "excluded", "untranscribed", "dubious gene",
-  "novel isolated - filtered",  "novel isolated - excluded",
-  "novel antisense - filtered", "novel antisense - excluded")
-
-for(rt in rnaTypes) {
-  s = categorizeSegments(get(rt))
-  catg = factor(rep(NA, nrow(s)), levels=simpleCategories)
-  catg[ s[,"category"] %in% c("uncharacterized gene", "verified gene")] = "annotated ORF"
-  catg[ s[,"category"] %in% c("ncRNA","snoRNA","snRNA","tRNA","rRNA")]  = "ncRNA"
-  for(lev in simpleCategories[-(1:2)])
-    catg[ s[,"category"]==lev] = lev
-  s$simpleCatg = catg
-  cs[[rt]] =s
-}
-
-fillColors = c(brewer.pal(8, "Paired")[c(1,2,6,8)], brewer.pal(8, "Paired")[5:8],
-               brewer.pal(9, "Pastel1")[c(2:3)])
-names(fillColors) = c("overlap < 50%", "overlap >=50%", "novel antisense", "novel isolated",
-       "novel antisense - excluded", "novel antisense - filtered",
-       "novel isolated - excluded", "novel isolated - filtered",
-       "annotated ORF", "ncRNA")
-      
-lineColors = c(brewer.pal(8, "Paired")[c(1,2,6,8)], "grey")
-names(lineColors) =c("annotated ORF", "ncRNA", 
+  allncRNA = c("ncRNA","snoRNA","snRNA","tRNA","rRNA")
+  
+  for(rt in rnaTypes) {
+    s = categorizeSegments(get(rt))
+    catg = factor(rep(NA, nrow(s)), levels=simpleCategories)
+    catg[ s[,"category"] %in% c("uncharacterized gene", "verified gene")] = "annotated ORF"
+    catg[ s[,"category"] %in% c(allncRNA)]  = "ncRNA(all)"
+    for(lev in simpleCategories[-(1:2)])
+      catg[ s[,"category"]==lev] = lev
+    s$simpleCatg = catg
+    cs[[rt]] =s
+  }
+  
+  fillColors = c(brewer.pal(8, "Paired")[c(1,2,6,8)], brewer.pal(8, "Paired")[5:8],
+    brewer.pal(9, "Pastel1")[c(2:3)])
+  names(fillColors) = c("overlap < 50%", "overlap >=50%", "novel antisense", "novel isolated",
+         "novel antisense - excluded", "novel antisense - filtered",
+         "novel isolated - excluded", "novel isolated - filtered",
+         "annotated ORF", "ncRNA(all)")
+  
+  lineColors = c(brewer.pal(8, "Paired")[c(1,2,6,8)], "grey")
+  names(lineColors) =c("annotated ORF", "ncRNA(all)", 
    "novel antisense - filtered", "novel isolated - filtered", "unexpressed isolated")
+}
 
 ##
 ## PIE: Four classes
@@ -85,7 +89,8 @@ if("pie" %in% what){
         labels = paste(names(px), " (", px, ")", sep=""))
 
     cat("=====", rt, "=====\n")
-    category[category %in% c("snoRNA", "snRNA", "tRNA", "rRNA")] = "ncRNA"
+    levels(category) = sub("ncRNA", "ncRNA(all)", levels(category))
+    category[ s[, "simpleCatg"]=="ncRNA(all)" ] = "ncRNA(all)"
     tab = table(category, overlap)
     tab = tab[rowSums(tab)!=0, ]
 
@@ -93,6 +98,8 @@ if("pie" %in% what){
     featg = as.character(gff[, "feature"])
     for(grx in c("Dubious", "Verified", "Uncharacterized"))
       featg[ (featg=="gene") & (gff[, "orf_classification"]==grx) ] = paste(tolower(grx), "gene")
+    featg[ featg %in% allncRNA ] = "ncRNA(all)"
+    
     tab = cbind(tab, "in genome" = sapply(rownames(tab), function(ft)
                        length(unique(gff[ featg==ft, "Name"]))))
       
@@ -152,11 +159,17 @@ if("wpt" %in% what){
     
   }
 
-  cat("Annotated:                 ", signif(mean(isAnno)*100, 3), "%.\n", sep="")
-  for(rt in rnaTypes)
-    cat("Transcribed in", rt, ": ", signif(mean(isTrans[[rt]])*100, 3), "%.\n", sep="")
-  cat("Union of both: ", signif(mean(isTrans[[1]]|isTrans[[2]])*100, 3), "%.\n", sep="")
+  cat("Fraction of transcribed basepairs\n",
+      "=================================\n\n", sep="")
 
+  cat(sprintf("%31s: %3.1f percent\n", "Annotated", signif(mean(isAnno)*100, 3)))
+  for(rt in rnaTypes) {
+    cat(sprintf("Transcribed in %16s: %3.1f percent\n",
+                rt, signif(mean(isTrans[[rt]])*100, 3)))
+  }
+  cat(sprintf("%31s: %3.1f percent\n", "Union of both",
+              signif(mean(isTrans[[1]]|isTrans[[2]])*100, 3)))
+  cat("\n\n")
 }
 
 ##
@@ -182,7 +195,7 @@ if("wst" %in% what){
 maxlen=5000
 if("length" %in% what){
   selectedCategories = c(
-     "annotated ORF", "ncRNA", 
+     "annotated ORF", "ncRNA(all)", 
      "novel isolated - filtered", 
      "novel antisense - filtered")
 
@@ -263,10 +276,12 @@ calchit = function(sp, blrt, s) {
   colnames(hit) = names(blrt)
   for(b in 1:length(blrt)) {
     br  = blrt[[b]]
+
     ## 1 = Query Sequence ID, 3 = Percent identity, 4 = Alignment length 
-    ## fas = br[[3]] * br[[4]] / s$length[br[[1]]]
-    fas = (br[[4]] / s$length[br[[1]]] > 0.5) * 100 
-    ## fas = br[[3]] 
+    ##fas = br[[3]] * br[[4]] / s$length[br[[1]]]
+    ##fas = (br[[4]] / s$length[br[[1]]] > 0.5) * 100 
+    ##fas = br[[3]]
+    fas = rep(100, nrow(br))
     stopifnot(all( fas>=0 & fas<=115 & !is.na(fas)))
     
     ## split by name of query sequence and just keep the hit with the
@@ -278,6 +293,11 @@ calchit = function(sp, blrt, s) {
     ## mean of the ratios:
     alignableFrac = numeric(nrow(s))
     alignableFrac[i.seg] = fas[theBest]
+
+    ## number of hits somewhere else - this seems to be non-sense
+    ## tab = table(br[[1]])
+    ## alignableFrac = numeric(nrow(s))
+    ## alignableFrac[as.numeric(names(tab))]=tab
     
     hit[,b] = sapply(sp, function(segments) {
       mean(alignableFrac[segments]) 
@@ -297,7 +317,7 @@ calchit = function(sp, blrt, s) {
   theSplit = vector(mode="list", length=length(rnaTypes))
   names(theSplit) = rnaTypes
     
-  selectedCategories = c("annotated ORF", "ncRNA",  "novel antisense - filtered", "novel isolated - filtered",
+  selectedCategories = c("annotated ORF", "ncRNA(all)",  "novel antisense - filtered", "novel isolated - filtered",
     "unexpressed isolated")
 
   for(rt in rnaTypes) {
