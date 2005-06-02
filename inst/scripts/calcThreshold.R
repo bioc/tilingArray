@@ -1,4 +1,6 @@
-calcThreshold = function(x, sel, pthresh=0.05, showPlot=FALSE, main) {
+
+
+calcThreshold = function(x, sel, FDRthresh, showPlot=FALSE, main) {
   stopifnot(is.numeric(x), is.logical(sel))
 
   require("multtest")
@@ -17,7 +19,7 @@ calcThreshold = function(x, sel, pthresh=0.05, showPlot=FALSE, main) {
   
   adjp = numeric(nrow(bh$adjp))
   adjp[bh$index] = bh$adjp[,2]
-  selfdr = (adjp < pthresh)
+  selfdr = (adjp < FDRthresh)
 
   thresh = min(x[sel][selfdr], na.rm=TRUE)
 
@@ -46,10 +48,13 @@ if(interact) {
 par(mfrow=c(length(rnaTypes),1))
 
 maxDuplicated = 0.5
+FDRthresh     = 0.001
+cat("FDRthresh=", FDRthresh, "\n")
+
 for(rt in rnaTypes) {
   s = get("segScore", get(rt))
   sel = (s[, "frac.dup"] < maxDuplicated) & (s[, "overlappingFeature"] == "")
-  thr = calcThreshold(s[, "level"], sel = sel, showPlot=!interact, main=rt)
+  thr = calcThreshold(s[, "level"], sel = sel, showPlot=!interact, main=rt, FDRthresh=FDRthresh)
   assign("threshold", thr, envir=get(rt))
 }
 

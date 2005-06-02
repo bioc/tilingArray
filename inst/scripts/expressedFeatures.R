@@ -4,7 +4,6 @@
 library("tilingArray")
 library("multtest")
 source("scripts/readSegments.R") 
-fdrThresh = 0.001
 
 interact=!TRUE
 if(!interact) {
@@ -12,7 +11,8 @@ if(!interact) {
   cat("Made on", date(), "\n\n")
 }
 
-cat("fdrTresh=", fdrThresh, "\n")
+source("scripts/calcThreshold.R") 
+
 if(!exists("intergenic")){
   probe = probeAnno$probeReverse
   intergenic = which(probeAnno$probeReverse$no_feature=="no" & probeAnno$probeDirect$no_feature=="no")

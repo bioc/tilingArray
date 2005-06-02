@@ -37,8 +37,6 @@ if(interact) {
 }
   
 cols = brewer.pal(12, "Paired")
-trsf = function(x) log(x+1, 10)
-## trsf = function(x) sqrt(x)
 
 investigateExpressionVersusLength = function(lev, len, main) {
   theCut = cut(len, breaks=quantile(len, probs=c(0, 0.8, 0.95, 1)))
@@ -65,23 +63,24 @@ for(rt in rnaTypes) {
   colnames(z) = c("5' UTR", "3' UTR")
   utr[[rt]] = z
 
-  ##
-  ## WRITE THE SEGMENT TABLE
-  ##
-  fn = file.path(indir[rt], "viz", "utrmap.html")
-  if(TRUE){
-    cat("Writing", nrow(s), "UTRs to", fn, "\n")
-    writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn,
-                      sortBy = "goodUTR", sortDecreasing=TRUE)
-  } else {
-    cat(">>> Attention: not writing", fn, "<<<\n") 
-  }
-
   cat("5' UTR length distribution summary:\n")
   print(summary(s[, "utr5"]))
   cat("3' UTR length distribution summary:\n")
   print(summary(s[, "utr3"]))
   
+  ##
+  ## WRITE THE SEGMENT TABLE
+  ##
+  fn = file.path(indir[rt], "viz", "utrmap.html")
+  if(TRUE){
+    if(interact)
+      cat("Writing", nrow(s), "UTRs to", fn, "\n")
+    writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn,
+                      sortBy = "goodUTR", sortDecreasing=TRUE, interact=interact)
+  } else {
+    cat(">>> Attention: not writing", fn, "<<<\n") 
+  }
+
 
   ##
   ## LENGTH HISTOGRAM
@@ -131,12 +130,14 @@ if(interact) {
 
 par(mfrow=c(1,2))
 for(i in 1:2){
-  smoothScatter(trsf(utr[[1]][comUTR,i]), trsf(utr[[2]][comUTR,i]),
-       main=paste("log10 of length of ", colnames(utr[[1]])[i], " (", length(comUTR), ")", sep=""),
-       xlab=longNames[rnaTypes[1]], ylab=longNames[rnaTypes[2]])
-  abline(a=0, b=1, col="#606060")
-
-  
+  px = utr[[1]][comUTR,i]
+  py = utr[[2]][comUTR,i]
+  axlim = c(0, quantile(c(px, py), 0.8))
+  plot(px, py,
+       main = paste("length of ", colnames(utr[[1]])[i], " (", length(comUTR), " common)", sep=""),
+       xlab = longNames[rnaTypes[1]], ylab=longNames[rnaTypes[2]],
+       xlim = axlim, ylim = axlim, pch=20)
+  abline(a=0, b=1, col="red")
 }
 
 w = (abs(utr[[1]][comUTR, 1] - utr[[2]][comUTR, 1]) < 10 &

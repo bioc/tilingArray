@@ -23,20 +23,9 @@ if(!exists("cs")) {
   cs = vector(mode="list", length=length(rnaTypes))
   names(cs)=rnaTypes
   
-  simpleCategories = c("annotated ORF", "ncRNA(all)", "excluded", "untranscribed", "dubious gene",
-    "novel isolated - filtered",  "novel isolated - excluded",
-    "novel antisense - filtered", "novel antisense - excluded")
-
-  allncRNA = c("ncRNA","snoRNA","snRNA","tRNA","rRNA")
-  
   for(rt in rnaTypes) {
+    cat("\n--------", rt, "---------\n")
     s = categorizeSegments(get(rt))
-    catg = factor(rep(NA, nrow(s)), levels=simpleCategories)
-    catg[ s[,"category"] %in% c("uncharacterized gene", "verified gene")] = "annotated ORF"
-    catg[ s[,"category"] %in% c(allncRNA)]  = "ncRNA(all)"
-    for(lev in simpleCategories[-(1:2)])
-      catg[ s[,"category"]==lev] = lev
-    s$simpleCatg = catg
     cs[[rt]] =s
   }
   
@@ -183,8 +172,8 @@ if("wst" %in% what){
     sel = !(s[,"category"] %in% notUse)
     fn  = file.path(indir[rt], "viz", "index.html")
     cat("Writing", fn, "\n")
-    writeSegmentTable(s[sel, ], fn=fn, sortBy="category",
-      title=paste(rt, " (", longNames[rt], ")", sep=""))
+    writeSegmentTable(s[sel, ], fn=fn, sortBy="category-level",
+      title=paste(rt, " (", longNames[rt], ")", sep=""), interact=interact)
   }
   cat("\n")
 }

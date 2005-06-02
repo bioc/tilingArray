@@ -8,7 +8,9 @@ categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
   hasGoodFlanks = (!is.na(minZ) & (minZ >= zThresh))
 
   ## annotated ORF, z-score criterion, nuclear
-  sel = ((s[, "category"]=="annotated ORF") & hasGoodFlanks &
+  catg = s[, "simpleCatg"]
+  stopifnot("annotated ORF" %in% levels(catg))
+  sel = ((catg=="annotated ORF") & hasGoodFlanks &
          !is.na(s[, "utr3"]) & !is.na(s[, "utr5"]) & (s[,"chr"] <= 16))
 
   s$goodUTR = ifelse(sel, minZ, as.numeric(NA))
@@ -18,9 +20,15 @@ categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
 ##
 ## Categorize segments 
 ##
+allncRNA = c("ncRNA","snoRNA","snRNA","tRNA","rRNA")
+  
 categorizeSegments = function(env, maxDuplicated=0.5,
-  minNewSegmentLength=24,
+  minNewSegmentLength=48,
   zThresh=1) {
+
+  s = get("segScore", env)
+  threshold = get("threshold", env)
+  stopifnot(length(threshold)==1, is(s, "data.frame"))
 
   feat1 = c("verified gene", "uncharacterized gene", "dubious gene")
   feat2 = c("tRNA", "rRNA", "snoRNA","snRNA", "ncRNA","transposable_element_gene", "transposable_element")
@@ -28,17 +36,17 @@ categorizeSegments = function(env, maxDuplicated=0.5,
   ## results data structure: a factor which assigns a category to each segment:
   overlap = factor(rep(NA, nrow(s)),
     levels = c("<50%", ">=50%, <100%", "100%"))
-
+  
   catg = factor(rep(NA, nrow(s)), 
     levels = c("excluded", "untranscribed",
       feat1, feat2, 
       "novel isolated - filtered", "novel isolated - excluded",
       "novel antisense - filtered", "novel antisense - excluded")) 
 
-  s = get("segScore", env)
-  threshold = get("threshold", env)
-  stopifnot(length(threshold)==1, is(s, "data.frame"))
-
+  simpleCategories = c("annotated ORF", "ncRNA(all)", "excluded", "untranscribed", "dubious gene",
+    "novel isolated - filtered",  "novel isolated - excluded",
+    "novel antisense - filtered", "novel antisense - excluded")
+  
   ## Step 1: frac.dup
   sel = s[,"frac.dup"] >= maxDuplicated
   catg[ sel ] = "excluded"
@@ -80,9 +88,11 @@ categorizeSegments = function(env, maxDuplicated=0.5,
     ## Loop over three annotation classes
     for(j in rev(seq(along=categIDs))) {
       ## find features that this segment is contained in
-                   sel = sapply(ovF, function(x) any(x %in% categIDs[[j]]))
-         catg[wh[sel]] = names(categIDs)[j]
-      overlap[wh[sel]] = names(attrName)[i]
+      sel = sapply(ovF, function(x) any(x %in% categIDs[[j]]))
+      if(any(sel)) {
+        catg[wh[sel]]    = names(categIDs)[j]
+        overlap[wh[sel]] = names(attrName)[i]
+      }
     } ## for j
   } ## i
 
@@ -94,13 +104,13 @@ categorizeSegments = function(env, maxDuplicated=0.5,
   filt3 = (s[,"oppositeExpression"] > threshold)
   filt  = (filt1|filt2|filt3)
 
-  ##cat("Step 4 (novelty filter): ", sum(sel), " (zThresh: ",
-  ##      sum(sel1), ", length: ", sum(sel2), ", oppositeExpression: ",
-  ##      sum(sel3), ")", " -> excluded\n", sep="")
-
   ## step 5: novel - isolated or antisense
   iso  = (s[,"oppositeFeature"]=="")
   isna = is.na(catg)
+
+  cat("Novelty filter: Considering ", sum(isna), " segments.\nzThresh rejects ",
+    sum(isna&filt1), ", length ", sum(isna&filt2), ", oppositeExpression ",
+    sum(isna&filt3), ", altogether ", sum(isna&filt), ".\n", sep="")
 
   catg[isna &  iso & !filt ] = "novel isolated - filtered"
   catg[isna &  iso &  filt ] = "novel isolated - excluded"
@@ -110,6 +120,14 @@ categorizeSegments = function(env, maxDuplicated=0.5,
   stopifnot(!any(is.na(catg)))
   s$category = catg
   s$overlap  = overlap
+
+  simc = factor(rep(NA, nrow(s)), levels=simpleCategories)
+  simc[ catg %in% c("uncharacterized gene", "verified gene")] = "annotated ORF"
+  simc[ catg %in% c(allncRNA)]  = "ncRNA(all)"
+  for(lev in simpleCategories[-(1:2)])
+    simc[ s[,"category"]==lev] = lev
+  s$simpleCatg = simc
+  
   return(s)
 }
 
