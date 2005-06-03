@@ -1,6 +1,9 @@
 ##------------------------------------------------------------
 ## Copyright (2005) Wolfgang Huber
 ##------------------------------------------------------------
+colMedians = function(x)
+  apply(x, 2, median)
+
 vectornorm = function(x) {
   sqrt(mean(x*x))
 }
@@ -21,7 +24,7 @@ movingWindow = function(x, y, width) {
   } else {
     res = sapply(w, function(i) {
       rg = which(x>=x[i] & x<(x[i]+width))
-      mean(y[rg])
+      median(y[rg])
     })
     stopifnot(!any(is.na(res)))
     ## plot(x[w], res); browser()
@@ -101,7 +104,6 @@ scoreSegments = function(s, gff,
       dEnd   = dat[["end"]][wh]        ## end base of all probes
       dUniq  = dat[["unique"]][wh]
       dY     = dat[["y"]][wh,, drop=FALSE]
-      dUniqFun = approxfun((dStart+dEnd)/2, dUniq, rule=2)
 
       ## extract relevant data from "datOppo"
       wh = which(datOppo[["ss"]])
@@ -136,21 +138,25 @@ scoreSegments = function(s, gff,
       for(j in 1:cp) {
         startj = dStart[i1[j]]
         endj   = dEnd[i2[j]]
-
-        ## frac.dup
-        fd[j]  = 1-mean(dUniqFun(seq(startj, endj, by=8)))
         
         ## data from segment, and opposite
-        ksel   = dUniq & (dStart>=startj) & (dEnd<=endj)
+        kw     = (dStart>=startj) & (dEnd<=endj)
+        ksel   = dUniq & kw
         ym     = dY[ksel,,drop=FALSE]
+
+        ## frac.dup
+        fd[j]  = 1-mean(dUniq[kw])
         
         ksel   = dOppoUniq & (dOppoStart>=startj) & (dOppoEnd<=endj)
         xOppo  = (dOppoStart[ksel]+dOppoEnd[ksel])/2
         yOppo  = dOppoY[ksel,,drop=FALSE]
         
-        cmym   = colMeans(ym)
-        lev[j] = mean(cmym)
-        
+        cmym   = colMedians(ym)
+        lev[j] = median(ym)
+
+        if(is.na(lev[j]))
+          stopifnot(fd[j]>0.5)
+                  
         ## data from flanks, for segment quality scores
         if(j>1) {
           probesLeft = which(dUniq & (dEnd<startj) & (dStart>=dStart[i1[j-1]]))

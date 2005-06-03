@@ -1,8 +1,8 @@
 ##
 ## categorize segments for the UTR mapping
 ##
-categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
-  s = categorizeSegments(env, maxDuplicated=maxDuplicated)
+categorizeSegmentsUTRmap = function(env, zThresh=2) {
+  s = categorizeSegments(env)
 
   minZ =  pmin(s[,"zLeft"], s[,"zRight"])
   hasGoodFlanks = (!is.na(minZ) & (minZ >= zThresh))
@@ -22,9 +22,7 @@ categorizeSegmentsUTRmap = function(env, maxDuplicated=0.5, zThresh=2) {
 ##
 allncRNA = c("ncRNA","snoRNA","snRNA","tRNA","rRNA")
   
-categorizeSegments = function(env, maxDuplicated=0.5,
-  minNewSegmentLength=48,
-  zThresh=1) {
+categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
 
   s = get("segScore", env)
   threshold = get("threshold", env)

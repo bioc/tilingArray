@@ -19,7 +19,6 @@ source("scripts/calcThreshold.R")
 ##
 ## CATEGORIZE
 ##
-if(!exists("cs")) {
   cs = vector(mode="list", length=length(rnaTypes))
   names(cs)=rnaTypes
   
@@ -39,7 +38,6 @@ if(!exists("cs")) {
   lineColors = c(brewer.pal(8, "Paired")[c(1,2,6,8)], "grey")
   names(lineColors) =c("annotated ORF", "ncRNA(all)", 
    "novel antisense - filtered", "novel isolated - filtered", "unexpressed isolated")
-}
 
 ##
 ## PIE: Four classes
@@ -55,6 +53,7 @@ if("pie" %in% what){
 
   par(mfrow=c(1, length(rnaTypes)))
   counts = NULL
+  cat("\n\n")
   for(rt in rnaTypes) {
     s  = cs[[rt]] 
     category = s[, "category"]
@@ -128,8 +127,8 @@ if("wpt" %in% what){
 
   isAnno = unlist(isAnno)
 
-  isTrans = vector(mode="list", length=length(rnaTypes))
-  names(isTrans)=rnaTypes
+  isTrans = isDup = vector(mode="list", length=length(rnaTypes))
+  names(isTrans)=names(isDup)=rnaTypes
   
   for(rt in rnaTypes) {
 
@@ -143,21 +142,28 @@ if("wpt" %in% what){
         res[s$start[i]:s$end[i]] = TRUE
       res
     })
-
     isTrans[[rt]]=unlist(res)
-    
+
+    res = lapply(1:nrChr, function(chr) {
+      res  = logical(chrlen[chr])
+      selt = which(s[, "chr"]==chr & s$frac.dup>=maxDuplicated)
+      for(i in selt)
+        res[s$start[i]:s$end[i]] = TRUE
+      res
+    })
+    isDup[[rt]]=unlist(res)
   }
 
   cat("Fraction of transcribed basepairs\n",
       "=================================\n\n", sep="")
-
-  cat(sprintf("%31s: %3.1f percent\n", "Annotated", signif(mean(isAnno)*100, 3)))
+  nDup = (sum(!isDup[[1]])+sum(!isDup[[2]]))/2
+  cat(sprintf("%31s: %3.1f percent\n", "Annotated", signif(sum(isAnno)/nDup*100, 3)))
   for(rt in rnaTypes) {
-    cat(sprintf("Transcribed in %16s: %3.1f percent\n",
-                rt, signif(mean(isTrans[[rt]])*100, 3)))
+    cat(sprintf("Transcribed in %16s: %3.1f percent\n", rt, 
+     signif(sum(isTrans[[rt]])/sum(!isDup[[rt]])*100, 3)))
   }
   cat(sprintf("%31s: %3.1f percent\n", "Union of both",
-              signif(mean(isTrans[[1]]|isTrans[[2]])*100, 3)))
+     signif(sum(isTrans[[1]]|isTrans[[2]])/nDup*100, 3)))
   cat("\n\n")
 }
 
@@ -171,7 +177,8 @@ if("wst" %in% what){
     stopifnot(all(notUse %in% levels(s[,"category"])))
     sel = !(s[,"category"] %in% notUse)
     fn  = file.path(indir[rt], "viz", "index.html")
-    cat("Writing", fn, "\n")
+    if(interact)
+      cat("Writing", fn, "\n")
     writeSegmentTable(s[sel, ], fn=fn, sortBy="category-level",
       title=paste(rt, " (", longNames[rt], ")", sep=""), interact=interact)
   }

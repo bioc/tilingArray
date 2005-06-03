@@ -10,7 +10,6 @@ calcThreshold = function(x, sel, FDRthresh, showPlot=FALSE, main) {
   loc   = shorth(levu, na.rm=TRUE)
   z     = levu[which(levu<=loc)]-loc
   scale = mad(c(z, -z))
-  
   ## we calculate the threshold for level on the basis of the normal
   ## distribution and the FDR for _unannotated_ features
   pn = pnorm(q=x, mean=loc, sd=scale, lower.tail=FALSE)
@@ -24,9 +23,10 @@ calcThreshold = function(x, sel, FDRthresh, showPlot=FALSE, main) {
   thresh = min(x[sel][selfdr], na.rm=TRUE)
 
   if(showPlot) {
-    d1 = density(x[!sel], na.rm=TRUE, n=128)
+    adjust = 0.5
+    d1 = density(x[!sel], na.rm=TRUE, n=128, adjust=adjust)
     n  = length(d1$x)
-    d2 = density(levu, na.rm=TRUE, from=d1$x[1], to=d1$x[n], n=n)
+    d2 = density(levu, na.rm=TRUE, from=d1$x[1], to=d1$x[n], n=n, , adjust=adjust)
     plot(d2, col="grey", lwd=2, main=main)
     lines(d1, col="red", lwd=2)
     abline(v=c(loc, thresh), col=c("black", "blue"))
@@ -34,6 +34,7 @@ calcThreshold = function(x, sel, FDRthresh, showPlot=FALSE, main) {
     lines(d1$x, dn/max(dn)*max(d2$y), col="orange")
   }
   cat(main, ": loc=", signif(loc,3), "scale=", signif(scale,3), "thresh=", signif(thresh,3), "\n")
+  browser()
   return(thresh)
 }
 
@@ -48,13 +49,13 @@ if(interact) {
 par(mfrow=c(length(rnaTypes),1))
 
 maxDuplicated = 0.5
-FDRthresh     = 0.001
+FDRthresh     = 1e-3
 cat("FDRthresh=", FDRthresh, "\n")
 
 for(rt in rnaTypes) {
   s = get("segScore", get(rt))
   sel = (s[, "frac.dup"] < maxDuplicated) & (s[, "overlappingFeature"] == "")
-  thr = calcThreshold(s[, "level"], sel = sel, showPlot=!interact, main=rt, FDRthresh=FDRthresh)
+  thr = calcThreshold(s[, "level"], sel = sel, main=rt, FDRthresh=FDRthresh, showPlot=TRUE) ##  showPlot=!interact)
   assign("threshold", thr, envir=get(rt))
 }
 

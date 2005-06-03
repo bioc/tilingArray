@@ -32,7 +32,7 @@ addDirectHybe = function(s) {
 
 nrbpsList = c(1500)
 
-for(rt in rnaTypes) {
+for(rt in rnaTypes[rrr]) {
   for(nrbps in nrbpsList) {
     cat(">> ", rt, nrbps, "<<\n")
     segScore = scoreSegments(get(rt), gff=gff, nrBasePerSeg=nrbps)
