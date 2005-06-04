@@ -28,8 +28,7 @@ source("scripts/calcThreshold.R")
     cs[[rt]] =s
   }
   
-  fillColors = c(brewer.pal(8, "Paired")[c(1,2,6,8)], brewer.pal(8, "Paired")[5:8],
-    brewer.pal(9, "Pastel1")[c(2:3)])
+  fillColors = c(brewer.pal(10, "Paired")[c(1, 2, 6, 8, 5:8, 2, 10)])
   names(fillColors) = c("overlap < 50%", "overlap >=50%", "novel antisense", "novel isolated",
          "novel antisense - excluded", "novel antisense - filtered",
          "novel isolated - excluded", "novel isolated - filtered",
@@ -124,11 +123,10 @@ if("wpt" %in% what){
       res[gff$start[j]:gff$end[j]] = TRUE
     res
   })
-
   isAnno = unlist(isAnno)
 
-  isTrans = isDup = vector(mode="list", length=length(rnaTypes))
-  names(isTrans)=names(isDup)=rnaTypes
+  isTrans = isUni = vector(mode="list", length=length(rnaTypes))
+  names(isTrans)=names(isUni)=rnaTypes
   
   for(rt in rnaTypes) {
 
@@ -142,7 +140,7 @@ if("wpt" %in% what){
         res[s$start[i]:s$end[i]] = TRUE
       res
     })
-    isTrans[[rt]]=unlist(res)
+    isTrans[[rt]] = unlist(res)
 
     res = lapply(1:nrChr, function(chr) {
       res  = logical(chrlen[chr])
@@ -151,19 +149,18 @@ if("wpt" %in% what){
         res[s$start[i]:s$end[i]] = TRUE
       res
     })
-    isDup[[rt]]=unlist(res)
+    isUni[[rt]] = !(unlist(res))
   }
 
   cat("Fraction of transcribed basepairs\n",
       "=================================\n\n", sep="")
-  nDup = (sum(!isDup[[1]])+sum(!isDup[[2]]))/2
-  cat(sprintf("%31s: %3.1f percent\n", "Annotated", signif(sum(isAnno)/nDup*100, 3)))
+  cat(sprintf("%31s: %3.1f percent\n", "Annotated", signif(mean(isAnno)*100, 3)))
   for(rt in rnaTypes) {
     cat(sprintf("Transcribed in %16s: %3.1f percent\n", rt, 
-     signif(sum(isTrans[[rt]])/sum(!isDup[[rt]])*100, 3)))
+     signif(sum(isTrans[[rt]])/sum(isUni[[rt]])*100, 3)))
   }
   cat(sprintf("%31s: %3.1f percent\n", "Union of both",
-     signif(sum(isTrans[[1]]|isTrans[[2]])/nDup*100, 3)))
+     signif(sum(isTrans[[1]]|isTrans[[2]])/sum(isUni[[1]]|isUni[[2]])*100, 3)))
   cat("\n\n")
 }
 
@@ -186,9 +183,8 @@ if("wst" %in% what){
 }
 
 ##
-## LENGTH DISTRIBUTIONS
+## LENGTH & LEVEL DISTRIBUTIONS
 ##
-maxlen=5000
 if("length" %in% what){
   selectedCategories = c(
      "annotated ORF", "ncRNA(all)", 
@@ -196,9 +192,11 @@ if("length" %in% what){
      "novel antisense - filtered")
 
   stopifnot(all(selectedCategories %in% names(fillColors)))
+  
   if(!interact)
     pdf("tableSegments-lengths.pdf", width=14, height=length(rnaTypes)*3)
   par(mfrow=c(length(rnaTypes), length(selectedCategories)))
+  maxlen=5000
   br = seq(0, maxlen, by=200)
   for(rt in rnaTypes) {
     s = cs[[rt]]
@@ -206,7 +204,20 @@ if("length" %in% what){
     for(lev in selectedCategories) {
       len = s[ s[, "simpleCatg"]==lev, "length"]
       len[len>maxlen]=maxlen
-      hist(len, breaks=br, col=fillColors[lev], main=paste(rt, lev))
+      hist(len, breaks=br, col=fillColors[lev], main=paste("Length:", rt, lev), xlab="length")
+    }
+  }
+  if(!interact) {
+    dev.off()
+    pdf("tableSegments-levels.pdf", width=14, height=length(rnaTypes)*3)
+  }
+  par(mfrow=c(length(rnaTypes), length(selectedCategories)))
+  br = seq(get("threshold", get(rt))-0.01, max(s[, "level"], na.rm=TRUE)+0.01, length=40)
+  for(rt in rnaTypes) {
+    s = cs[[rt]]
+    for(lev in selectedCategories) {
+      lvs = s[ s[, "simpleCatg"]==lev, "level"]
+      hist(lvs, breaks=br, col=fillColors[lev], main=paste("Level:", rt, lev), xlab="level")
     }
   }
   if(!interact)
@@ -274,10 +285,10 @@ calchit = function(sp, blrt, s) {
     br  = blrt[[b]]
 
     ## 1 = Query Sequence ID, 3 = Percent identity, 4 = Alignment length 
-    ##fas = br[[3]] * br[[4]] / s$length[br[[1]]]
+    fas = br[[3]] * br[[4]] / s$length[br[[1]]]
     ##fas = (br[[4]] / s$length[br[[1]]] > 0.5) * 100 
     ##fas = br[[3]]
-    fas = rep(100, nrow(br))
+    ## fas = rep(100, nrow(br))
     stopifnot(all( fas>=0 & fas<=115 & !is.na(fas)))
     
     ## split by name of query sequence and just keep the hit with the

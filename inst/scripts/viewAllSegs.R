@@ -5,6 +5,7 @@ source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 ## source("colorRamp.R")  ## can go with R 2.1
 source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
+source("scripts/writeSegmentTable.R") 
 
 nrChr = 16
 

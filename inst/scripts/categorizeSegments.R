@@ -60,12 +60,6 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
                ">=50%, <100%" = "mostOfFeatureInSegment",
                "100%"         = "featureInSegment")
 
-#   categIDs = list(
-#         "other annotation"= gff$Name[((gff[, "feature"]=="gene") & (gff[, "orf_classification"]=="Dubious")) |
-#                                       (gff[, "feature"] %in% c("transposable_element", "transposable_element_gene"))],
-#         "ncRNA"           = gff$Name[ (gff[, "feature"] %in% c("ncRNA","snoRNA","snRNA", "tRNA", "rRNA"))], 
-#         "annotated ORF"   = gff$Name[ (gff[, "feature"]=="gene") & (gff[, "orf_classification"] %in% c("Verified", "Uncharacterized"))])
-
   categIDs = vector(mode="list", length = length(feat1)+length(feat2))
   names(categIDs) = c(feat1, feat2)
   
@@ -100,15 +94,19 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
   filt1 = (is.na(zmin) | (zmin <zThresh))
   filt2 = (s[,"length"] < minNewSegmentLength)
   filt3 = (s[,"oppositeExpression"] > threshold)
-  filt  = (filt1|filt2|filt3)
+  filt4 = (s[,"oppositeExpression"] > pmax(threshold, s[,"level"]-1))
+  filt  = (filt1|filt2|filt4)
 
   ## step 5: novel - isolated or antisense
   iso  = (s[,"oppositeFeature"]=="")
   isna = is.na(catg)
 
-  cat("Novelty filter: Considering ", sum(isna), " segments.\nzThresh rejects ",
-    sum(isna&filt1), ", length ", sum(isna&filt2), ", oppositeExpression ",
-    sum(isna&filt3), ", altogether ", sum(isna&filt), ".\n", sep="")
+  cat("Novelty filter: Considering ", sum(isna), " segments.\n1. z-scores < ", zThresh, ": ",
+    sum(isna&filt1), "\n2. length < ", minNewSegmentLength, ": ",
+    sum(isna&filt2), "\n3. oppositeExpression > threshold: ",
+    sum(isna&filt3), "\n4. oppositeExpression > max(threshold, segment level - 1): ",
+    sum(isna&filt4), "\nRejected by (1 or 2 or 4): ",
+    sum(isna&filt), ".\n", sep="")
 
   catg[isna &  iso & !filt ] = "novel isolated - filtered"
   catg[isna &  iso &  filt ] = "novel isolated - excluded"

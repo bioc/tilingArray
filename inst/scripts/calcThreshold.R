@@ -34,7 +34,6 @@ calcThreshold = function(x, sel, FDRthresh, showPlot=FALSE, main) {
     lines(d1$x, dn/max(dn)*max(d2$y), col="orange")
   }
   cat(main, ": loc=", signif(loc,3), "scale=", signif(scale,3), "thresh=", signif(thresh,3), "\n")
-  browser()
   return(thresh)
 }
 
