@@ -52,7 +52,7 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
   ## Step 2: untranscribed
   sel = (is.na(catg) & s[,"level"] < threshold)
   catg[ sel ] = "untranscribed"
-  s$isUnIso = (sel & (s[, "overlappingFeature"]=="") & (s[,"oppositeFeature"]==""))
+  s$isUnIso = (sel & (s[, "overlapFeatAll"]==""))
   
   ## step 3: annotated
   wh  = which(is.na(catg))

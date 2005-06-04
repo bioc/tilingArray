@@ -1,5 +1,5 @@
 plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, isDirectHybe=FALSE,
-  scoreShow="pt", nrBasesPerSeg, gff, haveLegend=TRUE) {
+  scoreShow="pt", nrBasesPerSeg, gff, haveLegend=TRUE, main) {
   
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
   colors = c("+" = "#00441b", 
@@ -9,8 +9,8 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, is
              "highlight" = "red",
              "threshold" = "grey")
   
-  if(!haveLegend)
-    VP = VP[-which(names(VP)=="legend")]
+  ##if(!haveLegend)
+  ##  VP = VP[-which(names(VP)=="legend")]
 
   ## do not draw p-value bars
   VP = VP[-which(names(VP)%in%c("z1", "z2"))]
@@ -85,10 +85,11 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, is
   pushViewport(dataViewport(xData=coord, yscale=c(-0.4,0.8), extension=0, 
                             layout.pos.col=1, layout.pos.row=which(names(VP)=="coord")))
   grid.lines(coord, c(0,0), default.units = "native")
-  tck= alongChromTicks(coord)
+  tck = alongChromTicks(coord)
   grid.text(label=formatC(tck, format="d"), x = tck, y = 0.2, 
             just = c("centre", "bottom"), gp = gpar(cex=.6), default.units = "native")
   grid.segments(x0 = tck, x1 = tck, y0 = -0.17, y1 = 0.17,  default.units = "native")
+  grid.text(label="Bla", x=0, y=0, just = c("right", "center"), rot=90, default.units = "native")
   if(!missing(highlight)){
     mt = (match(highlight$strand, c("-", "+"))-1.5)*2
     co = highlight$coord
@@ -97,12 +98,11 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, is
     grid.segments(x0=co, x1=co, y0=c(0,0), y1=c(0.4,0.4)*mt, default.units = "native",
                   gp=gpar(col=colors["highlight"], lwd=2))
   }
-  
   popViewport()
 
   ## title
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=which(names(VP)=="title")))
-  grid.text(label=paste("Chromosome", chr), x = 0.5, y = 0.5, 
+  grid.text(label=paste(main, "Chr", chr), x = 0.5, y = 0.5, 
             just = "centre", gp = gpar(cex=1))
   popViewport()
 
@@ -147,7 +147,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
 
   ord  = c(which(!uniq), which(uniq))
   colo = ifelse(uniq[ord], colors[strand], colors["duplicated"])
-  grid.points(x[ord], y[ord], pch=16, size=unit(0.0016, "npc"), gp=gpar(col=colo))
+  grid.points(x[ord], y[ord], pch=16, size=unit(1, "mm"), gp=gpar(col=colo))
 
   if(!is.na(threshold))
     grid.lines(y=unit(rep(threshold, 2), "native"), gp=gpar(col=colors["threshold"]))
@@ -195,7 +195,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     popViewport(1)
   }
   
-  pushViewport(dataViewport(xData=xlim, yscale=c(-1.2,1.2),  extension=0, 
+  pushViewport(dataViewport(xData=xlim, yscale=c(-1.2,1.2),  extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("gff%d", istrand))))
 
   stopifnot(all(gff[,"start"] <= gff[, "end"]))
@@ -240,6 +240,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
 
     txtcex = 0.7
     txtdy  = 0.7
+    i      = i[!duplicated(featnam[i])]
     strw   = convertWidth(stringWidth(featnam[i]), "native", valueOnly=TRUE)*txtcex
     txtx   = (gff$start[s]+gff$end[s])/2
     txty   = numeric(length(s))
@@ -299,8 +300,8 @@ alongChromTicks = function(x){
   if( lz-fl > log(5, 10))
     fl = fl +  log(5, 10)
   tw = round(10^fl)
-  i0 = floor(rx[1]/tw)
-  i1 = ceiling(rx[2]/tw)
+  i0 = ceiling(rx[1]/tw)
+  i1 = floor(rx[2]/tw)
   seq(i0, i1)*tw
 }
 
@@ -376,11 +377,11 @@ plotDuplication = function(xlim, chr, strand, probeAnno, VP) {
 ##------------------------------------------------------------
 featureDrawing = function() {
   res = data.frame(
-    col      = I(c("#d0e0f0", "#d94801", "#005a32", "#fc4e2a", "#707070",
+    col      = I(c("#d0e0f0", "#d94801", "#005a32", "#707070", "#fc4e2a", 
                    "#A65628", "#A65628")),
-    fill     = I(c("#7AADD1", "#fd8d3c", "#41ab5d", "#feb24c", "#e0e0e0",
+    fill     = I(c("#7AADD1", "#fd8d3c", "#41ab5d", "#e0e0e0", "#feb24c", 
                    "#BF5B17", "#BF5B17")))
-  rownames(res) =   c("CDS",     "ncRNA",   "tRNA",    "snoRNA",  "pseudogene",
+  rownames(res) =   c("CDS",     "tRNA",    "snoRNA",  "pseudogene", "ncRNA",   
             "transposable_element", "transposable_element_gene")
   return(res)
 }

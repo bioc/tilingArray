@@ -2,5 +2,5 @@ useDynLib(tilingArray)
 
 export("findSegments", "sampleStep", "scoreSegments", "costMatrix", 
        "isWithinInterval", "posMin", "getAttributeField", "otherStrand",
-       "qualityReport", "plotAlongChrom", "plotAlongChrom2")
+       "qualityReport", "plotAlongChrom", "plotAlongChrom2", "overlappingFeatures")
 

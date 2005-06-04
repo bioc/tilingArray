@@ -22,12 +22,9 @@ movingWindow = function(x, y, width) {
   if(length(w)==0) {
     res = +Inf
   } else {
-    res = sapply(w, function(i) {
-      rg = which(x>=x[i] & x<(x[i]+width))
-      median(y[rg])
-    })
+    res = sapply(w, function(i)
+      median(y[x>=x[i] & x<(x[i]+width)]))
     stopifnot(!any(is.na(res)))
-    ## plot(x[w], res); browser()
     res = min(res)
   }
   res
@@ -82,6 +79,7 @@ scoreSegments = function(s, gff,
         featureInSegment      = I(character(cp)),
         mostOfFeatureInSegment= I(character(cp)),
         overlappingFeature    = I(character(cp)),
+        overlapFeatAll        = I(character(cp)),
         oppositeFeature       = I(character(cp)),
         oppositeExpression    = rep(as.numeric(NA), cp),
         utr5                  = rep(as.integer(NA), cp),
@@ -123,15 +121,24 @@ scoreSegments = function(s, gff,
       segScore[, "length"]   = dEnd[i2]-dStart[i1]+1
 
       sel = (gff[, "chr"]==chr) & (gff[, "feature"] %in% transcribedFeatures)
-      same.gff = gff[ sel & gff[, "strand"]==strand, ]
+      same.gff = gff[ sel & gff[, "strand"]==strand, ] 
       oppo.gff = gff[ sel & gff[, "strand"]==otherStrand(strand), ]
 
+      ## for overlapFeatAll: all features, transcribable or not,
+      ##  and either strand
+      allsel = (gff[, "chr"]==chr & !(gff[, "feature"] %in% c("chromosome", "region")))
+      all.gff = gff[allsel, ]
+
+      stopifnot(!any(is.na(all.gff[, "Name"])),
+                !any(is.na(same.gff[, "Name"])),
+                !any(is.na(oppo.gff[, "Name"])))
+                
       ## is used below, in the definition of "featureInSegment"
       CDSfeature ="CDS"
       stopifnot(CDSfeature %in% transcribedFeatures)
       
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
-      ft1 = ft2 = ft3 = ft4 = character(cp)  
+      ft1 = ft2 = ft3 = ft4 = ft5 = character(cp)  
       zl = zr = lev = oe = fd = rep(as.numeric(NA), cp)
       nrFlankProbes = params["flankProbes"]
       
@@ -223,6 +230,11 @@ scoreSegments = function(s, gff,
         if(length(wh4)>0)
           ft4[j] = paste(unique(oppo.gff[wh4, "Name"]), collapse=", ")
 
+        ## overlapFeatAll
+        wh5 =  which((endj >= all.gff[, "end"]) & (startj <= all.gff[,"start"]))
+        if(length(wh5)>0)
+          ft5[j] = paste(unique(all.gff[wh5, "Name"]), collapse=", ")
+        
         ## expression on opposite strand?
         oe[j] = movingWindow(x=xOppo, y=yOppo, width=params[["oppositeWindow"]])
 
@@ -236,6 +248,7 @@ scoreSegments = function(s, gff,
       segScore[, "mostOfFeatureInSegment"] = ft2
       segScore[, "overlappingFeature"]     = ft3
       segScore[, "oppositeFeature"]        = ft4
+      segScore[, "overlapFeatAll"]         = ft5
       segScore[, "oppositeExpression"] = oe
       segScore[, "level"]              = lev
       segScore[, "distLeft"]           = dl
