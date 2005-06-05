@@ -3,7 +3,7 @@ library("tilingArray")
 graphics.off()
 options(error=recover, warn=2)
 interact = (!TRUE)
-what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")
+what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")[-3]
 
 source("scripts/readSegments.R") 
 source("scripts/categorizeSegments.R") 
@@ -19,6 +19,7 @@ source("scripts/calcThreshold.R")
 ##
 ## CATEGORIZE
 ##
+if(!exists("cs")) {
   cs = vector(mode="list", length=length(rnaTypes))
   names(cs)=rnaTypes
   
@@ -37,7 +38,11 @@ source("scripts/calcThreshold.R")
   lineColors = c(brewer.pal(8, "Paired")[c(1,2,6,8)], "grey")
   names(lineColors) =c("annotated ORF", "ncRNA(all)", 
    "novel antisense - filtered", "novel isolated - filtered", "unexpressed isolated")
-
+} else {
+  cat("\n**************************************************\n",
+        "*      NOT REDOING categorizeSegments            *\n",
+        "**************************************************\n", sep="")
+}
 ##
 ## PIE: Four classes
 ##
@@ -288,7 +293,7 @@ calchit = function(sp, blrt, s) {
     fas = br[[3]] * br[[4]] / s$length[br[[1]]]
     ##fas = (br[[4]] / s$length[br[[1]]] > 0.5) * 100 
     ##fas = br[[3]]
-    ## fas = rep(100, nrow(br))
+    ##fas = rep(100, nrow(br))
     stopifnot(all( fas>=0 & fas<=115 & !is.na(fas)))
     
     ## split by name of query sequence and just keep the hit with the
@@ -310,7 +315,7 @@ calchit = function(sp, blrt, s) {
       mean(alignableFrac[segments]) 
     })
   }
-  data.frame(number=listLen(sp), fraction=rowMeans(hit))
+  cbind(number=listLen(sp), hit)
 }
 
 ##
@@ -324,7 +329,8 @@ calchit = function(sp, blrt, s) {
   theSplit = vector(mode="list", length=length(rnaTypes))
   names(theSplit) = rnaTypes
     
-  selectedCategories = c("annotated ORF", "ncRNA(all)",  "novel antisense - filtered", "novel isolated - filtered",
+  selectedCategories = c("annotated ORF", "ncRNA(all)",
+    "novel antisense - filtered", "novel isolated - filtered",
     "unexpressed isolated")
 
   for(rt in rnaTypes) {
@@ -345,18 +351,19 @@ calchit = function(sp, blrt, s) {
   }
 
   nrlevs = 3
-  cat("\n\nGrouping of conservation scores by expression, using ", nrlevs, "\n", 
-      "quantile groups of equal size.\n",
+  cat("\n\nGrouping of conservation scores by expression,\nusing ", nrlevs, 
+      " quantile groups of equal size.\n",
       "=====================================================================\n", 
       sep="")
-  
+
+  species = names(blastres[[1]])
   if(interact) {
-    x11(width=6*length(rnaTypes), height=8)
+    x11(width=4.5*length(rnaTypes), height=4.5*length(species))
   } else {
     pdf(paste("tableSegments-consex.pdf", sep=""),
-        width=4*length(rnaTypes), height=8)
+        width=4*length(rnaTypes), height=6*length(species))
   }
-  par(mfcol=c(1, length(rnaTypes)))
+  par(mfcol=c(length(species), length(rnaTypes)))
   stopifnot(all(selectedCategories %in% names(lineColors)))
 
   for(i in seq(along=rnaTypes)) {
@@ -365,9 +372,9 @@ calchit = function(sp, blrt, s) {
     
     sp = theSplit[[rt]]
     s  = cs[[rt]]
-        
-    fraction = matrix(NA, nrow=nrlevs, ncol=length(sp))
-    colnames(fraction) = names(sp)
+    
+    fraction = array(NA, dim=c(nrlevs, length(species), length(sp)))
+    dimnames(fraction)=list(NULL, species=species, category=names(sp))
   
     pchs = c(15, 5, 16, 17, 19) # 20
     stopifnot(length(pchs)==length(sp))
@@ -378,7 +385,7 @@ calchit = function(sp, blrt, s) {
       br   = quantile(v, (0:nrlevs)/nrlevs, na.rm=TRUE)
       spwh = split(wh, cut(v, breaks=br))
       hit  = calchit(spwh, blastres[[rt]], s)
-      fraction[, names(sp)[j]] = hit$fraction
+      fraction[,, names(sp)[j]] = hit[, species]
       cat("\nby expression for:", names(sp)[j], "\n")
       print(round(hit,1))
     }
@@ -386,18 +393,23 @@ calchit = function(sp, blrt, s) {
     #stopifnot(length(j)==1)
     #baseline = mean(fraction[, j])
     #fraction = fraction[, -j]
-    
-    matplot(fraction, xaxt="n", type="b", main=longNames[rt],
-            lty=1, lwd=2, pch=pchs, col=lineColors[colnames(fraction)],
+
+    for(j in seq(along=species)){
+      linNams = dimnames(fraction)[[3]]
+      linCols = lineColors[ linNams ]
+      matplot(fraction[,j,], xaxt="n", type="b", main=longNames[rt],
+            lty=1, lwd=2, pch=pchs, col=linCols,
             ylab="average identity (percent) ", xlab="transcript level",
             ylim=c(0, 110))
-    #abline(h=baseline, col=lineColors[["isolated and unexpressed"]], lwd=2, type="l")
-    cutNames = paste("<=", round((1:nrlevs)/nrlevs*100), "%", sep="")
-    axis(side=1, at = 1:nrlevs, labels = cutNames)
-    if(i==1)
-      legend(x=1, y=112, legend=colnames(fraction),
-             lty=1, lwd=2, pch=pchs, col=lineColors[colnames(fraction)])
-  }
+    
+      ## abline(h=baseline, col=lineColors[["isolated and unexpressed"]], lwd=2, type="l")
+    
+      cutNames = paste("<=", round((1:nrlevs)/nrlevs*100), "%", sep="")
+      axis(side=1, at = 1:nrlevs, labels = cutNames)
+      if(i==1)
+        legend(x=1, y=112, legend=linNams, lty=1, lwd=2, pch=pchs, col=linCols)
+    } ## for j
+  } ## for i
   if(!interact)
     dev.off()
  

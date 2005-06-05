@@ -186,7 +186,7 @@ scoreSegments = function(s, gff,
         dlOppo = posMin(startj - oppo.gff[, "end"])
         drOppo = posMin(oppo.gff[, "start"] - endj)
         
-        nm1 = nm2 = nm3 = nm4 = character(0)
+        nm1 = nm2 = nm3 = nm4 = nm5 = character(0)
         ## featureInSegment: feature is fully contained in the segment
         ## a 'feature' is one of the things in 'known_features', except 'CDS'
         ## (since we want the whole gene, not just its exons)
@@ -209,7 +209,8 @@ scoreSegments = function(s, gff,
 
         ## mostOfFeatureInSegment: overlap is more than 50% of feature length
         overlapSame   = pmin(endj, same.gff[,"end"]) - pmax(startj, same.gff[,"start"]) + 1 
-        wh2 = which( overlapSame / (same.gff[,"end"]-same.gff[,"start"]+1) >= params[["overlapFraction"]])
+        wh2 = which( overlapSame / (same.gff[,"end"]-same.gff[,"start"]+1) >=
+          params[["overlapFraction"]])
         if(length(wh2)>0) {
           nm2    = unique(same.gff[wh2, "Name"])
           ft2[j] = paste(nm2, collapse=", ")
@@ -231,9 +232,12 @@ scoreSegments = function(s, gff,
           ft4[j] = paste(unique(oppo.gff[wh4, "Name"]), collapse=", ")
 
         ## overlapFeatAll
-        wh5 =  which((endj >= all.gff[, "end"]) & (startj <= all.gff[,"start"]))
-        if(length(wh5)>0)
-          ft5[j] = paste(unique(all.gff[wh5, "Name"]), collapse=", ")
+        wh5 =  which((all.gff[,"start"] <= endj) & (all.gff[, "end"] >= startj))
+        if(length(wh5)>0) {
+          nm5 = unique(all.gff[wh5, "Name"])
+          ft5[j] = paste(nm5, collapse=", ")
+        }
+        stopifnot(all(nm3 %in% nm5))
         
         ## expression on opposite strand?
         oe[j] = movingWindow(x=xOppo, y=yOppo, width=params[["oppositeWindow"]])

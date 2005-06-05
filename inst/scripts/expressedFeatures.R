@@ -18,19 +18,18 @@ if(!exists("intergenic")){
   intergenic = which(probeAnno$probeReverse$no_feature=="no" & probeAnno$probeDirect$no_feature=="no")
 }
 
-if(!exists("allxn")) {
-  allxn = vector(mode="list", length=length(rnaTypes))
-  names(allxn) = rnaTypes
-  for(rt in rnaTypes) {
+for(rt in rnaTypes) {
+  e = get(rt)
+  if(!("xn" %in% ls(e))) {
     fn = file.path(rt, "xn.rda")
-    cat(fn, "")
-    load(fn)
-    x = exprs(xn)
+    cat("Loading", fn, "\n")
+    load(fn, envir=e)
+    x = exprs(get("xn", e))
     for(j in 1:ncol(x))
       x[,j] = x[, j] - median(x[intergenic, j])
-    allxn[[rt]] = x 
+    assign("x", x, envir=e)
+    rm(x)
   }
-  cat("\n")
 }
 
 testExp = function(index) {
@@ -57,12 +56,22 @@ categGff = list(
   "ncRNA(all)"           = gff[ gff[, "feature"] %in% allncRNA , ])
 stopifnot(all(sapply(categGff, nrow)>=1))
 
-for(rt in rnaTypes) {
+
+res = matrix(NA, nrow=length(categGff), ncol=8)
+stopifnot(all(rnaTypes==c("seg-polyA-050525", "seg-tot-050525")))
+rownames(res) = names(categGff)
+colnames(res) = c("n1: in genome", "n2: with probes", 
+    "det. poly-A", "poly-A: % of n1", "poly-A: % of n2",
+    "det. total",  "total: % of n1",  "total: % of n2")
+
+for(irt in seq(along=rnaTypes)) {
+  rt = rnaTypes[irt]
   cat("\n=====", rt, "=====\n")
-  x = allxn[[rt]]
-  
+  x = get(rt)$"x"
+    
   for(icg in seq(along=categGff)) {
     sgff = categGff[[icg]]
+
     ## build a list of probes
     unames = sort(unique(sgff$Name))
     stopifnot(!any(unames==""))
@@ -75,26 +84,39 @@ for(rt in rnaTypes) {
     uni = paste(sgff$chr, sgff$strand, "unique",   sep=".")
 
     for(i in 1:nrow(sgff)) {
-      ## if(i%%100==0) cat(i, "")
       nm = sgff$Name[i]
       index[[nm]] = c(index[[nm]], get(ind[i], probeAnno)[
        get(uni[i], probeAnno) &
       (get(sta[i], probeAnno) >= sgff$start[i])&
       (get(end[i], probeAnno) <= sgff$end[i]) ])
     }
+
+    ## How many features have >= 7 probes
+    n1 = length(index)
+    n2 = sum(listLen(index) >= 7)
+    if(irt==1) {
+      res[icg, 1:2] = c(n1,n2)
+    } else {
+      stopifnot(all(res[icg, 1:2] == c(n1,n2)))
+    }
     
+    ## Test
     isExp = testExp(index)
+    nrDet = sum(isExp)
+    res[icg, irt*3] = nrDet
+    res[icg, irt*3+1] = round(100*nrDet/n1, 1)    
+    res[icg, irt*3+2] = round(100*nrDet/n2, 1)    
 
     ## controls
     ctrlIndex = lapply(index, function(x) sample(intergenic, length(x)))
     ctrlExp = testExp(ctrlIndex)
-    
-    cat(sprintf("%25s: %4d of %4d (%3.1f percent), control: %4d\n", 
-                names(categGff)[icg], as.integer(sum(isExp)), length(isExp), signif(100*mean(isExp)),
-                as.integer(sum(ctrlExp))))
+    cat(sprintf("%25s: %4d, control: %4d\n", 
+        names(categGff)[icg], as.integer(nrDet), as.integer(sum(ctrlExp))))
   }
   
 }
+
+print(res)
 
 if(!interact)
   sink()
