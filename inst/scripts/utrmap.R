@@ -20,133 +20,185 @@ interact=(!TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
-## source("colorRamp.R")
 source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
 
+what = c("stat", "wst", "explen", "expdiff")[-2]
 
-fdim = c(10.5, 7)
-if(interact) {
-  x11(width = fdim[1], height = fdim[2])
-  pch=16
+##
+## CATEGORIZE
+##
+if(!exists("cs")) {
+  utr = cs = vector(mode="list", length=length(rnaTypes))
+  names(cs) = names(utr) = rnaTypes
+
+  for(rt in rnaTypes) {
+    cat("\n--------", rt, "---------\n")
+    s = categorizeSegmentsUTRmap(get(rt))
+    s = s[!is.na(s[,"goodUTR"]), ]
+    z = as.matrix(s[, c("utr5", "utr3")])
+    rownames(z) = rownames(s) = s[, "featureInSegment"]
+    colnames(z) = c("5' UTR", "3' UTR")
+    utr[[rt]] = z
+    cs[[rt]] =s
+  }
+  rm(list=c("s", "z"))
 } else {
-  sink("utrmap.txt")
-  pch="."
+  cat("\n**************************************************\n",
+        "*      NOT REDOING categorizeSegments            *\n",
+        "**************************************************\n", sep="")
 }
-  
+
+if(!interact) {
+  sink("utrmap.txt")
+}
+graphics.off()
 cols = brewer.pal(12, "Paired")
 
-investigateExpressionVersusLength = function(lev, len, main) {
-  theCut = cut(len, breaks=quantile(len, probs=c(0, 0.8, 0.95, 1)))
-  ## e = tapply(len, cut(lev, breaks=3), ecdf)
-  e = tapply(lev, theCut, ecdf)
-  theCol = cols[1]
-  plot(e[[1]], xlab="level", main=main)
-  for(i in 2:length(e)) {
-    theCol = cols[i*2]
-    lines(e[[i]], col.hor=theCol, col.points=theCol, col.vert=theCol)
+##
+## distribution summaries, length histograms, scatterplot 3' vs 5' length
+##
+if("stat" %in% what){
+  for(rt in rnaTypes) {
+    ul = utr[[rt]]
+    cat("\n-------", rt, "-------\n")
+    cat("Length distribution summary of", nrow(ul), "5'-UTRs:\n")
+    print(summary(ul[, "5' UTR"]))
+    cat("Length distribution summary of", nrow(ul), "3'-UTRs:\n")
+    print(summary(ul[, "3' UTR"]))
+
+    if(!interact) {
+      pdf(file=paste("utrmap-", rt, ".pdf", sep=""), width = 10.5, height = 3.7)
+    } else {
+      x11(width = 10.5, height = 3.7)
+    }
+    mai = par("mai")[1]
+    par(mfrow = c(1, 3), mai=c(mai[c(1,1)], 0.05, 0.05))
+
+    up = ul
+    maxlen = 600
+    up[up>maxlen]=maxlen
+    br = seq(0, maxlen, length=31)
+    for(j in 1:ncol(up))
+      hist(up[, j], col=cols[j*2-1], breaks=br, xlab=paste("Length of", colnames(up)[j]), main="")
+
+    maxlen = 700
+    plot(ul, xlab=colnames(ul)[1], ylab=colnames(ul)[2],
+         xlim=c(0, maxlen), ylim=c(0, maxlen), pch=20) 
+    if(!interact)
+      dev.off()
+  }
+
+  ## common:
+  comUTR = intersect(rownames(utr[[1]]), rownames(utr[[2]]))
+  allUTR = union(rownames(utr[[1]]), rownames(utr[[2]]))
+  cat("\n", length(comUTR)," in both ", paste(rnaTypes, collapse=" and "), ", ", 
+      length(allUTR), " altogether.\n", sep="")
+}
+
+
+##
+## WRITE THE SEGMENT TABLE
+##
+if("wst" %in% what){
+  for(rt in rnaTypes) {
+    fn = file.path(indir[rt], "viz", "utrmap.html")
+    nr = nrow(cs[[rt]])
+    if(interact)
+      cat("Writing", nr, "UTRs to", fn, "\n")
+    writeSegmentTable(cs[[rt]], title=paste(nr, "UTR maps from", longNames[rt]), fn=fn,
+                      sortBy = "goodUTR", sortDecreasing=TRUE, interact=interact)
   }
 }
 
-utr = vector(mode="list", length=length(rnaTypes))
-names(utr)=rnaTypes
-      
-for(rt in rnaTypes) {
-  cat("\n", rt, "\n------------------\n", sep="")
-  s = categorizeSegmentsUTRmap(get(rt))
-  s = s[!is.na(s[,"goodUTR"]), ]
-  
-  z = s[, c("utr5", "utr3")]
-  rownames(z) = s[, "featureInSegment"]
-  colnames(z) = c("5' UTR", "3' UTR")
-  utr[[rt]] = z
+##
+## expression vs length
+##
+if("explen" %in% what){
 
-  cat("5' UTR length distribution summary:\n")
-  print(summary(s[, "utr5"]))
-  cat("3' UTR length distribution summary:\n")
-  print(summary(s[, "utr3"]))
-  
-  ##
-  ## WRITE THE SEGMENT TABLE
-  ##
-  fn = file.path(indir[rt], "viz", "utrmap.html")
-  if(TRUE){
-    if(interact)
-      cat("Writing", nrow(s), "UTRs to", fn, "\n")
-    writeSegmentTable(s, title=paste(nrow(s), "UTR maps from", longNames[rt]), fn=fn,
-                      sortBy = "goodUTR", sortDecreasing=TRUE, interact=interact)
-  } else {
-    cat(">>> Attention: not writing", fn, "<<<\n") 
+  investigateExpressionVersusLength = function(lev, len, main) {
+    theCut = cut(len, breaks=quantile(len, probs=c(0, 0.95, 1)))
+    e = tapply(lev, theCut, ecdf)
+    theCol = cols[1]
+    plot(e[[1]], pch=".", xlab="level", main=main)
+    for(i in 2:length(e)) {
+      theCol = cols[i*2]
+      lines(e[[i]], col.hor=theCol, col.points=theCol, col.vert=theCol)
+    }
   }
-
-
-  ##
-  ## LENGTH HISTOGRAM
-  ##
+  
   if(!interact) {
-    pdf(file=paste("utrmap-", rt, ".pdf", sep=""), width = fdim[1], height = fdim[2])
+    pdf(file=paste("utrmap-expression-vs-length.pdf", sep=""), width = 10.5, height = 7.5)
+  } else {
+    x11(width = 10.5, height = 7.5)
   }
   par(mfrow = c(2, 3))
-  br=50
-  hist(s[ s[, "utr5"]<1000, "utr5"],
-       col=cols[1], breaks=br, xlab="length of 5' UTR",
-       main=paste(longNames[rt], ": 5' UTR", " (", length(s[, "utr5"]), ")", sep=""))
-  hist(s[ s[,"utr3"]<1000, "utr3"], xlab="length of 3' UTR",
-       col=cols[3], breaks=br, main=paste(longNames[rt], ": 3' UTR", sep=""))
 
-  ##
-  ## GET THE CDS LENGTHS AS WELL
-  ##
-  mt = match(s[,"featureInSegment"], gff[,"Name"])
-  stopifnot(!any(is.na(mt)))
+  for(rt in rnaTypes) {
+    s = cs[[rt]]
+    ## get the CDS length
+    mt = match(s[,"featureInSegment"], gff[,"Name"])
+    stopifnot(!any(is.na(mt)))
+    cdslen = gff[mt, "end"]-gff[mt, "start"]
+
+    investigateExpressionVersusLength(s[,"level"], s[,"utr3"], paste(rt, ": length of 3' UTR", sep=""))
+    investigateExpressionVersusLength(s[,"level"], s[, "utr5"], paste(rt, ": length of 5' UTR", sep=""))
+    investigateExpressionVersusLength(s[,"level"], cdslen, paste(rt, ": length of CDS", sep=""))
+  }
   
-  cdslen = gff[mt, "end"]-gff[mt, "start"]
-  investigateExpressionVersusLength(s[,"level"], s[,"utr3"], "length of 3' UTR")
-  investigateExpressionVersusLength(s[,"level"], s[, "utr5"], "length of 5' UTR")
-  investigateExpressionVersusLength(s[,"level"], cdslen, "length of CDS")
-
   if(!interact)
     dev.off()
 }
-cat("\n\n")
 
+##
+## difference between total and poly-A
+## 
+if("expdiff" %in% what){
+  if(interact) {
+    x11(width=6.6, height=10)
+  } else {
+    pdf(file=paste("utrmap-scatter.pdf", sep=""), width=6.6, height=10)
+  }
+  
+  par(mfrow=c(3,2))
+  for(i in 1:2){
+    px = utr[[1]][comUTR,i]
+    py = utr[[2]][comUTR,i]
+    axlim = c(0, quantile(c(px, py), 0.8))
+    plot(px, py,
+         main = paste("length of ", colnames(utr[[1]])[i], " (", length(comUTR), " common)", sep=""),
+         xlab = longNames[rnaTypes[1]], ylab=longNames[rnaTypes[2]],
+         xlim = axlim, ylim = axlim, pch=20)
+    abline(a=0, b=1, col="red")
+  }
 
-## common:
-comUTR = intersect(rownames(utr[[1]]), rownames(utr[[2]]))
-## union:
-allUTR = union(rownames(utr[[1]]), rownames(utr[[2]]))
-for(j in seq(along=utr))
-  cat(nrow(utr[[j]]), " UTRs for ", rnaTypes[j], ", ", sep="")
-cat("\n", length(comUTR)," in both ", paste(rnaTypes, collapse=" and "), ", ", 
-    length(allUTR), " altogether.\n", sep="")
+  vec = c("5' UTR", "3' UTR")
+  d = utr[[1]][comUTR, vec] - utr[[2]][comUTR, vec]
+  colnames(d)=vec
+  
+  ex1 = cs[[1]][comUTR, "level"]
+  ex2 = cs[[2]][comUTR, "level"]
 
-if(interact) {
-  x11(width=8, height=4)
-} else {
-  pdf(file=paste("utrmap-scatter.pdf", sep=""), width=8, height=4)
+  ex = cbind(difference=ex1-ex2, average=(ex1+ex2)/2)
+
+  col2 = "lightblue"; col3="pink"
+  for(j in 1:ncol(ex)) {
+    for(i in 1:ncol(d)){
+      ec1 = ecdf(ex[d[,i]==0, j])
+      ec2 = ecdf(ex[d[,i]>0, j])
+      ec3 = ecdf(ex[d[,i]<0, j])
+      plot(ec1, pch=".", xlab=colnames(ex)[j], main=colnames(d)[i])
+      lines(ec2, pch=".", col.points=col2, col.hor=col2, col.vert=col2)
+      lines(ec3, pch=".", col.points=col3, col.hor=col3, col.vert=col3)
+    }
+  }
+  if(!interact)
+    dev.off()
 }
-
-par(mfrow=c(1,2))
-for(i in 1:2){
-  px = utr[[1]][comUTR,i]
-  py = utr[[2]][comUTR,i]
-  axlim = c(0, quantile(c(px, py), 0.8))
-  plot(px, py,
-       main = paste("length of ", colnames(utr[[1]])[i], " (", length(comUTR), " common)", sep=""),
-       xlab = longNames[rnaTypes[1]], ylab=longNames[rnaTypes[2]],
-       xlim = axlim, ylim = axlim, pch=20)
-  abline(a=0, b=1, col="red")
-}
-
-w = (abs(utr[[1]][comUTR, 1] - utr[[2]][comUTR, 1]) < 10 &
-     abs(utr[[1]][comUTR, 2] - utr[[2]][comUTR, 2]) < 10 )
-u5 = utr[[1]][comUTR[w], 1]
-u3 = utr[[1]][comUTR[w], 2]
 
 if(!interact) {
   sink()
-  dev.off()
 }
 

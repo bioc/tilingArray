@@ -61,4 +61,4 @@ for(rt in rnaTypes) {
 if(!interact)
     dev.off()
 
-cat("\n\n")
+cat("\n")

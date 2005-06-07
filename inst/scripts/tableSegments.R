@@ -2,15 +2,17 @@ library("tilingArray")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = (!TRUE)
-what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")[-3]
+interact = (TRUE)
+what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")[c(3,5)]
 
 source("scripts/readSegments.R") 
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
 
 if(!interact){
-  sink("tableSegments.txt")
+  ## outfile = "tableSegments"
+  outfile = "tableSegments-yesno"
+  sink(paste(outfile, ".txt", sep=""))
   cat("Made on", date(), "\n\n")
 }
 
@@ -51,8 +53,7 @@ if("pie" %in% what){
   if(interact) {
     x11(width=7*length(rnaTypes), height=4.8)
   } else {
-    ## pdf("tableSegments-pie.pdf", width=7*length(rnaTypes), height=4.8)
-    pdf(paste("tableSegments-pie.pdf", sep=""), width=7*length(rnaTypes), height=4.8)
+    pdf(paste(outfile, "pie.pdf", sep="-"), width=7*length(rnaTypes), height=4.8)
   }
 
   par(mfrow=c(1, length(rnaTypes)))
@@ -178,10 +179,8 @@ if("wst" %in% what){
     s = cs[[rt]]
     stopifnot(all(notUse %in% levels(s[,"category"])))
     sel = !(s[,"category"] %in% notUse)
-    fn  = file.path(indir[rt], "viz", "index.html")
-    if(interact)
-      cat("Writing", fn, "\n")
-    writeSegmentTable(s[sel, ], fn=fn, sortBy="category-level",
+    writeSegmentTable(s[sel, ], fn=file.path(indir[rt], "viz", "index"),
+      sortBy="category-level",
       title=paste(rt, " (", longNames[rt], ")", sep=""), interact=interact)
   }
   cat("\n")
@@ -199,7 +198,7 @@ if("length" %in% what){
   stopifnot(all(selectedCategories %in% names(fillColors)))
   
   if(!interact)
-    pdf("tableSegments-lengths.pdf", width=14, height=length(rnaTypes)*3)
+    pdf(paste(outfile, "lengths.pdf", sep="-"), width=14, height=length(rnaTypes)*3)
   par(mfrow=c(length(rnaTypes), length(selectedCategories)))
   maxlen=5000
   br = seq(0, maxlen, by=200)
@@ -214,7 +213,7 @@ if("length" %in% what){
   }
   if(!interact) {
     dev.off()
-    pdf("tableSegments-levels.pdf", width=14, height=length(rnaTypes)*3)
+    pdf(paste(outfile, "levels.pdf", sep="-"), width=14, height=length(rnaTypes)*3)
   }
   par(mfrow=c(length(rnaTypes), length(selectedCategories)))
   br = seq(get("threshold", get(rt))-0.01, max(s[, "level"], na.rm=TRUE)+0.01, length=40)
@@ -234,7 +233,7 @@ if("length" %in% what){
 ##
 if("lvsx" %in% what){
   if(!interact) {
-    pdf("tableSegments-lvsx.pdf", width=14, height=length(rnaTypes)*3)
+    pdf(paste(outfile, "lvsx.pdf", sep="-"), width=14, height=length(rnaTypes)*3)
     pch="."
   } else {
     pch=18
@@ -290,10 +289,10 @@ calchit = function(sp, blrt, s) {
     br  = blrt[[b]]
 
     ## 1 = Query Sequence ID, 3 = Percent identity, 4 = Alignment length 
-    fas = br[[3]] * br[[4]] / s$length[br[[1]]]
+    ##fas = br[[3]] * br[[4]] / s$length[br[[1]]]
     ##fas = (br[[4]] / s$length[br[[1]]] > 0.5) * 100 
     ##fas = br[[3]]
-    ##fas = rep(100, nrow(br))
+    fas = rep(100, nrow(br))
     stopifnot(all( fas>=0 & fas<=115 & !is.na(fas)))
     
     ## split by name of query sequence and just keep the hit with the
@@ -360,8 +359,8 @@ calchit = function(sp, blrt, s) {
   if(interact) {
     x11(width=4.5*length(rnaTypes), height=4.5*length(species))
   } else {
-    pdf(paste("tableSegments-consex.pdf", sep=""),
-        width=4*length(rnaTypes), height=6*length(species))
+    pdf(paste(outfile, "consex.pdf", sep="-"),
+        width=4.5*length(rnaTypes), height=4.5*length(species))
   }
   par(mfcol=c(length(species), length(rnaTypes)))
   stopifnot(all(selectedCategories %in% names(lineColors)))
@@ -397,7 +396,7 @@ calchit = function(sp, blrt, s) {
     for(j in seq(along=species)){
       linNams = dimnames(fraction)[[3]]
       linCols = lineColors[ linNams ]
-      matplot(fraction[,j,], xaxt="n", type="b", main=longNames[rt],
+      matplot(fraction[,j,], xaxt="n", type="b", main=paste(species[j], "--", longNames[rt]),
             lty=1, lwd=2, pch=pchs, col=linCols,
             ylab="average identity (percent) ", xlab="transcript level",
             ylim=c(0, 110))
