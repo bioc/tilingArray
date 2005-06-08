@@ -1,5 +1,5 @@
 plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, isDirectHybe=FALSE,
-  scoreShow="pt", nrBasesPerSeg, gff, haveNames=TRUE, haveLegend=TRUE, main, colors, pointSize=unit(0.6, "mm")) {
+  scoreShow="pt", nrBasesPerSeg, gff, haveNames=TRUE, haveLegend=TRUE, main="", colors, pointSize=unit(0.6, "mm")) {
   
 
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
@@ -93,7 +93,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, is
   grid.text(label=formatC(tck, format="d"), x = tck, y = 0.2, 
             just = c("centre", "bottom"), gp = gpar(cex=.6), default.units = "native")
   grid.segments(x0 = tck, x1 = tck, y0 = -0.17, y1 = 0.17,  default.units = "native")
-  grid.text(label="Bla", x=0, y=0, just = c("right", "center"), rot=90, default.units = "native")
+
   if(!missing(highlight)){
     mt = (match(highlight$strand, c("-", "+"))-1.5)*2
     co = highlight$coord
@@ -252,11 +252,15 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     txtcex = 0.7
     txtdy  = 0.7
     whnames = whnames[!duplicated(featnam[whnames])]
-
     s      = sel[whnames]
-    strw   = convertWidth(stringWidth(featnam[whnames]), "native", valueOnly=TRUE)*txtcex
     txtx   = (gff$start[s]+gff$end[s])/2
     txty   = numeric(length(s))
+    ord    = order(txtx)
+    whnames = whnames[ord]
+    s      = s[ord]
+    txtx   = txtx[ord]
+    
+    strw   = convertWidth(stringWidth(featnam[whnames]), "native", valueOnly=TRUE)*txtcex
     rightB = txtx[1] + 0.5*strw[1]
     doText = rep(TRUE, length(whnames))
     if(length(whnames)>1) {
@@ -264,13 +268,17 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
         leftB = txtx[k] - 0.5*strw[k]
         if(leftB > rightB) {
           rightB = txtx[k] + 0.5*strw[k]
-        } else if(txty[k-1]!= txtdy) {
-          txty[k]= txtdy
-        } else if(txty[k-1] != -txtdy) {
-          txty[k]= -txtdy
         } else {
-          doText[k] = FALSE
-        }
+          if(!any(txty[k-(1:2)]==txtdy)) {
+            txty[k]= txtdy
+          } else {
+            if(!any(txty[k-(1:2)]== -txtdy)) {
+              txty[k]= -txtdy
+            } else {
+              doText[k] = FALSE
+            }
+          }
+        } ##  else
       } ## for
     }
     grid.text(label = featnam[whnames][doText],
@@ -323,7 +331,7 @@ alongChromTicks = function(x){
 plotAlongChromLegend = function(vpr) {
   featDraw = featureDrawing()
 
-  featDraw = featDraw[rownames(featDraw)!="transposable_element_gene", ]
+  featDraw = featDraw[!(rownames(featDraw) %in% c("transposable_element_gene", "transposable_element")), ]
   dx       = 1/(1+nrow(featDraw))
   i        = 1:nrow(featDraw)
 
@@ -343,7 +351,7 @@ plotAlongChromLegend = function(vpr) {
             x     = (i-0.65)*dx,
             y     = 0.4,
             default.units = "npc", just  = c("left", "center"),
-            gp    = gpar(cex=.8))
+            gp    = gpar(cex=.7))
 
   popViewport()
 }
