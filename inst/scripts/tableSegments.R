@@ -3,15 +3,18 @@ library("tilingArray")
 graphics.off()
 options(error=recover, warn=2)
 interact = (TRUE)
-what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")[c(3,5)]
+what     = c("pie", "wpt", "wst", "length", "cons", "lvsx")[3] 
+
+consScoreFun = function(alignmentLength, percentIdentity, queryLength)
+  (alignmentLength*percentIdentity/queryLength)
 
 source("scripts/readSegments.R") 
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
 
 if(!interact){
-  ## outfile = "tableSegments"
-  outfile = "tableSegments-yesno"
+  outfile = "tableSegments"
+  ## outfile = "tableSegments-yesno"
   sink(paste(outfile, ".txt", sep=""))
   cat("Made on", date(), "\n\n")
 }
@@ -131,8 +134,8 @@ if("wpt" %in% what){
   })
   isAnno = unlist(isAnno)
 
-  isTrans = isUni = vector(mode="list", length=length(rnaTypes))
-  names(isTrans)=names(isUni)=rnaTypes
+  segLev = isTrans = isUni = vector(mode="list", length=length(rnaTypes))
+  names(segLev) = names(isTrans) = names(isUni) = rnaTypes
   
   for(rt in rnaTypes) {
 
@@ -140,13 +143,16 @@ if("wpt" %in% what){
     threshold = get("threshold", get(rt))
       
     res = lapply(1:nrChr, function(chr) {
-      res  = logical(chrlen[chr])
-      selt = which(s[, "chr"]==chr & s$level>=threshold)
-      for(i in selt)
-        res[s$start[i]:s$end[i]] = TRUE
+      res  = rep(-Inf, chrlen[chr])
+      selt = which(s[, "chr"]==chr & !is.na(s[, "level"])) 
+      for(i in selt) {
+        rg = s$start[i]:s$end[i] 
+        res[rg] = pmax(res[rg], s[i, "level"])
+      }
       res
     })
-    isTrans[[rt]] = unlist(res)
+    segLev[[rt]] = unlist(res)
+    isTrans[[rt]] = (segLev[[rt]] >= get("threshold", get(rt)))
 
     res = lapply(1:nrChr, function(chr) {
       res  = logical(chrlen[chr])
@@ -157,7 +163,7 @@ if("wpt" %in% what){
     })
     isUni[[rt]] = !(unlist(res))
   }
-
+  
   cat("Fraction of transcribed basepairs\n",
       "=================================\n\n", sep="")
   cat(sprintf("%31s: %3.1f percent\n", "Annotated", signif(mean(isAnno)*100, 3)))
@@ -168,20 +174,32 @@ if("wpt" %in% what){
   cat(sprintf("%31s: %3.1f percent\n", "Union of both",
      signif(sum(isTrans[[1]]|isTrans[[2]])/sum(isUni[[1]]|isUni[[2]])*100, 3)))
   cat("\n\n")
+
+  if(!interact)
+    pdf(paste(outfile, "wpt.pdf", sep="-"), height=length(rnaTypes)*4, width=6)
+  par(mfrow=c(2,1))
+  cols = brewer.pal(4, "Paired")
+  for(i in seq(along=rnaTypes)) {
+    rt = rnaTypes[i]
+    hist(segLev[[rt]], breaks=100, col=cols[i*2-1], main=rt, xlab="level")
+    abline(v=get("threshold", get(rt)), col=cols[i*2], lwd=3)
+  }
+  if(!interact)
+    dev.off()  
 }
 
 ##
 ## WRITE THE SEGMENT TABLE
 ##
 if("wst" %in% what){
-  notUse = c("excluded", "untranscribed")
   for(rt in rnaTypes) {
     s = cs[[rt]]
-    stopifnot(all(notUse %in% levels(s[,"category"])))
-    sel = !(s[,"category"] %in% notUse)
-    writeSegmentTable(s[sel, ], fn=file.path(indir[rt], "viz", "index"),
-      sortBy="category-level",
-      title=paste(rt, " (", longNames[rt], ")", sep=""), interact=interact)
+    s$segID = paste(1:nrow(s))
+    drop =  (s[,"category"]=="excluded") | (s[,"category"]=="untranscribed"&(!s[,"isUnIso"]))
+    writeSegmentTable(s[!drop, ],
+      fn = file.path(indir[rt], "viz", "index"), HTML=TRUE, 
+      sortBy = "category-level",
+      title = paste(rt, " (", longNames[rt], ")", sep=""), interact=interact)
   }
   cat("\n")
 }
@@ -289,10 +307,9 @@ calchit = function(sp, blrt, s) {
     br  = blrt[[b]]
 
     ## 1 = Query Sequence ID, 3 = Percent identity, 4 = Alignment length 
-    ##fas = br[[3]] * br[[4]] / s$length[br[[1]]]
+    fas = consScoreFun(br[[4]], br[[3]], s$length[br[[1]]])
     ##fas = (br[[4]] / s$length[br[[1]]] > 0.5) * 100 
-    ##fas = br[[3]]
-    fas = rep(100, nrow(br))
+    ##fas = rep(100, nrow(br))
     stopifnot(all( fas>=0 & fas<=115 & !is.na(fas)))
     
     ## split by name of query sequence and just keep the hit with the

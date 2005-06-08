@@ -31,12 +31,14 @@ grid.newpage()
 pushViewport(viewport(layout=grid.layout(3, 2, height=c(1, 0.1, 2), width=c(0.02, 1))))
 
 ##
-## 13:541-555: the segmentation nicely captures two spliced transcripts
+## 14:380-480: overview
 ##
 ## push 2: top panel
 pushViewport(viewport(layout.pos.col=2, layout.pos.row=1))
-plotAlongChrom2(main="a)", chr=13, coord = (541+c(0, 2*wkb))*1e3, ylim=ylim, segObj=so, 
-                probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
+plotAlongChrom2(main="a)", chr=14, coord= c(350,500)*1e3,
+                ylim=ylim, segObj=so, colors=c(cp="#d0d0d0"), 
+                probeAnno = probeAnno, gff=gff,
+                haveNames=FALSE, haveLegend=FALSE, pointSize=unit(0.1, "mm"))
 ## pop 2
 popViewport()
 
@@ -45,11 +47,11 @@ pushViewport(viewport(layout.pos.col=2, layout.pos.row=3,
       layout=grid.layout(3, 3, height=c(1, 0.1, 1), width=c(1, 0.1, 1))))
 
 ##
-## 1:41-47 ACS1: novel architecture
+## 13:547.6-554.6 splicing RPS16A, RPL13B
 ##
 ## push 3: middle left
 pushViewport(viewport(layout.pos.col=1, layout.pos.row=1))
-plotAlongChrom2(main="b)", chr=1, coord = (41+c(0, wkb))*1e3, ylim=ylim, segObj=so, 
+plotAlongChrom2(main="b)", chr=13, coord = (547.6+c(0, wkb))*1e3, ylim=ylim, segObj=so, 
                 probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
 ## pop3
 popViewport()
@@ -67,7 +69,7 @@ popViewport()
 ##
 ## 2:360-367: novel isolated
 ##
-## push 3: middle right
+## push 3: bottom left
 pushViewport(viewport(layout.pos.col=1, layout.pos.row=3))
 plotAlongChrom2(main="d)", chr=2, coord = (360+c(0, wkb))*1e3, ylim=ylim, segObj=so, 
                 probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
@@ -75,11 +77,11 @@ plotAlongChrom2(main="d)", chr=2, coord = (360+c(0, wkb))*1e3, ylim=ylim, segObj
 popViewport()
 
 ##
-## 6:87-94: novel antisense
+## 9:221-228: novel antisense SPO22
 ##
-## push 3: middle right
+## push 3: bottom right
 pushViewport(viewport(layout.pos.col=3, layout.pos.row=3))
-plotAlongChrom2(main="e)", chr=6, coord = (87+c(0, wkb))*1e3, ylim=ylim, segObj=so, 
+plotAlongChrom2(main="e)", chr=9, coord = (221+c(0, wkb))*1e3, ylim=ylim, segObj=so, 
                 probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
 ## plotAlongChrom2(chr=1, coord = c(141.2+144.5)*1e3, ylim=ylim, segObj=so, 
 ##                probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
