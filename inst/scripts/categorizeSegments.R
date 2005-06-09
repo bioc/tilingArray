@@ -38,12 +38,12 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
   catg = factor(rep(NA, nrow(s)), 
     levels = c("excluded", "untranscribed",
       feat1, feat2, 
-      "novel isolated - filtered", "novel isolated - excluded",
-      "novel antisense - filtered", "novel antisense - excluded")) 
+      "novel isolated - filtered", "novel isolated - unassigned",
+      "novel antisense - filtered", "novel antisense - unassigned")) 
 
   simpleCategories = c("annotated ORF", "ncRNA(all)", "excluded", "untranscribed", "dubious gene",
-    "novel isolated - filtered",  "novel isolated - excluded",
-    "novel antisense - filtered", "novel antisense - excluded")
+    "novel isolated - filtered",  "novel isolated - unassigned",
+    "novel antisense - filtered", "novel antisense - unassigned")
   
   ## Step 1: frac.dup
   sel = s[,"frac.dup"] >= maxDuplicated
@@ -109,9 +109,9 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
     sum(isna&filt), ".\n", sep="")
 
   catg[isna &  iso & !filt ] = "novel isolated - filtered"
-  catg[isna &  iso &  filt ] = "novel isolated - excluded"
+  catg[isna &  iso &  filt ] = "novel isolated - unassigned"
   catg[isna & !iso & !filt ] = "novel antisense - filtered"
-  catg[isna & !iso &  filt ] = "novel antisense - excluded"
+  catg[isna & !iso &  filt ] = "novel antisense - unassigned"
 
   stopifnot(!any(is.na(catg)))
   s$category = catg

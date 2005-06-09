@@ -2,6 +2,7 @@ options(error=recover, warn=2)
 library("tilingArray")
 source("/homes/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 
+rnaTypes  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")[3]
 doNotLoadSegScore=TRUE
 source("scripts/readSegments.R")
 
@@ -32,7 +33,7 @@ addDirectHybe = function(s) {
 
 nrbpsList = c(1500)
 
-for(rt in rnaTypes[rrr]) {
+for(rt in rnaTypes) {
   for(nrbps in nrbpsList) {
     cat(">> ", rt, nrbps, "<<\n")
     segScore = scoreSegments(get(rt), gff=gff, nrBasePerSeg=nrbps)

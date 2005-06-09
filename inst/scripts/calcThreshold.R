@@ -37,8 +37,8 @@ calcThreshold = function(x, sel, FDRthresh, showPlot=FALSE, main) {
   return(thresh)
 }
 
-cat("Calculating Thresholds:\n",
-    "=======================\n", sep="")
+cat("Calculation of thresholds for transcribed yes/no:\n",
+    "=================================================\n", sep="")
 
 if(interact) {
   ## x11(width=10, height=length(rnaTypes)*3)

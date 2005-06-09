@@ -3,9 +3,11 @@ if(!exists("gff")) {
   load("probeAnno.rda")
 }
 
-rnaTypes  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")[1:2]
-longNames = c("poly-A RNA", "total RNA", "total RNA (v2)")[1:2]
-names(longNames) = names(indir) = indir = rnaTypes
+longNames = c("seg-polyA-050525"="poly-A RNA",
+  "seg-tot-050525"="total RNA",
+  "seg-tot2-050525"="total RNA (v2)")
+
+names(indir) = indir = rnaTypes
 
 for(rt in rnaTypes) {
   if(!exists(rt)) {
