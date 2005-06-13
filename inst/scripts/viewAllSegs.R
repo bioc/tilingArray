@@ -2,7 +2,8 @@ options(error=recover, warn=0)
 interact =  !TRUE
 library("tilingArray")
 source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
-## source("colorRamp.R")  ## can go with R 2.1
+
+rnaTypes  = c("seg-polyA-050525", "seg-tot-050525")
 source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
 source("scripts/writeSegmentTable.R") 
