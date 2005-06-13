@@ -3,9 +3,11 @@
 ##
 library("tilingArray")
 library("multtest")
+
+rnaTypes  = c("seg-polyA-050525", "seg-tot-050525")
 source("scripts/readSegments.R") 
 
-interact=TRUE
+interact=!TRUE
 if(!interact) {
   sink("expressedFeatures.txt")
   cat("Made on", date(), "\n\n")
@@ -106,7 +108,7 @@ if(!exists("index")) {
 }
 
 hasEnoughProbes = (listLen(index)>=7)
-cat(sum(hasEnoughProbes),"of",length(index),"potential transcripts are matched by >=7 unique probes.")
+cat(sum(hasEnoughProbes),"of",length(index),"potential transcripts are matched by >=7 unique probes.\n\n")
 
 res = matrix(NA, nrow=length(levels(sgff[,"category"])), ncol=8)
 stopifnot(all(rnaTypes==c("seg-polyA-050525", "seg-tot-050525")))
@@ -148,6 +150,19 @@ for(irt in seq(along=rnaTypes)) {
 }
   
 print(res)
+
+##
+##  GO analysis of unexpressed genes
+##
+cat("\n\nGO-Analysis of the untranscribed verified genes:\n\n")
+
+source("scripts/GOHyperG.R")
+source("scripts/writeSegmentTable.R")
+
+unexpressedGenes = names(index)[hasEnoughProbes][!isExp & sgff[hasEnoughProbes, "category"]=="verified gene"]
+
+
+GOHyperG(unexpressedGenes)
 
 if(!interact)
   sink()

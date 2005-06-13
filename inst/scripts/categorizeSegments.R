@@ -33,7 +33,7 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
   
   ## results data structure: a factor which assigns a category to each segment:
   overlap = factor(rep(NA, nrow(s)),
-    levels = c("<50%", ">=50%, <100%", "100%"))
+    levels = c("<50%", ">=50%", "complete"))
   
   catg = factor(rep(NA, nrow(s)), 
     levels = c("excluded", "untranscribed",
@@ -56,9 +56,9 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
   
   ## step 3: annotated
   wh  = which(is.na(catg))
-  attrName = c("<50%"         = "overlappingFeature",
-               ">=50%, <100%" = "mostOfFeatureInSegment",
-               "100%"         = "featureInSegment")
+  attrName = c("<50%"  = "overlappingFeature",
+               ">=50%" = "mostOfFeatureInSegment",
+               "complete"  = "featureInSegment")
 
   categIDs = vector(mode="list", length = length(feat1)+length(feat2))
   names(categIDs) = c(feat1, feat2)
@@ -73,7 +73,7 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
 
   stopifnot(all(listLen(categIDs)>0))
 
-  ## Loop over <50%, 50-100%, 100%:
+  ## Loop over <50%, >=50%, complete:
   for(i in seq(along=attrName)) {
     ovF = strsplit(s[wh, attrName[i]],  split=", ")
 
@@ -106,7 +106,7 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
     sum(isna&filt2), "\n3. oppositeExpression > threshold: ",
     sum(isna&filt3), "\n4. oppositeExpression > max(threshold, segment level - 1): ",
     sum(isna&filt4), "\nRejected by (1 or 2 or 4): ",
-    sum(isna&filt), ".\n", sep="")
+    sum(isna&filt), ".\n\n", sep="")
 
   catg[isna &  iso & !filt ] = "novel isolated - filtered"
   catg[isna &  iso &  filt ] = "novel isolated - unassigned"
@@ -117,12 +117,27 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
   s$category = catg
   s$overlap  = overlap
 
+  ## simpleCategory
   simc = factor(rep(NA, nrow(s)), levels=simpleCategories)
   simc[ catg %in% c("uncharacterized gene", "verified gene")] = "annotated ORF"
   simc[ catg %in% c(allncRNA)]  = "ncRNA(all)"
   for(lev in simpleCategories[-(1:2)])
     simc[ s[,"category"]==lev] = lev
   s$simpleCatg = simc
+
+  ## piechart category
+  pieNames = c(A="overlap >=50%", B="overlap <50%",
+  C="novel isolated - filtered", D="novel isolated - unassigned",
+  E="novel antisense - filtered", F="novel antisense - unassigned")
+  
+  pc = factor(rep(NA, nrow(s)), levels=pieNames)
+  pc[overlap  %in% c(">=50%", "complete")] = "overlap >=50%"
+  pc[overlap  %in% c("<50%")] = "overlap <50%"
+  stopifnot(all(levels(pc)[3:6] %in% levels(catg)))
+  for(k in levels(pc)[3:6])
+    pc[catg == k] = k
+
+  s$pieCat = pc
   
   return(s)
 }

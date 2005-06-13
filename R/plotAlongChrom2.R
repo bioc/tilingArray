@@ -1,10 +1,12 @@
 plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, isDirectHybe=FALSE,
-  scoreShow="pt", nrBasesPerSeg, gff, haveNames=TRUE, haveLegend=TRUE, main="", colors, pointSize=unit(0.6, "mm")) {
+  scoreShow="pt", nrBasesPerSeg, gff, haveNames=TRUE, haveLegend=TRUE, main="", colors,
+  pointSize=unit(0.6, "mm")) {
   
 
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
 
-  defaultColors = c("+" = "#00441b", "-" = "#081d58", "duplicated" = "grey", "cp" = "#101010", "highlight" = "red", "threshold" = "grey")
+  defaultColors = c("+" = "#00441b", "-" = "#081d58", "duplicated" = "grey",
+    "cp" = "#101010", "highlight" = "red", "threshold" = "grey")
   if(!missing(colors)) {
     mt = match(names(colors), names(defaultColors))
     if(any(is.na(mt)))
@@ -140,6 +142,11 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
   istrand = match(strand, c("+", "-"))
   stopifnot(length(strand)==1, !is.na(istrand))
 
+  if(!is.na(threshold)) {
+    y = y-threshold
+    ylim = ylim-threshold
+  }
+  
   ## the expression data. use two viewports for different clipping behavior
   vpr = which(names(VP)==sprintf("expr%d", istrand))
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
@@ -153,7 +160,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
   colo = ifelse(uniq[ord], colors[strand], colors["duplicated"])
 
   if(!is.na(threshold))
-    grid.lines(y=unit(rep(threshold, 2), "native"), gp=gpar(col=colors["threshold"]))
+    grid.lines(y=unit(0, "native"), gp=gpar(col=colors["threshold"]))
   
   if(!is.null(segScore)) {
     segSel   = which(segScore$chr==chr & segScore$strand==strand)
