@@ -61,9 +61,9 @@ names(lineColors) =c("annotated ORF", "ncRNA(all)",
 if("fig2" %in% what){
 
   if(interact) {
-    x11(width=4*length(rnaTypes), height=3*4)
+    x11(width=3*length(rnaTypes), height=3*3.2)
   } else {
-    pdf(paste(outfile, "fig2.pdf", sep="-"), width=3.8*length(rnaTypes), height=3*4.0)
+    pdf(paste(outfile, "fig2.pdf", sep="-"), width=3*length(rnaTypes), height=3*3.2)
   }
 
   par(mfrow=c(3, length(rnaTypes)))

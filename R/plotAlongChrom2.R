@@ -404,9 +404,9 @@ plotDuplication = function(xlim, chr, strand, probeAnno, VP) {
 ##------------------------------------------------------------
 featureDrawing = function() {
   res = data.frame(
-    col      = I(c("#d0e0f0", "#d94801", "#005a32", "#707070", "#fc4e2a", 
+    col      = I(c("#7AADD1", "#d94801", "#005a32", "#707070", "#fc4e2a", 
                    "#A65628", "#A65628", "#FED976", "#FED976")),
-    fill     = I(c("#7AADD1", "#fd8d3c", "#41ab5d", "#e0e0e0", "#feb24c", 
+    fill     = I(c("#d0e0f0", "#fd8d3c", "#41ab5d", "#e0e0e0", "#feb24c", 
                    "#BF5B17", "#BF5B17", "#FFEDA0", "#FFEDA0"))) 
   rownames(res) =   c("CDS",     "tRNA",    "snoRNA",  "pseudogene", "ncRNA",   
             "transposable_element", "transposable_element_gene", "centromere", "telomere")
