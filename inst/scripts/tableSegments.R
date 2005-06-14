@@ -4,7 +4,7 @@ library("geneplotter"); source("~/madman/Rpacks/geneplotter/R/histStack.R")
 graphics.off()
 options(error=recover, warn=2)
 interact = (!TRUE)
-what     = c("fig2", "wpt", "cons", "lvsx", "wst")[1:4] 
+what     = c("fig2", "fig4", "cons", "lvsx", "wst")[1:3] 
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
@@ -173,40 +173,47 @@ if("fig2" %in% what){
   ##
   ##
   selectedCategories = c(
-    "(1) only 'overlap <50%' (i.e. in 'overlappingFeature' but not 'mostOfFeatureinSegment')", 
-    "(2) only 'overlap >=50%', but not 'complete' (i.e. in 'mostOfFeatureinSegment' but not 'featureInSegment')",
-    "(3) 'complete' (i.e. in 'featureInSegment')",
-    "(4): (1) or (2)",
-    "(5): (2) or (3)")
-
+    "(1): only 'overlap <50%' (i.e. in 'overlappingFeature' but not 'mostOfFeatureinSegment')", 
+    "(2): only 'overlap >=50%', but not 'complete' (i.e. in 'mostOfFeatureinSegment' but not 'featureInSegment')",
+    "(3): 'complete' (i.e. in 'featureInSegment')",
+    "(4): (1) AND (2), i.e. 'overlap <50%' in one segment and 'overlap >=50%' in another segment.\n")
+  
   selGenes = ((gff[,"feature"]=="gene") & (gff[, "orf_classification"] %in% c("Verified", "Uncharacterized")))
   featNames = list("annotated ORFs" = unique(gff[ selGenes, "Name"]),
                    "ncRNA(all)" = unique(gff[ gff[, "feature"] %in% allncRNA, "Name"]))
 
-  tab = matrix(NA, nrow=length(selectedCategories)*length(featNames), ncol=length(rnaTypes)+1)
-  rownames(tab) = paste("(", rep(1:5, 2), ") ", rep(names(featNames), each=5), sep="")
+  nsc = length(selectedCategories)
+  nfn = length(featNames)
+  tab = matrix(NA, nrow=nsc*nfn, ncol=length(rnaTypes)+1)
+  rownames(tab) = paste("(", rep(1:nsc, nfn), ") ", rep(names(featNames), each=nsc), sep="")
   colnames(tab) = c(rnaTypes, "in genome")
 
-  for(rt in rnaTypes) {
-    ovf = unique(unlist(strsplit(cs[[rt]][, "overlappingFeature"],     split=", ")))
-    mof = unique(unlist(strsplit(cs[[rt]][, "mostOfFeatureInSegment"], split=", ")))
-    fis = unique(unlist(strsplit(cs[[rt]][, "featureInSegment"],       split=", ")))
-    
+  for(irt in seq(along=rnaTypes)) {
+    isT = !(cs[[irt]][, "category"] %in% c("excluded", "untranscribed"))
+    ovf = strsplit(cs[[irt]][isT, "overlappingFeature"],     split=", ")
+    mof = strsplit(cs[[irt]][isT, "mostOfFeatureInSegment"], split=", ")
+    fis = strsplit(cs[[irt]][isT, "featureInSegment"],       split=", ")
+    s1  = mapply(setdiff, ovf, mof)
+    s2  = mapply(setdiff, mof, fis)
+    s3  = fis
     for(isc in seq(along=selectedCategories)) {
-      fIDs = switch(isc,
-        setdiff(ovf, mof),
-        setdiff(mof, fis),
-        fis,
-        setdiff(ovf, fis),
-        mof)
-      for(k in seq(along=featNames))
-        tab[ (k-1)*length(selectedCategories)+isc, rt ] = length(intersect(fIDs, featNames[[k]]))
+      fIDs = unique(switch(isc,
+        unlist(s1),
+        unlist(s2),
+        unlist(s3),
+        intersect(unlist(s1), unlist(s2))))
+      for(k in seq(along=featNames)) {
+        m =  intersect(fIDs, featNames[[k]])
+        tab[ (k-1)*length(selectedCategories)+isc, irt ] = length(m)
+        if(irt==1 && isc==4 && k==1)
+          writeLines(replaceSystematicByCommonName(m), con="tableSegments-unusual-architecture.txt")
+      }
     }    
   }
   tab[ , "in genome" ] = rep(listLen(featNames), each=length(selectedCategories))
 
-  cat("\nHow many unique known features (SGD Names) do we find with\n",
-      paste(selectedCategories, collapse="\n"), "\n", 
+  cat("\nHow many unique known features (SGD Names) do we find that occur with\n",
+      paste(selectedCategories, collapse="\n"), "\n",
       "=====================================================================\n", sep="")
   print(tab)  
   cat("\n\n")
@@ -262,7 +269,7 @@ if("fig2" %in% what){
 ## What fraction of basepairs in the genome are transcribed
 ## and how many genes do we find expressed
 ##
-if("wpt" %in% what){
+if("fig4" %in% what){
   data(transcribedFeatures)
   feats = transcribedFeatures[transcribedFeatures!="gene"]
   nrChr = 16
@@ -285,17 +292,18 @@ if("wpt" %in% what){
   for(rt in rnaTypes) {
     s = cs[[rt]]
     threshold = get("threshold", get(rt))
+    lev = s[, "level"] - threshold
     res = lapply(1:nrChr, function(chr) {
       res  = rep(-Inf, chrlen[chr])
       selt = which(s[, "chr"]==chr & !is.na(s[, "level"]) & s[,"frac.dup"]<maxDuplicated)
       for(i in selt) {
         rg = s$start[i]:s$end[i] 
-        res[rg] = pmax(res[rg], s[i, "level"])
+        res[rg] = pmax(res[rg], lev[i])
       }
       res
     })
     segLev[[rt]]  = unlist(res)
-    isTrans[[rt]] = (segLev[[rt]] >= get("threshold", get(rt)))
+    isTrans[[rt]] = (segLev[[rt]] >= 0)
   }
   isTrans[["both"]] = (isTrans[[1]] | isTrans[[2]])
   segLev[["both"]]  = pmax(segLev[[1]], segLev[[2]])
@@ -318,14 +326,20 @@ if("wpt" %in% what){
   cat("\n")
 
   if(!interact)
-    pdf(paste(outfile, "wpt.pdf", sep="-"), height=length(rnaTypes)*4, width=6)
-  par(mfrow=c(2,1))
-  cols = brewer.pal(4, "Paired")
-  for(i in seq(along=rnaTypes)) {
-    rt = rnaTypes[i]
-    hist(segLev[[rt]], breaks=100, col=cols[i*2-1], main=rt, xlab="level")
-    abline(v=get("threshold", get(rt)), col=cols[i*2], lwd=3)
+    pdf(paste(outfile, "fig4.pdf", sep="-"), height=3, width=4)
+  par(mfrow=c(1,1))
+  myHist = function(x) {
+    xmax = quantile(x, 0.9999, na.rm=TRUE)
+    xmin = min(x[is.finite(x)])
+    x[x>xmax] = xmax
+    by = 0.1
+    breaks = c(rev(seq(0, xmin-by, by=-by)), seq(by, xmax+by, by=by))
+    cols = brewer.pal(4, "Paired")[1:2]
+    hist(x, breaks=breaks, col=cols[1], main="", yaxt="n", ylab="", xlab="level")
+    axis(side=2, at=(0:2)*2e5, labels=c("0", "200000", "400000"), las=1)
+    abline(v=0, col="black", lwd=3)
   }
+  myHist(segLev[["both"]])
   if(!interact)
     dev.off()  
 }

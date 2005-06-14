@@ -42,7 +42,7 @@ pushViewport(viewport(layout.pos.col=1, layout.pos.row=1,
      layout=grid.layout(1, 2, height=1, width=c(0.01, 1))))
 pushViewport(viewport(layout.pos.col=2, layout.pos.row=1))
 
-plotAlongChrom2(main="a)", chr=14, coord= c(410,490)*1e3,
+plotAlongChrom2(chr=14, coord= c(410000,488150),
                 ylim=ylim, segObj=so, colors=c(cp="#d0d0d0"), 
                 probeAnno = probeAnno, gff=gff,
                 haveNames=FALSE, haveLegend=FALSE, pointSize=unit(0.1, "mm"))
@@ -55,21 +55,21 @@ pushViewport(viewport(layout.pos.col=1, layout.pos.row=2,
       layout=grid.layout(2, 6, height=c(1, 1), width=c(0.1, 1, 0.07, 1, 0.07, 1))))
 
 ##
-## 13:548.6-554.6 splicing RPS16A, RPL13B
+## 13:550k splicing RPS16A, RPL13B
 ##
 ## push 3: middle left
 pushViewport(viewport(layout.pos.col=2, layout.pos.row=1))
-plotAlongChrom2(main="b)", chr=13, coord = (548.6+c(0, wkb))*1e3, ylim=ylim, segObj=so, 
+plotAlongChrom2(chr=13, coord = c(549300, 554700), ylim=ylim, segObj=so, 
                 probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
 ## pop3
 popViewport()
 
 ##
-## 11:63-69: MNN4, novel architecture
+## 11:65k: MNN4, novel architecture
 ##
 ## push 3: middle right
 pushViewport(viewport(layout.pos.col=4, layout.pos.row=1))
-plotAlongChrom2(main="c)", chr=11, coord = (63+c(0, wkb))*1e3, ylim=ylim, segObj=so, 
+plotAlongChrom2(chr=11, coord = c(63370, 68270), ylim=ylim, segObj=so, 
                 probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
 ## pop3
 popViewport()
@@ -79,7 +79,7 @@ popViewport()
 ##
 ## push 3: bottom left
 pushViewport(viewport(layout.pos.col=6, layout.pos.row=1))
-plotAlongChrom2(main="d)", chr=2, coord = (360.5+c(0, wkb))*1e3, ylim=ylim, segObj=so, 
+plotAlongChrom2(chr=2, coord = c(360500, 365970), ylim=ylim, segObj=so, 
                 probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
 ## pop3
 popViewport()
@@ -89,11 +89,8 @@ popViewport()
 ##
 ## push 3: bottom right
 pushViewport(viewport(layout.pos.col=2, layout.pos.row=2))
-plotAlongChrom2(main="e)", chr=9, coord = (221+c(0, wkb))*1e3, ylim=ylim, segObj=so, 
+plotAlongChrom2(chr=9, coord = c(221000, 226500), ylim=ylim, segObj=so, 
                 probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
-## plotAlongChrom2(chr=1, coord = c(141.2+144.5)*1e3, ylim=ylim, segObj=so, 
-##                probeAnno = probeAnno, gff=gff, haveLegend=FALSE)
-## pop3
 popViewport()
 
 #for(j in c(1,3)) {

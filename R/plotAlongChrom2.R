@@ -108,7 +108,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, is
 
   ## title
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=which(names(VP)=="title")))
-  grid.text(label=paste(main, "Chr", chr), x = 0.5, y = 0.5, 
+  grid.text(label=paste(main, "Chr ", chr, sep=""), x = 0.5, y = 0.5, 
             just = "centre", gp = gpar(cex=1))
   popViewport()
 
@@ -322,7 +322,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
 ##------------------------------------------------------------
 alongChromTicks = function(x){
   rx = range(x)
-  lz = log((rx[2]-rx[1])/5, 10)
+  lz = log((rx[2]-rx[1])/4, 10)
   fl = floor(lz)
   if( lz-fl > log(5, 10))
     fl = fl +  log(5, 10)
