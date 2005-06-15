@@ -101,7 +101,8 @@ if("stat" %in% what){
     maxlen = 700
     br = seq(0, maxlen, by=20)
     scatterWithHist(ul,
-         xlab=colnames(ul)[1], ylab=colnames(ul)[2],
+         xlab=paste("Length of", colnames(ul)[1]),
+         ylab=paste("Length of", colnames(ul)[2]),
          breaks = br, pch=20, barcols=cols[c(1,3)])
     
     if(!interact)

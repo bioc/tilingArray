@@ -63,7 +63,7 @@ if("fig2" %in% what){
   if(interact) {
     x11(width=3*length(rnaTypes), height=3*3.2)
   } else {
-    pdf(paste(outfile, "fig2.pdf", sep="-"), width=3*length(rnaTypes), height=3*3.2)
+    pdf(paste(outfile, "fig2.pdf", sep="-"), width=2.5*length(rnaTypes), height=2.6*3)
   }
 
   par(mfrow=c(3, length(rnaTypes)))
@@ -71,11 +71,7 @@ if("fig2" %in% what){
 
   cat("\nSegment overlap with known features (genes):\n",
         "============================================\n\n", sep="")
-
-  pieCat = vector(mode="list", length=length(rnaTypes))
-  names(pieCat) = rnaTypes
   mai.old = par(mai=c(0,0,0.5,0))
-  
   for(irt in seq(along=rnaTypes)) {
     rt = rnaTypes[irt]
     s  = cs[[rt]] 
@@ -84,7 +80,7 @@ if("fig2" %in% what){
     labels = LETTERS[ match(names(px), levels(s[, "pieCat"])) ]
     stopifnot(all(names(px) %in% names(fillColors)))
     counts = cbind(counts, px)
-    pie(px, radius=0.75, main=paste(c("a)", "b)")[irt], longNames[rt]), 
+    pie(px, radius=0.75, main=longNames[rt], 
         col = fillColors[names(px)], labels = paste(labels, " (", px, ")", sep=""))
 
     category = s[, "category"]
@@ -222,43 +218,47 @@ if("fig2" %in% what){
   ## LENGTH & LEVEL DISTRIBUTIONS
   ##
   source("scripts/showDens.R")
-  maxlen=5000
-  br = seq(0, maxlen, by=200)
+  maxlen=4000
+  mai = par("mai")
+  mai[2:3] = 0.1
+  par(mai=mai)
+  br = seq(0, maxlen, by=50)
   ## breaksFun = function(z) paste(signif(z, 3))
   for(irt in seq(along=rnaTypes)) {
     s   = cs[[rnaTypes[irt]]]
     plotCat = s[, "pieCat"]
     stopifnot(all(levels(plotCat) %in% names(fillColors)))
     len = split(s[, "length"], plotCat)
-    len = lapply(len, function(z) {z[z>maxlen]=maxlen; z})
-    ## len = len[order(listLen(len))]
+    ## len = lapply(len, function(z) {z[z>maxlen]=maxlen; z})
+    len = lapply(len, function(z) {z[z>maxlen]=NA; z})
     cols = fillColors[names(len)]
-
-    ## histStack(len, breaksFun=breaksFun, 
     showDens(len,
-      breaks=br, col=cols, main=paste(c("c)", "d)")[irt]), xlab="length")
+      breaks=br, col=cols, main="", xlab="length (nucleotides)")
   }
 
+
+  lvall = lapply(rnaTypes, function(rt) {
+    rv  = cs[[rt]][, "level"]
+    thr = get("threshold", get(rt))
+    return(rv-thr)
+  })
+  rg = quantile(unlist(lvall), probs=c(0.001, 0.999), na.rm=TRUE)
+  by = 0.1
+  eps = diff(rg)/1e6
+  br = c(rev(seq(-eps, rg[1]-by, by=-by)), seq(by, rg[2]+by, by=by))
+    
   for(irt in seq(along=rnaTypes)) {
-    s   = cs[[rnaTypes[irt]]]
-    thr = get("threshold", get(rnaTypes[irt]))
+    s       = cs[[rnaTypes[irt]]]
     plotCat = s[, "pieCat"]
     levels(plotCat) = c(levels(plotCat), "untranscribed")
     plotCat[ s[, "simpleCatg"]=="untranscribed" ] = "untranscribed"
     stopifnot(all(levels(plotCat) %in% names(fillColors)))
 
-    lv = split(s[, "level"]-thr, plotCat)
-    ## lv = lv[order(listLen(lv))]
-    by = 0.2
-    rg = quantile(unlist(lv), probs=c(0.001, 0.999))
-    eps = diff(rg)/1e6
-    br = c(rev(seq(-eps, rg[1]-by, by=-by)), seq(by, rg[2]+by, by=by))
+    lv = split(lvall[[irt]], plotCat)
     lv = lapply(lv, function(z)
       ifelse(z<=rg[2], ifelse(z>=rg[1], z, rg[1]), rg[2]))
-    ## histStack(lv, breaksFun=breaksFun, 
     showDens(lv,
-       breaks=br, col=fillColors[names(lv)], main=paste(c("e)", "f)")[irt]), xlab="level")
-    ## abline(v=which.min(abs(br-thr))-1, col="grey", lwd=3)
+       breaks=br, col=fillColors[names(lv)], main="", xlab="level")
   }
   
   if(!interact)

@@ -1,4 +1,4 @@
-showDens = function(z, breaks, col, ylab="frequency", ...) {
+showDens = function(z, breaks, col, ylab="", ...) {
   y  = matrix(NA, nrow=length(breaks)-1, ncol=length(z))
   for(k in seq(along=z)) {
     h = hist(z[[k]], breaks=breaks, plot=FALSE)
