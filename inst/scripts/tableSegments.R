@@ -4,7 +4,7 @@ library("geneplotter"); source("~/madman/Rpacks/geneplotter/R/histStack.R")
 graphics.off()
 options(error=recover, warn=2)
 interact = (!TRUE)
-what     = c("fig2", "fig4", "cons", "lvsx", "wst")[1:3] 
+what     = c("fig2", "fig4", "cons", "lvsx", "wst")[1] 
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
@@ -140,7 +140,7 @@ if("fig2" %in% what){
     
     if(jstart==jend) {
       lne = lns = 0
-      lni = ke-ks+1
+      lni = (ke-ks+1) * as.numeric(isTr1[jstart])
     } else {
       lns = (end1[jstart] - ks + 1) * as.numeric(isTr1[jstart])
       lne = (ke - start1[jend] + 1) * as.numeric(isTr1[jend])
