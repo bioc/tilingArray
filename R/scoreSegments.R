@@ -20,7 +20,7 @@ movingWindow = function(x, y, width) {
   stopifnot(length(x)==nrow(y))
   w = which(x+width-1 <= x[length(x)])
   if(length(w)==0) {
-    res = +Inf
+    res = median(y)
   } else {
     res = sapply(w, function(i)
       median(y[x>=x[i] & x<(x[i]+width)]))
