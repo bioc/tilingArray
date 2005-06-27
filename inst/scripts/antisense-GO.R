@@ -2,6 +2,7 @@
 ## run this script after "tableSegments"
 ##
 library("GOstats")
+source("scripts/GOHyperG.R")
 interact=!TRUE
 if(!interact)
   sink("antisense-GO.txt")
