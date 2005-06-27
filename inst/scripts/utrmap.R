@@ -6,12 +6,6 @@
 ## e) scatterplot mean level vs 3' UTR length
 ## The poly-A version is for the paper,
 ## the total RNA version is for the supplement.
-##
-## Criteria for good gene-containing segments:
-## a. contains less than 50% (maxDuplicated) multiple-hit probes
-## d. the mean level is above threshold
-## e. on both flanks level is down
-## f. moving average of 3 probes should not deviate too far to below
 
 library("tilingArray")
 library("geneplotter")

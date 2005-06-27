@@ -1,8 +1,10 @@
 showDens = function(z, breaks, col, ylab="", ...) {
   y  = matrix(NA, nrow=length(breaks)-1, ncol=length(z))
+  scaleFac = numeric(length(z))
   for(k in seq(along=z)) {
     h = hist(z[[k]], breaks=breaks, plot=FALSE)
-    y[,k] = h$density/max(h$density) * 0.92
+    scaleFac[k] = 1/max(h$counts) * 0.92 
+    y[,k] = h$counts * scaleFac[k]
     if(k==1) {
       mids = h$mids
     } else {
@@ -26,5 +28,5 @@ showDens = function(z, breaks, col, ylab="", ...) {
       y[,i] = y[,i]/max(y[,i]) + (i-1)
     matplot(x[,1], y, type="l", yaxt="n", lwd=3, lty=1, ...)
   }
-
+  return(scaleFac)
 }

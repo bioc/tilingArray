@@ -1,6 +1,6 @@
 plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, isDirectHybe=FALSE,
   scoreShow="pt", nrBasesPerSeg, gff, haveNames=TRUE, haveLegend=TRUE, main="", colors,
-  pointSize=unit(0.6, "mm")) {
+  pointSize=unit(0.6, "mm"), featColScheme=1) {
   
 
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
@@ -51,9 +51,9 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, is
       dat$mid   = (dat[["start"]] + dat[["end"]])/2
       lengthChr = dat[["end"]][length(dat[["end"]])]
       
-      if("threshold" %in% ls(segObj))
-        threshold = get("threshold", segObj)
-      
+      if("theThreshold" %in% ls(segObj))
+        threshold = get("theThreshold", segObj)
+
       if("segScore" %in% ls(segObj)) {
         sgs = get("segScore", segObj)
         if(!missing(nrBasesPerSeg))
@@ -83,7 +83,8 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, is
                      segScore=sgs, threshold=threshold, scoreShow=scoreShow,
                      gff=gff, chr=chr,
                      strand=ifelse(isDirectHybe, otherStrand(strand), strand),
-                     VP=VP, colors=colors, pointSize=pointSize, haveNames=haveNames)
+                     VP=VP, colors=colors, pointSize=pointSize, haveNames=haveNames,
+                     featColScheme=featColScheme)
     
   }
 
@@ -122,7 +123,7 @@ plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, is
 ## gff and chrSeqname into an environment or object?
 
 plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreShow,
-  gff, chr, strand, VP, colors, pointSize, haveNames, probeLength=25) {
+  gff, chr, strand, VP, colors, pointSize, haveNames, probeLength=25, featColScheme) {
 
   ## could this be done better?
   if(is.matrix(y))
@@ -173,11 +174,10 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     grid.segments(x0 = unit(meanss, "native"), x1 = unit(meanss, "native"),
                   y0 = unit(0.1, "npc"),       y1 = unit(0.9, "npc"),
                   gp = gpar(col=colors["cp"]))
-
-    grid.points(x[ord], y[ord], pch=20, size=pointSize, gp=gpar(col=colo))
-
   }
+  grid.points(x[ord], y[ord], pch=20, size=pointSize, gp=gpar(col=colo))
   popViewport(2)
+
 
   if(FALSE) {
   ## if(!is.null(segScore)) {
@@ -233,7 +233,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
   }
   
-  featDraw = featureDrawing()
+  featDraw = featureDrawing(featColScheme)
   sfeatsp  = featsp[rownames(featDraw)]
   ll       = listLen(sfeatsp)
 
@@ -402,12 +402,16 @@ plotDuplication = function(xlim, chr, strand, probeAnno, VP) {
 ##------------------------------------------------------------
 ## featureDrawing
 ##------------------------------------------------------------
-featureDrawing = function() {
-  res = data.frame(
-    col      = I(c("#7AADD1", "#d94801", "#005a32", "#707070", "#fc4e2a", 
-                   "#A65628", "#A65628", "#FED976", "#FED976")),
-    fill     = I(c("#d0e0f0", "#fd8d3c", "#41ab5d", "#e0e0e0", "#feb24c", 
-                   "#BF5B17", "#BF5B17", "#FFEDA0", "#FFEDA0"))) 
+featureDrawing = function(what=1) {
+  res = switch(what, 
+    data.frame(col  = I(c("#7AADD1", "#d94801", "#005a32", "#707070", "#fc4e2a", 
+                          "#A65628", "#A65628", "#FED976", "#FED976")),
+               fill = I(c("#d0e0f0", "#fd8d3c", "#41ab5d", "#e0e0e0", "#feb24c", 
+                          "#BF5B17", "#BF5B17", "#FFEDA0", "#FFEDA0"))),
+    data.frame(col  = I(rep("#7AADD1", 9)),
+               fill = I(rep("#d0e0f0", 9))),
+    stop("Sapperlot"))
+    
   rownames(res) =   c("CDS",     "tRNA",    "snoRNA",  "pseudogene", "ncRNA",   
             "transposable_element", "transposable_element_gene", "centromere", "telomere")
   return(res)

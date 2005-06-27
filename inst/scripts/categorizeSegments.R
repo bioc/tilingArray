@@ -25,8 +25,7 @@ allncRNA = c("ncRNA","snoRNA","snRNA","tRNA","rRNA")
 categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
 
   s = get("segScore", env)
-  threshold = get("threshold", env)
-  stopifnot(length(threshold)==1, is(s, "data.frame"))
+  stopifnot(is(s, "data.frame"))
 
   feat1 = c("verified gene", "uncharacterized gene", "dubious gene")
   feat2 = c("tRNA", "rRNA", "snoRNA","snRNA", "ncRNA","transposable_element_gene", "transposable_element")
@@ -51,7 +50,7 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
   catg[ sel ] = "excluded"
     
   ## Step 2: untranscribed
-  sel = (is.na(catg) & s[,"level"] < threshold)
+  sel = (is.na(catg) & s[,"level"] < 0)
   catg[ sel ] = "untranscribed"
   s$isUnIso = (sel & (s[, "overlapFeatAll"]==""))
   
@@ -91,21 +90,22 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
 
   ## step 4: novelty filter
   zmin = pmin(s[, "zLeft"], s[, "zRight"])
-  
+  xOp  = s[,"oppositeExpression"]
   filt1 = (is.na(zmin) | (zmin <zThresh))
   filt2 = (s[,"length"] < minNewSegmentLength)
-  filt3 = (s[,"oppositeExpression"] > threshold)
-  filt4 = (s[,"oppositeExpression"] > pmax(threshold, s[,"level"]-1))
+  filt3 = (!is.na(xOp) & xOp > 0)
+  filt4 = (!is.na(xOp) & xOp > pmax(0, s[,"level"]-1))
   filt  = (filt1|filt2|filt4)
-
+  stopifnot(!any(is.na(filt)))
+  
   ## step 5: novel - isolated or antisense
   iso  = (s[,"oppositeFeature"]=="")
   isna = is.na(catg)
 
   cat("Novelty filter: Considering ", sum(isna), " segments.\n1. z-scores < ", zThresh, ": ",
     sum(isna&filt1), "\n2. length < ", minNewSegmentLength, ": ",
-    sum(isna&filt2), "\n3. oppositeExpression > threshold: ",
-    sum(isna&filt3), "\n4. oppositeExpression > max(threshold, segment level - 1): ",
+    sum(isna&filt2), "\n3. oppositeExpression > 0: ",
+    sum(isna&filt3), "\n4. oppositeExpression > max(0, segment level - 1): ",
     sum(isna&filt4), "\nRejected by (1 or 2 or 4): ",
     sum(isna&filt), ".\n\n", sep="")
 

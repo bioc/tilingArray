@@ -1,6 +1,7 @@
 ##
 ## run this script after "tableSegments"
 ##
+library("GOstats")
 interact=!TRUE
 if(!interact)
   sink("antisense-GO.txt")

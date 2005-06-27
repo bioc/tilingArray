@@ -4,7 +4,7 @@ library("geneplotter"); source("~/madman/Rpacks/geneplotter/R/histStack.R")
 graphics.off()
 options(error=recover, warn=2)
 interact = (!TRUE)
-what     = c("fig2", "fig4", "cons", "lvsx", "wst")[1] 
+what     = c("fig2", "fig4", "cons", "lvsx", "wst")
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
@@ -15,6 +15,7 @@ outfile = "tableSegments"
 source("scripts/readSegments.R") 
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
+source("scripts/showDens.R")
 
 if(!interact){
   sink(paste(outfile, ".txt", sep=""))
@@ -217,7 +218,6 @@ if("fig2" %in% what){
   ##
   ## LENGTH & LEVEL DISTRIBUTIONS
   ##
-  source("scripts/showDens.R")
   maxlen=4000
   mai = par("mai")
   mai[2:3] = 0.1
@@ -237,15 +237,11 @@ if("fig2" %in% what){
   }
 
 
-  lvall = lapply(rnaTypes, function(rt) {
-    rv  = cs[[rt]][, "level"]
-    thr = get("threshold", get(rt))
-    return(rv-thr)
-  })
-  rg = quantile(unlist(lvall), probs=c(0.001, 0.999), na.rm=TRUE)
-  by = 0.1
-  eps = diff(rg)/1e6
-  br = c(rev(seq(-eps, rg[1]-by, by=-by)), seq(by, rg[2]+by, by=by))
+  lvall = lapply(rnaTypes, function(rt) cs[[rt]][, "level"] )
+  rg    = quantile(unlist(lvall), probs=c(0.001, 0.999), na.rm=TRUE)
+  by    = 0.1
+  eps   = diff(rg)/1e6
+  br    = c(rev(seq(-eps, rg[1]-by, by=-by)), seq(by, rg[2]+by, by=by))
     
   for(irt in seq(along=rnaTypes)) {
     s       = cs[[rnaTypes[irt]]]
@@ -290,9 +286,8 @@ if("fig4" %in% what){
   names(isTrans) = names(segLev) = c(rnaTypes, "both")
   
   for(rt in rnaTypes) {
-    s = cs[[rt]]
-    threshold = get("threshold", get(rt))
-    lev = s[, "level"] - threshold
+    s   = cs[[rt]]
+    lev = s[, "level"]
     res = lapply(1:nrChr, function(chr) {
       res  = rep(-Inf, chrlen[chr])
       selt = which(s[, "chr"]==chr & !is.na(s[, "level"]) & s[,"frac.dup"]<maxDuplicated)
@@ -334,9 +329,11 @@ if("fig4" %in% what){
     x[x>xmax] = xmax
     by = 0.1
     breaks = c(rev(seq(0, xmin-by, by=-by)), seq(by, xmax+by, by=by))
-    cols = brewer.pal(4, "Paired")[1:2]
-    hist(x, breaks=breaks, col=cols[1], main="", yaxt="n", ylab="", xlab="level")
-    axis(side=2, at=(0:2)*2e5, labels=c("0", "200000", "400000"), las=1)
+    theCol = brewer.pal(4, "Paired")[3]
+    ##hist(x, breaks=breaks, col=cols[1], main="", yaxt="n", ylab="", xlab="level")
+    sf = showDens(z=list(x=x), breaks=breaks, col=theCol, main="",  xlab="expression level")
+    
+    axis(side=2, at=(0:2)*2e5*sf[1], labels=c("0", "200000", "400000"), las=1)
     abline(v=0, col="black", lwd=3)
   }
   myHist(segLev[["both"]])
