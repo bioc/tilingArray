@@ -1,8 +1,10 @@
-plotAlongChrom2 = function(chr, coord, highlight, segObj, y, ylim, probeAnno, isDirectHybe=FALSE,
-  scoreShow="pt", nrBasesPerSeg, gff, haveNames=TRUE, haveLegend=TRUE, main="", colors,
-  pointSize=unit(0.6, "mm"), featColScheme=1) {
-  
-
+plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg, 
+                      probeAnno, gff,
+                      colors, featColScheme=1,
+                      isDirectHybe=FALSE, scoreShow = "pt", 
+                      haveNames=TRUE, haveLegend=TRUE, main="", 
+                      pointSize=unit(0.6, "mm")) {
+ 
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
 
   defaultColors = c("+" = "#00441b", "-" = "#081d58", "duplicated" = "grey",

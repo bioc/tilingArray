@@ -27,8 +27,6 @@ in the \code{scripts} directory of this package. For an example
 scoring script, which loads the data and then calls this function, see
 the script \code{scoreSegments.R}.
 
-More details can be found in the separate file mat_meth_wh_DATE.doc.
-
 
 % For each segment, we calculate and record its:
 % \describe{

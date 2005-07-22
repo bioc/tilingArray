@@ -1,12 +1,15 @@
-\name{plotAlongChrom2}
-\alias{plotAlongChrom2}
+\name{plotAlongChrom}
+\alias{plotAlongChrom}
 \title{Plot the results of segmentation along a chromosomal region}
 \keyword{hplot}
 \description{Plot the results of segmentation along a chromosomal region}
 
-\usage{plotAlongChrom2(chr, coord, highlight, segObj, y, probeAnno,
-                       scoreShow = "pt", nrBasesPerSeg, gff,
-                       haveLegend=TRUE)}
+\usage{plotAlongChrom(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg, 
+                      probeAnno, gff,
+                      colors, featColScheme=1,
+                      isDirectHybe=FALSE, scoreShow = "pt", 
+                      haveNames=TRUE, haveLegend=TRUE, main="", 
+                      pointSize=unit(0.6, "mm"))}
 
 \arguments{
   \item{chr}{integer of length 1 with the number of the chromosome for
@@ -16,26 +19,48 @@
   \item{highlight}{optional, list with two elements: a single numeric value
     \code{coord} and a character \code{strand}. If present, this
     position is marked by a vertical red bar on the coordinate axis.}
-  \item{segObj}{environment containing three types of data:
-    1. microarray intensities in along-chromosome order,
-    2. segmentation (output of findSegments),
-    3. segment score (dataframe, can
-    be missing iff \code{nrBasesPerSeg} is present),
-    4. the threshold for "transcribed" segments.
+  \item{segObj}{environment containing three types of data
+    \itemize{
+      \item microarray intensities in along-chromosome order,
+      \item a segmentation (output of findSegments),
+      \item a data.frame named \code{segScore} with segment scores; can
+        be missing iff \code{nrBasesPerSeg} is present,
+      \item a numeric scalar names \code{theThreshold}, which is used to 
+        draw a horizontal "threshold" line in the plot.
+    }
     See also Paragraph \emph{Intensities} in the \emph{Details} section.
     This is currently simply an environment that is expected to contain
     certain objects with certain names. In future version, this is
-    supposed to be replaced by a proper S4 object.}
-  \item{y}{numeric vector of intensities from a (virtual) array,
+    may be replaced by a proper S4 object.}
+  \item{y}{numeric vector of intensities from an array,
     see Paragraph \emph{Intensities} in the \emph{Details} section.}
-  \item{probeAnno}{environment with probe annotations, see details.}
-  \item{scoreShow}{character, name of a column in \code{segScore} that
-    is to be used for the coloring of the segments.}
-  \item{nrBasesPerSeg}{numeric of length 1 with the average number of
-    nucleotide bases per segment. Can
-    be missing iff \code{segScore} is present.}
+  \item{ylim}{numeric vector of length two with y-axis limits.}
+  \item{nrBasesPerSeg}{numeric scalar. If \code{segObj} does not 
+     contain a \code{segScore} data.frame, then this parameter allows to 
+     choose the parameter which controls the number of segments in the 
+     segmentation (called \emph{S} in the paper). In particular, this 
+     parameter specifies the average length of segments, measured in bases, 
+     thus one value can be used for all chromosomes.}
+  \item{probeAnno}{environment with probe annotations, see vignette.}
   \item{gff}{data frame with genome annotation from the GFF file.}
-  \item{haveLegend}{logical, should the plot contain a legend?}
+  \item{colors}{named character vector, optional. If missing, 
+    the following default is used:
+    \code{c("+"="#00441b", "-"="#081d58", "duplicated"="grey", "cp"="#101010", 
+   "highlight"="red", "threshold"="grey")}, 
+   where the first three elements refer to colors of data points and the 
+   last three to those of lines in the plot.}
+  \item{featColScheme}{numeric scalar, used to select a color scheme for the 
+   boxes representing genomic features such as coding sequences, ncRNAs etc. 
+   Currently the values 1 and 2 are supported.}
+  \item{isDirectHybe}{logical scalar: if TRUE, the mapping of probes to genomic 
+   strands is reversed with respect to the default. This is appropriate for data 
+   from a direct RNA hybridization that used no reverse transcription.} 
+  \item{scoreShow}{character: name of a column in \code{segScore} that
+    is to be used for the coloring of the segments.}
+  \item{haveNames}{logical; should their names be added to the feature symbols?}
+  \item{haveLegend}{logical: should the plot contain a legend?} 
+  \item{main}{character: plot title.}
+  \item{pointSize}{unit object: point size used for the probe intensities scatterplot.}
 }
 
 \details{
