@@ -26,9 +26,9 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
   if(!file.info(outputDir)$isdir)
     stop(paste("'", outputDir, "' is not a directory.", sep=""))
 
-  graphicsDir = paste(outputDir,"png",sep="/")
-  if(!file.exists(graphicsDir))
-    dir.create(graphicsDir)
+  graphicsDir = "png"
+  if(!file.exists(file.path(outputDir, graphicsDir)))
+    dir.create(file.path(outputDir, graphicsDir))
   
   if(is(x, "character"))
     x = read.affybatch(filenames=x, compress=compress, verbose=verbose)
@@ -36,7 +36,7 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
     stop("'x' must be an AffyBatch")
 
   if(length(hybeType)!=1 || !(hybeType %in% c("Direct", "Reverse")))
-    stop(paste("'hybeType' must have same length 1 and be",
+    stop(paste("'hybeType' must have length 1 and be",
                "either 'Direct' or 'Reverse'."))
   
   ## log2
@@ -89,79 +89,21 @@ qualityReport = function(x, hybeType, normRef=NULL, compress = TRUE,
                      gff  = gff,
                      probeAnno = probeAnno)
       if(output == "HTML") {
-        HTMLplot(file=out, Width=700, Height=300, GraphDirectory=graphicsDir,
-                 GraphFileName=paste(sampleNames[s], selectGenes[i], sep="-"),
+        HTMLplot(file=out, Width=700, Height=300, GraphDirectory=outputDir,
+                 GraphFileName=file.path(graphicsDir, paste(sampleNames[s], selectGenes[i], sep="-")),
                  GraphBorder=0)
       }
     } ## for i
 
     ## calculate scores
     probe = get(paste("probe", hybeType, sep=""), probeAnno)
-    nsc = calcScores(exprs(x), probe)
+    ## nsc = calcScores(exprs(x), probe)
 
-    ## compare with unnomalized score (if applicable)
-    if(!is.null(normRef)) {
-      usc = calcScores(exprs(xu), probe)
-
-      myplot=function(x, y, ...) {
-        axlim = quantile(c(x,y), c(0.01,0.99))
-        plot(x, y, xlim=axlim, ylim=axlim, pch=".",
-             xlab = "unnormalized", ylab = "normalized", ...)
-        abline(a=0, b=1, col="red")
-      }
-
-      par(mfrow=c(1, 2))
-      myplot(usc$sd, nsc$sd, main="standard deviation")
-      p1 = -log(usc$p, 10)
-      p2 = -log(nsc$p, 10)
-      p1[p1>100]=100
-      p2[p2>100]=100
-      myplot(p1, p2, main="-log10(pvalue)")
-      
-      if (output == "HTML") {
-        HTMLhr(file=out)
-        HTML.title("Comparing CDSs between raw and normalized data", HR=3, file=out)
-        HTMLplot(file=out, Width=800, Height=450, GraphDirectory=graphicsDir,
-                 GraphFileName=paste(sampleNames[s], "norm", sep="-"),
-                 GraphBorder=0)
-      }
-    }
-    
-    ## histogram of levels
-    par(mfrow=c(1, 1))
-    hist(nsc$mean, main="Histogram of mean levels", col="lightblue")
-
-    pthresh = 0.05/length(nsc$p)
-    numberExpr = paste(sum(nsc$p < pthresh), " CDSs have p < ", signif(pthresh,2),
-        " =(0.05/", length(nsc$p), ")\n", sep="")
 
     if (output == "HTML"){
-      HTMLhr(file=out)
-      HTML.title("Histogram of CDSs' mean levels", HR=3, file=out)
-      HTMLplot(file=out, Width=600, Height=400, GraphDirectory=graphicsDir,
-               GraphFileName=paste(sampleNames[s], "hist", sep="-"),
-               GraphBorder=0)
-      HTML(numberExpr, file=out)
       HTMLEndFile(file=out)
-
     }
     
   } # for (s in 1:nsamples)
   invisible(NULL)
-}
-
-
-## t-scores and standard deviations for annotated CDSs
-calcScores = function(x, probe) {
-  browser()
-  baseline = median(x[probe$no_feature=="no"])
-  x = x-baseline
-  xs    = split(x, probe$CDS)
-  ## throw out CDS with less than 7 probes
-  xs    = xs[names(xs)!="" & listLen(xs) > 7]
-  lls   = listLen(xs)
-  means = sapply(xs, mean)
-  sds   = sapply(xs, sd)
-  p     = pt(means/sds*sqrt(lls), df=lls-1, lower.tail=FALSE)
-  list(mean = means, sd = sds, p = p)  
 }

@@ -4,7 +4,7 @@ library("genefilter")
 if(!exists("a"))load("a.rda")
 if(!exists("probeAnno"))load("probeAnno.rda")
 
-rrr = 1
+rrr = 4
 hybeSets = list(
   "polyA2" = c("05_04_27_2xpolyA_NAP3.cel.gz",
     "05_04_26_2xpolyA_NAP2.cel.gz",
@@ -15,14 +15,16 @@ hybeSets = list(
   "tot2" = c("050331_totcDNA_15ug_S96.cel.gz",
     "050411_totcDNA_20ug_affy.cel.gz",
     "050415_totcDNA_20ug_Affy11.cel.gz"),
-  "dir" = "050507_dirRNA_10ug_F1.cel.gz")[rrr]
+  "dir" = c("050621_dirPolyARNA_10ug_2-3.cel.gz",
+    "050621_dirPolyARNA_10ug_2-3_4x.cel.gz"))[rrr]
 
 outdir = c("polyA2" = "seg-polyA-050521",
            "tot"    = "seg-tot-050521",
            "tot2"   = "seg-tot2-050521",
-           "dir"    = "seg-dir-050521")[rrr]
+           "dir"    = "seg-dir-050721")[rrr]
 
-normMethod = c(rep("vsn", 3), "shiftlog")[rrr]
+## normMethod = c(rep("vsn", 3), "shiftlog")[rrr]
+normMethod = "vsn"
 names(normMethod) = names(outdir)
 
 ##
@@ -92,7 +94,6 @@ for(hs in seq(along=hybeSets)) {
   switch(normMethod[hs],
        vsn = {
          ## vsn without strata
-         browser()
          xn = vsn(yn, lts.quantile=0.95, subsample=2e5)
          exprs(xn)    = exprs(xn)/log(2)
          phenoData(xn) = phenoData(a)[fn, ]

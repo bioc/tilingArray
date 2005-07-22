@@ -1,5 +1,5 @@
 library("tilingArray")
-library("geneplotter"); source("~/madman/Rpacks/geneplotter/R/histStack.R")
+library("geneplotter")
 
 graphics.off()
 options(error=recover, warn=2)

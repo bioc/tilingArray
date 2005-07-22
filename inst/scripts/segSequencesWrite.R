@@ -1,21 +1,28 @@
 ## write FASTA files with segments so they can be blasted against
 ## another genome
+library("tilingArray")
+
+interact = TRUE
+rnaTypes  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")[1]
+outfile = "tableSegments"
+
+source("scripts/readSegments.R") 
+source("scripts/categorizeSegments.R") 
+source("scripts/calcThreshold.R") 
 
 options(error=recover)
-
-library("tilingArray")
 
 if(!exists("gff"))
   load("probeAnno.rda")
 
-segmentationDirs  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")
-segScoreFile      = c("segScore-1500.rda")
+segScoreFile = "segScore-1500.rda"
 seqDir = "SGD"
 
 outdir = "fasta"
+what   = c("all","novel-isolated")[2]
 
-for(d in segmentationDirs) {
-  df = file.path(d, outdir)
+for(rt in rnaTypes) {
+  df = file.path(rt, outdir)
   if(!file.exists(df)) {
     cat("Creating output directory", df, ".\n")
     dir.create(df)
@@ -37,9 +44,8 @@ if(!exists("fsa")) {
 }
 
 
-### Check if the sequence lengths found here coincide with the end of
+## Check if the sequence lengths found here coincide with the end of
 ## the telomere in the GFF table. If yes, all is well!
-
 chrLengths = sapply(fsa, nchar)
 chrLengths = chrLengths[order(as.numeric(names(chrLengths)))]
 
@@ -51,15 +57,26 @@ for(i in 1:16) {
   stopifnot(chrLengths[i]==sgff$end[w[2]])
 }
 
-## At this point, we simply write out all segments:
+## write segment seqs:
+for(rt in rnaTypes) {
+  fout = file.path(rt, outdir, paste(what, "fsa", sep="."))
 
-for(d in segmentationDirs) {
-  load(file.path(d, segScoreFile))
-  cat(d, "writing", nrow(segScore), "sequences.\n")
-  con = file(file.path(d, outdir, "segments.fsa"), open="wt")
+  segScore = categorizeSegments(get(rt))
+  wh = switch(what,
+    "all"            = {
+      1:nrow(segScore)
+    },
+    "novel-isolated" = {
+      which(segScore$category=="novel isolated - filtered")
+    },
+    stop("Zapperlot")
+  )
+
+  cat("Writing", length(wh), "sequences to", fout, ".\n")
+  con = file(fout, open="wt")
 
   stopifnot(all(segScore$strand %in% c("+", "-")))
-  for(s in 1:nrow(segScore)) {
+  for(s in wh) {
     sequence = substr(fsa[[paste(segScore$chr[s])]],
       start = segScore$start[s],
       stop  = segScore$end[s])
