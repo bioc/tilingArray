@@ -25,7 +25,7 @@ rownames(hsAnno) = c("polyA2", "tot", "dir")
 outdir = "qualityReports"
 
 ##--------------------------------------------------
-makeFig1 = function(y, main="") {
+makeFig1 = function(y, isDirect, main) {
 
   ## push 1: first level of layout
   pushViewport(viewport(layout=grid.layout(2, 1, height=c(1.5, 2), width=1)))
@@ -38,9 +38,9 @@ makeFig1 = function(y, main="") {
   pushViewport(viewport(layout.pos.col=2, layout.pos.row=1))
   plotAlongChrom(chr=14, coord= c(410000,488150), y=y,
                   colors=c(cp="#d0d0d0"), main=main,
-                  probeAnno = probeAnno, gff=gff,
+                  probeAnno = probeAnno, gff=gff, 
                   haveNames=FALSE, haveLegend=FALSE, pointSize=unit(0.1, "mm"),
-                  featColScheme=2)
+                  featColScheme=2, isDirect=isDirect)
   popViewport(2)
 
   ## second level of layout
@@ -51,35 +51,35 @@ makeFig1 = function(y, main="") {
   ## B) 13:550k splicing RPS16A, RPL13B
   ## middle row, left
   pushViewport(viewport(layout.pos.col=2, layout.pos.row=1))
-  plotAlongChrom(chr=13, coord = c(550044, 553360), y=y, 
+  plotAlongChrom(chr=13, coord = c(550044, 553360), y=y, isDirect=isDirect,
                   probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
   popViewport()
 
   ## C) 11:65k: MNN4, novel architecture
   ## middle row, middle
   pushViewport(viewport(layout.pos.col=4, layout.pos.row=1))
-  plotAlongChrom(chr=11, coord = c(63370, 68270), y=y, 
+  plotAlongChrom(chr=11, coord = c(63370, 68270), y=y, isDirect=isDirect,
                   probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
   popViewport()
   
   ## D) overlapping transcripts
   ## middle row, right
   pushViewport(viewport(layout.pos.col=6, layout.pos.row=1))
-  plotAlongChrom(chr=14, coord = c(342500, 347545), y=y, 
+  plotAlongChrom(chr=14, coord = c(342500, 347545), y=y, isDirect=isDirect,
                   probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
   popViewport()
   
   ## E) 2:360.5-366.5: novel isolated
   ## bottom row, left
   pushViewport(viewport(layout.pos.col=2, layout.pos.row=2))
-  plotAlongChrom(chr=2, coord = c(360500, 365970), y=y, 
+  plotAlongChrom(chr=2, coord = c(360500, 365970), y=y, isDirect=isDirect,
                   probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
   popViewport()
 
   ## F) 9:221-227: novel antisense SPO22
   ## bottom row, middle
   pushViewport(viewport(layout.pos.col=4, layout.pos.row=2))
-  plotAlongChrom(chr=9, coord = c(221000, 226500), y=y, 
+  plotAlongChrom(chr=9, coord = c(221000, 226500), y=y, isDirect=isDirect,
                 probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
   popViewport()
   
@@ -99,10 +99,12 @@ for(hs in seq(along=hybeSets)) {
     grid.newpage()
     pushViewport(viewport(layout=grid.layout(2, 1, height=c(1,1), width=1)))
     pushViewport(viewport(layout.pos.col=1, layout.pos.row=1))
-    makeFig1(log(exprs(a)[,fn],2), main=paste("raw (log2 scale)", sub(".cel.gz", "", fn), "- "))
+    makeFig1(log(exprs(a)[,fn],2), main=paste("raw (log2 scale)", sub(".cel.gz", "", fn), "- "),
+             isDirect = hsAnno$isDirect[hs])
     popViewport(1)
     pushViewport(viewport(layout.pos.col=1, layout.pos.row=2))
-    makeFig1(exprs(xn)[,fn], main=paste("normalized", sub(".cel.gz", "", fn), "- "))
+    makeFig1(exprs(xn)[,fn], main=paste("normalized", sub(".cel.gz", "", fn), "- "),
+             isDirect = hsAnno$isDirect[hs])
     popViewport(2)
     dev.off()
 
