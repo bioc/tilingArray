@@ -76,12 +76,14 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
     
     if(missing(coord))
       coord = c(1, lengthChr)
-    if(missing(ylim))
-      ylim = range(dat[["y"]])
 
+    px = dat[["mid"]]
+    py = dat[["y"]]
+    
+    if(missing(ylim))
+      ylim = quantile(py[px>=coord[1] & px<=coord[2]], c(0.01, 0.99))
    
-    plotSegmentation(x= dat[["mid"]],
-                     y= dat[["y"]], xlim=coord, ylim=ylim, uniq=dat$unique,
+    plotSegmentation(x=px, y=py, xlim=coord, ylim=ylim, uniq=dat$unique,
                      segScore=sgs, threshold=threshold, scoreShow=scoreShow,
                      gff=gff, chr=chr,
                      strand=ifelse(isDirectHybe, otherStrand(strand), strand),

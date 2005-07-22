@@ -11,7 +11,6 @@ hybeSets = list(
     "05_04_20_2xpolyA_NAP_2to1.cel.gz"),
   "tot" = c("050409_totcDNA_14ug_no52.cel.gz",
     "030505_totcDNA_15ug_affy.cel.gz"),
-  ##"050415_totcDNA_20ug_Affy11.cel.gz"
   "tot2" = c("050331_totcDNA_15ug_S96.cel.gz",
     "050411_totcDNA_20ug_affy.cel.gz",
     "050415_totcDNA_20ug_Affy11.cel.gz"),
@@ -23,7 +22,6 @@ outdir = c("polyA2" = "seg-polyA-050521",
            "tot2"   = "seg-tot2-050521",
            "dir"    = "seg-dir-050721")[rrr]
 
-## normMethod = c(rep("vsn", 3), "shiftlog")[rrr]
 normMethod = "vsn"
 names(normMethod) = names(outdir)
 
