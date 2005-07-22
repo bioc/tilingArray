@@ -1,7 +1,6 @@
 options(error=recover, warn=0)
 interact =  !TRUE
 library("tilingArray")
-source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
 
 rnaTypes  = c("seg-polyA-050525", "seg-tot-050525")
 source("scripts/readSegments.R")
@@ -64,8 +63,8 @@ for(rt in rnaTypes[1:2]) {
         pdf(file=pdfname, width=10, height=5.5)
       }
       grid.newpage()
-      plotAlongChrom2(chr=chr, coord=c(start, start+alongChromWidth),
-                      segObj = get(rt), gff = gff, ylim=ylim)
+      plotAlongChrom(chr=chr, coord=c(start, start+alongChromWidth),
+                     segObj=get(rt), gff = gff, ylim=ylim)
       dev.off()
       
       convCmd = c(convCmd, paste("convert -density 120", pdfname, "-quality 100", pixname))

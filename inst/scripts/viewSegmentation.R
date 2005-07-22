@@ -1,10 +1,5 @@
 options(error=recover, warn=0)
-
 library("tilingArray")
-
-## source("colorRamp.R")  ## can go with R 2.1
-source("~/madman/Rpacks/tilingArray/R/plotAlongChrom2.R")
-
 
 #### Generic plot
 graphics.off();
@@ -15,7 +10,7 @@ if(!TRUE) {
   ## with segRes environment
   source("scripts/readSegments.R")
   rt = "polyA"
-  plotAlongChrom2(which(gff$seqname[w]==chrSeqname), coord = c(gff$start[w]-1e4, gff$end[w]+1e4),
+  plotAlongChrom(which(gff$seqname[w]==chrSeqname), coord = c(gff$start[w]-1e4, gff$end[w]+1e4),
                 nrBasesPerSeg=1500, segRes = get(rt),
                 ## segScore = get("segScore", e), 
                 gff = gff, highlight= list(coord=c(142621, 143365),strand="+"))
@@ -40,7 +35,7 @@ if(!TRUE) {
   for(i in 1:2)
     for(j in 1:2) {
       pushViewport(viewport(layout.pos.col=i, layout.pos.row=j))
-      plotAlongChrom2(2, coord = c(start[i], end[i])*1e3,
+      plotAlongChrom(2, coord = c(start[i], end[i])*1e3,
                   y = zz[,j], probeAnno = probeAnno,
                   isDirectHybe = FALSE, 
                   gff = gff)
