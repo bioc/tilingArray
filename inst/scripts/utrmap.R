@@ -10,7 +10,7 @@
 library("tilingArray")
 library("geneplotter")
 
-interact=(!TRUE)
+interact=(TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
@@ -156,7 +156,7 @@ if("explen" %in% what){
     cdslen = gff[mt, "end"]-gff[mt, "start"]
 
     investigateExpressionVersusLength(s[,"level"], s[,"utr3"], paste(rt, ": length of 3' UTR", sep=""))
-    investigateExpressionVersusLength(s[,"level"], s[, "utr5"], paste(rt, ": length of 5' UTR", sep=""))
+    investigateExpressionVersusLength(s[,"level"], s[,"utr5"], paste(rt, ": length of 5' UTR", sep=""))
     investigateExpressionVersusLength(s[,"level"], cdslen, paste(rt, ": length of CDS", sep=""))
   }
   

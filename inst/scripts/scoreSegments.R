@@ -6,12 +6,6 @@ rnaTypes  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")[1:2]
 doNotLoadSegScore=TRUE
 source("scripts/readSegments.R")
 
-##if(!exists("xn")) {
-##  fn = "seg-dir-050521/xn.rda"
-##  cat("Loading", fn, "\n")
-##  load(fn)
-##}
-
 addDirectHybe = function(s) {
   dhl = numeric(nrow(s))
   strand = otherStrand(s$strand)

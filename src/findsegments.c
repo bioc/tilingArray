@@ -10,12 +10,11 @@
 #include <stdlib.h>
 
 #define DEBUG
-#undef VERBOSE
 
 #define MAT_ELT(x, i, j, nrow) x[(long)(i)+(long)(j)*(long)(nrow)]
 
 /* from sampleSteps.c */
-SEXP sampleStep(SEXP _x, SEXP _step);
+SEXP sampleStep(SEXP ax, SEXP astep);
 
 /*  Global variables */
 double *G;  /* cost matrix */
@@ -72,20 +71,14 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        in the optimal segmentation from 0 to i with cp change points;
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
-    vs = (long) maxcp * (long) n;
-    #ifdef VERBOSE
-      Rprintf("vs1=%ld\n", vs);
-    #endif
+
+
     /* currently R_alloc will not work for vs*sizeof() > 2 GB */
-    /* mI = (double*) R_alloc(vs, sizeof(double)); */
+    vs = (long) maxcp * (long) n;
     PROTECT(v1 = allocVector(REALSXP, vs)); 
     mI = REAL(v1);
 
     vs = (long) (maxcp-1) * (long) n;
-    #ifdef VERBOSE
-      Rprintf("vs2=%ld\n", vs); 
-    #endif
-    /* mt = (int*) R_alloc(vs, sizeof(int)); */
     PROTECT(v2 = allocVector(INTSXP, vs)); 
     mt = INTEGER(v2);
 
@@ -107,20 +100,12 @@ void findsegments_dp(double* J, int* th, int maxcp) {
           /* find the best change point between 0 and j-1 */ 
           k0 = (j<maxk) ? j : maxk;
 	  for (k=0; k<k0; k++) { 
-#ifdef VERBOSE              
-	      Rprintf("cp=%4d j=%4d k=%4d mI=%6g G=%6g", cp, j, k, 
-		      MAT_ELT(mI, j-k-1, cp-1, n), 
-		      MAT_ELT(G,  k,      j-k, maxk));
-#endif
               /* Best segmentation from 0 to j-k-1 */
 	      z = MAT_ELT(mI, j-k-1, cp-1, n);
               if (finite(z))
 		  z += MAT_ELT(G, k, j-k, maxk);
                   /* Cost of segment from j-k to j */
-#ifdef VERBOSE              
-	      Rprintf(" %6g\n", z);
-#endif
-	     if(z<zmin) {
+	      if(z<zmin) {
 		  zmin = z;
 		  imin = j-k;
 	     } /* if z */
@@ -135,11 +120,6 @@ void findsegments_dp(double* J, int* th, int maxcp) {
     if(verbose>=2)
 	Rprintf("\n");
 
-#ifdef VERBOSE              
-       print_matrix_double(mI, n, maxcp, "mI");
-       print_matrix_int(mt, n, maxcp-1, "mt"); 
-#endif
-   
     /* th: elements 0...cp-1 of the cp-th row of matrix th contain
        the cp change points; element cp has value n, which corresponds
        to a changepoint at the rightmost point */
@@ -155,9 +135,6 @@ void findsegments_dp(double* J, int* th, int maxcp) {
         /* In the following loop, i is always the changepoint to the right */
         MAT_ELT(th, cp, cp, maxcp) = i = n;  /* note the chained assignment */
 	for(j=cp-1; j>=0; j--) {
-#ifdef VERBOSE              
-	    Rprintf("cp=%4d j=%4d i=%4d\n", cp, j, i); 
-#endif
 #ifdef DEBUG
 	    if((i<1)||(i>n))
 	       error("Illegal value for i.");
@@ -183,7 +160,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
    G : numeric matrix (cost matrix)
    maxcp: integer scalar (maximum number of segments
 ------------------------------------------------------------------*/
-SEXP findsegments(SEXP _G, SEXP _maxcp, SEXP _verbose) 
+SEXP findsegments(SEXP aG, SEXP amaxcp, SEXP averbose) 
 {
   SEXP dimG;  /* dimensions of G */
   SEXP res;   /* return value    */
@@ -191,22 +168,22 @@ SEXP findsegments(SEXP _G, SEXP _maxcp, SEXP _verbose)
   int maxcp;
 
   /* check input arguments */
-  PROTECT(dimG = getAttrib(_G, R_DimSymbol));
+  PROTECT(dimG = getAttrib(aG, R_DimSymbol));
  
-  if((!isReal(_G)) || isNull(dimG) || (LENGTH(dimG)!=2))
-    error("Invalid argument '_G', must be a real matrix."); 
-  G    = REAL(_G);
+  if((!isReal(aG)) || isNull(dimG) || (LENGTH(dimG)!=2))
+    error("Invalid argument 'aG', must be a real matrix."); 
+  G    = REAL(aG);
   maxk = INTEGER(dimG)[0];
   n    = INTEGER(dimG)[1];
   UNPROTECT(1);  /* done with dimG */
 
-  if(!isInteger(_maxcp) || length(_maxcp)!=1)
-      error("'_maxcp' must be integer of length 1.");
-  maxcp = INTEGER(_maxcp)[0];
+  if(!isInteger(amaxcp) || length(amaxcp)!=1)
+      error("'amaxcp' must be integer of length 1.");
+  maxcp = INTEGER(amaxcp)[0];
   
-  if(!isInteger(_verbose) || length(_verbose)!=1)
-      error("'_verbose' must be integer of length 1.");
-  verbose = INTEGER(_verbose)[0];
+  if(!isInteger(averbose) || length(averbose)!=1)
+      error("'averbose' must be integer of length 1.");
+  verbose = INTEGER(averbose)[0];
 
   /* J */
   PROTECT(J   = allocVector(REALSXP, maxcp));

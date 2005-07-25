@@ -199,12 +199,6 @@ scoreSegments = function(s, gff,
           stopifnot(!any(duplicated(nm1)))
           ft1[j] = paste(nm1, collapse=", ")
 
-          ## Does the segment contain exactly one gene
-          if((length(wh1)==1) && (same.gff[wh1, "feature"]=="gene")) {
-            stopifnot(length(nm1)==1)
-            utrLeft[j]  = same.gff[wh1, "start"] - startj 
-            utrRight[j] = endj - same.gff[wh1, "end"]
-          }
         }
 
         ## mostOfFeatureInSegment: overlap is more than 50% of feature length
@@ -239,15 +233,35 @@ scoreSegments = function(s, gff,
         }
         stopifnot(all(nm3 %in% nm5))
         
+        ## UTR lengths: if the segment contain exactly one gene
+        if((length(wh1)==1) && (same.gff[wh1, "feature"]=="gene") &&
+           identical(nm1, nm2) && identical(nm1, nm3) && identical(nm1, nm5)) {
+          utrLeft[j]  = same.gff[wh1, "start"] - startj 
+          utrRight[j] = endj - same.gff[wh1, "end"]
+        }
+
         ## expression on opposite strand?
         oe[j] = movingWindow(x=xOppo, y=yOppo, width=params[["oppositeWindow"]])
 
       } ## for j
 
       stopifnot(!any(is.na(fd)))
-      
-      segScore[, "utr5"] = switch(strand, "+"=utrLeft,  "-"=utrRight)
-      segScore[, "utr3"] = switch(strand, "+"=utrRight, "-"=utrLeft)
+
+      switch(strand,
+        "+" = {
+          segScore[, "utr5"] = utrLeft
+          segScore[, "utr3"] = utrRight
+          segScore[, "z5"]   = zl
+          segScore[, "z3"]   = zr
+        },
+        "-" = {
+          segScore[, "utr3"] = utrLeft
+          segScore[, "utr5"] = utrRight
+          segScore[, "z3"]   = zl
+          segScore[, "z5"]   = zr
+        },
+        stop("Zapperlot"))
+
       segScore[, "featureInSegment"]       = ft1
       segScore[, "mostOfFeatureInSegment"] = ft2
       segScore[, "overlappingFeature"]     = ft3
@@ -257,8 +271,6 @@ scoreSegments = function(s, gff,
       segScore[, "level"]              = lev
       segScore[, "distLeft"]           = dl
       segScore[, "distRight"]          = dr
-      segScore[, "zLeft"]              = zl
-      segScore[, "zRight"]             = zr
       segScore[, "frac.dup"]           = fd
         
       rv = rbind(rv, segScore)
