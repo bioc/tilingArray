@@ -4,8 +4,8 @@
 categorizeSegmentsUTRmap = function(env, zThresh=2) {
   s = categorizeSegments(env)
 
-  minZ =  pmin(s[,"zLeft"], s[,"zRight"])
-  hasGoodFlanks = (!is.na(minZ) & (minZ >= zThresh))
+  zmin = pmin(s[, "z3"], s[, "z5"])
+  hasGoodFlanks = (!is.na(zmin) & (zmin >= zThresh))
 
   ## annotated ORF, z-score criterion, nuclear
   catg = s[, "simpleCatg"]
@@ -13,7 +13,7 @@ categorizeSegmentsUTRmap = function(env, zThresh=2) {
   sel = ((catg=="annotated ORF") & hasGoodFlanks &
          !is.na(s[, "utr3"]) & !is.na(s[, "utr5"]) & (s[,"chr"] <= 16))
 
-  s$goodUTR = ifelse(sel, minZ, as.numeric(NA))
+  s$goodUTR = ifelse(sel, zmin, as.numeric(NA))
   return(s)
 }
 
@@ -89,7 +89,7 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
   } ## i
 
   ## step 4: novelty filter
-  zmin = pmin(s[, "zLeft"], s[, "zRight"])
+  zmin = pmin(s[, "z3"], s[, "z5"])
   xOp  = s[,"oppositeExpression"]
   filt1 = (is.na(zmin) | (zmin <zThresh))
   filt2 = (s[,"length"] < minNewSegmentLength)

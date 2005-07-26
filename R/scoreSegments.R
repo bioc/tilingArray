@@ -41,15 +41,6 @@ scoreSegments = function(s, gff,
   rv = NULL
   for(chr in chrs) {
     for(strand in c("+", "-")) {
-      switch(strand,
-        "+" = {
-          distleft="dist5"; distright="dist3"
-        },
-        "-" = {
-          distleft="dist3"; distright="dist5"
-        },
-        stop("Sapperlot")
-      ) ## end of switch
       
       dat     = get(paste(chr, strand, "dat", sep="."), s)
       datOppo = get(paste(chr, otherStrand(strand), "dat", sep="."), s)
@@ -84,10 +75,10 @@ scoreSegments = function(s, gff,
         oppositeExpression    = rep(as.numeric(NA), cp),
         utr5                  = rep(as.integer(NA), cp),
         utr3                  = rep(as.integer(NA), cp),
-        distLeft              = rep(as.integer(NA), cp),
-        distRight             = rep(as.integer(NA), cp),
-        zLeft                 = rep(as.numeric(NA), cp),
-        zRight                = rep(as.numeric(NA), cp),
+        z5                    = rep(as.numeric(NA), cp),
+        z3                    = rep(as.numeric(NA), cp),
+        dist5                 = rep(as.integer(NA), cp),
+        dist3                 = rep(as.integer(NA), cp),
         frac.dup              = rep(as.numeric(NA), cp))
       
       ## th[i] is 1 + (end point of segment i) which is the same as
@@ -198,7 +189,6 @@ scoreSegments = function(s, gff,
           nm1 = unique(same.gff[wh1, "Name"])
           stopifnot(!any(duplicated(nm1)))
           ft1[j] = paste(nm1, collapse=", ")
-
         }
 
         ## mostOfFeatureInSegment: overlap is more than 50% of feature length
@@ -235,7 +225,7 @@ scoreSegments = function(s, gff,
         
         ## UTR lengths: if the segment contain exactly one gene
         if((length(wh1)==1) && (same.gff[wh1, "feature"]=="gene") &&
-           identical(nm1, nm2) && identical(nm1, nm3) && identical(nm1, nm5)) {
+           identical(nm1, nm2) && identical(nm1, nm3)) {
           utrLeft[j]  = same.gff[wh1, "start"] - startj 
           utrRight[j] = endj - same.gff[wh1, "end"]
         }
@@ -249,16 +239,20 @@ scoreSegments = function(s, gff,
 
       switch(strand,
         "+" = {
-          segScore[, "utr5"] = utrLeft
-          segScore[, "utr3"] = utrRight
-          segScore[, "z5"]   = zl
-          segScore[, "z3"]   = zr
+          segScore[, "utr5"]  = utrLeft
+          segScore[, "utr3"]  = utrRight
+          segScore[, "z5"]    = zl
+          segScore[, "z3"]    = zr
+          segScore[, "dist5"] = dl
+          segScore[, "dist3"] = dr
         },
         "-" = {
           segScore[, "utr3"] = utrLeft
           segScore[, "utr5"] = utrRight
           segScore[, "z3"]   = zl
           segScore[, "z5"]   = zr
+          segScore[, "dist3"] = dl
+          segScore[, "dist5"] = dr
         },
         stop("Zapperlot"))
 
@@ -269,8 +263,6 @@ scoreSegments = function(s, gff,
       segScore[, "overlapFeatAll"]         = ft5
       segScore[, "oppositeExpression"] = oe
       segScore[, "level"]              = lev
-      segScore[, "distLeft"]           = dl
-      segScore[, "distRight"]          = dr
       segScore[, "frac.dup"]           = fd
         
       rv = rbind(rv, segScore)

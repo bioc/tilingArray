@@ -45,9 +45,9 @@ writeSegmentTable = function(sgs, title, fn, sortBy, sortDecreasing=FALSE,
     
   colOrd = c("segID", "category", "overlap", "overlappingFeature", "oppositeFeature",
     "chr", "strand", "start", "end", "length", "level", "utr5", "utr3",
-    "zLeft", "zRight",
+    "z3", "z5",
     "featureInSegment", "mostOfFeatureInSegment", "overlapFeatAll", 
-    "oppositeExpression", "distLeft", "distRight", "simpleCatg", 
+    "oppositeExpression", "dist3", "dist5", "simpleCatg", 
     "frac.dup")
   colOrd = c(sortBy, colOrd[!(colOrd %in% sortBy)])
 
