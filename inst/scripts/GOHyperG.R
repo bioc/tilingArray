@@ -69,7 +69,7 @@ GOHyperG = function(candidates) {
   thSlop = length(candidates) / length(ctrls)
   
   ksel = which(nr[,1]>=4 & nr[,1]<length(asGO))
-  ksel = ksel[order(ph[ksel])[1:14]]
+  ksel = ksel[order(ph[ksel])[1:25]]
   
   for(k in ksel) {
     L = rownames(nr)[k]

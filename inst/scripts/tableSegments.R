@@ -3,8 +3,8 @@ library("geneplotter")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = (!TRUE)
-what     = c("fig2", "fig4", "cons", "lvsx", "wst")
+interact = (TRUE)
+what     = c("fig2", "fig4", "cons", "lvsx", "wst")[0]
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
@@ -43,7 +43,9 @@ if(!exists("cs")) {
         "*      NOT REDOING categorizeSegments            *\n",
         "**************************************************\n", sep="")
 }
-  
+
+
+
 fillColors = c(c(brewer.pal(10, "Paired")[c(1, 2, 6, 8, 5:8, 2, 10)]), "#d0d0d0")
 names(fillColors) = c("overlap <50%", "overlap >=50%",
        "novel antisense", "novel isolated",
@@ -218,6 +220,8 @@ if("fig2" %in% what){
   ##
   ## LENGTH & LEVEL DISTRIBUTIONS
   ##
+  cat("\n\nLength distributions:\n",
+          "=====================\n", sep="")
   maxlen=4000
   mai = par("mai")
   mai[2:3] = 0.1
@@ -230,10 +234,12 @@ if("fig2" %in% what){
     stopifnot(all(levels(plotCat) %in% names(fillColors)))
     len = split(s[, "length"], plotCat)
     ## len = lapply(len, function(z) {z[z>maxlen]=maxlen; z})
-    len = lapply(len, function(z) {z[z>maxlen]=NA; z})
+    slen = lapply(len, function(z) {z[z>maxlen]=NA; z})
     cols = fillColors[names(len)]
-    showDens(len,
+    showDens(slen,
       breaks=br, col=cols, main="", xlab="length (nucleotides)")
+    cat("\n", rnaTypes[irt], "\n")
+    print(sapply(len, summary))
   }
 
 

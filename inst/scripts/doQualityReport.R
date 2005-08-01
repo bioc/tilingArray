@@ -1,6 +1,8 @@
 library("tilingArray")
 library("affy")
 
+source("~/madman/Rpacks/tilingArray/R/plotAlongChrom.R")
+
 options(error=recover)
 
 if(!exists("probeAnno"))
@@ -15,12 +17,13 @@ hybeSets = list(
   "tot" = c("050409_totcDNA_14ug_no52.cel.gz",
     "030505_totcDNA_15ug_affy.cel.gz"),
   "dir" = c("050621_dirPolyARNA_10ug_2-3.cel.gz",
-    "050621_dirPolyARNA_10ug_2-3_4x.cel.gz"))
+    "050621_dirPolyARNA_10ug_2-3_4x.cel.gz"),
+  "odT" = c("041112_S96_polyA-dT-cDNA1_16H_45C.cel.gz"))
 
 hsAnno = data.frame(
-  dir = I(c("seg-polyA-050525", "seg-tot-050525", "seg-dir-050721")),
-  isDirect = c(FALSE, FALSE, TRUE))
-rownames(hsAnno) = c("polyA2", "tot", "dir")
+  dir = I(c("seg-polyA-050525", "seg-tot-050525", "seg-dir-050721", "seg-odT-050801")),
+  isDirect = c(FALSE, FALSE, TRUE, FALSE))
+rownames(hsAnno) = c("polyA2", "tot", "dir", "oligodT")
 
 outdir = "qualityReports"
 
@@ -87,11 +90,25 @@ makeFig1 = function(y, isDirect, main) {
   popViewport(2)
   
 }
-## --------------------------------------------------
 
+## --------------------------------------------------
+## all PM probes
+chrstr = paste(rep(1:17, each=2), 
+  rep(c("+", "-"), 17), sep=".")
+allPM = unique(unlist(lapply(chrstr, function(chr)
+  get(paste(chr, "index", sep="."), probeAnno))))
+
+## --------------------------------------------------
 for(hs in seq(along=hybeSets)) {
   files = hybeSets[[hs]]
   load(file.path(hsAnno$dir[hs], "xn.rda"))
+
+  ## mask bad probes
+  refSigThresh = quantile(refSig[allPM], probs=0.05)
+  isBad = (refSig < refSigThresh)
+  cat(hs, ": masking", sum(isBad), "of", length(isBad), "probes.\n")
+  exprs(xn)[isBad, ] = NA
+  
   for(fn in files) {
     f1 = file.path(outdir, sub(".cel.gz", ".pdf", fn))
     f2 = file.path(outdir, sub(".cel.gz", ".tiff", fn))

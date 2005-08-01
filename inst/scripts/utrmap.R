@@ -10,7 +10,7 @@
 library("tilingArray")
 library("geneplotter")
 
-interact=(TRUE)
+interact=(!TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
@@ -20,14 +20,16 @@ source("scripts/calcThreshold.R")
 source("scripts/categorizeSegments.R") 
 source("scripts/writeSegmentTable.R")
 
-what = c("stat", "wst", "explen", "expdiff")[-2]
+what = c("stat", "wst", "explen", "polyAvstot", "go")[5]
 
 ##
 ## CATEGORIZE
 ##
 if(!exists("cs")) {
-  utr = cs = vector(mode="list", length=length(rnaTypes))
-  names(cs) = names(utr) = rnaTypes
+  utr = vector(mode="list", length=length(rnaTypes)+1)
+  names(utr) = c(rnaTypes, "combined")
+  cs  = vector(mode="list", length=length(rnaTypes))
+  names(cs) = rnaTypes
 
   for(rt in rnaTypes) {
     cat("\n--------", rt, "---------\n")
@@ -39,6 +41,9 @@ if(!exists("cs")) {
     utr[[rt]] = z
     cs[[rt]] =s
   }
+  
+  utr[["combined"]] = rbind(utr[[1]], utr[[2]][ !(rownames(utr[[2]])%in%rownames(utr[[1]])), ])
+      
   rm(list=c("s", "z"))
 } else {
   cat("\n**************************************************\n",
@@ -116,7 +121,7 @@ if("stat" %in% what){
 ##
 if("wst" %in% what){
   for(rt in rnaTypes) {
-    fn = file.path(indir[rt], "viz", "utrmap.html")
+    fn = file.path(indir[rt], "viz", "utrmap")
     nr = nrow(cs[[rt]])
     if(interact)
       cat("Writing", nr, "UTRs to", fn, "\n")
@@ -140,13 +145,18 @@ if("explen" %in% what){
       lines(e[[i]], col.hor=theCol, col.points=theCol, col.vert=theCol)
     }
   }
+
+  investigateLengthVersusLength = function(l1, l2, ...) {
+    cc = cor(l1, l2, method="kendall")
+    plot(l1+1, l2+1, log="xy", pch=".", main=paste("length, cor=", signif(cc, 3)), ...)
+  }
   
   if(!interact) {
-    pdf(file=paste("utrmap-expression-vs-length.pdf", sep=""), width = 10.5, height = 7.5)
+    pdf(file=paste("utrmap-expression-vs-length.pdf", sep=""), width = 10.5, height = 14)
   } else {
-    x11(width = 10.5, height = 7.5)
+    x11(width = 10.5, height = 14)
   }
-  par(mfrow = c(2, 3))
+  par(mfrow = c(4, 3))
 
   for(rt in rnaTypes) {
     s = cs[[rt]]
@@ -158,6 +168,9 @@ if("explen" %in% what){
     investigateExpressionVersusLength(s[,"level"], s[,"utr3"], paste(rt, ": length of 3' UTR", sep=""))
     investigateExpressionVersusLength(s[,"level"], s[,"utr5"], paste(rt, ": length of 5' UTR", sep=""))
     investigateExpressionVersusLength(s[,"level"], cdslen, paste(rt, ": length of CDS", sep=""))
+    investigateLengthVersusLength(s[,"utr3"], s[,"utr5"], xlab="3' UTR", ylab="5' UTR")
+    investigateLengthVersusLength(cdslen, s[,"utr3"], xlab="CDS", ylab="3' UTR")
+    investigateLengthVersusLength(cdslen, s[,"utr5"], xlab="CDS", ylab="5' UTR")
   }
   
   if(!interact)
@@ -167,7 +180,7 @@ if("explen" %in% what){
 ##
 ## difference between total and poly-A
 ## 
-if("expdiff" %in% what){
+if("polyAvstot" %in% what){
   if(interact) {
     x11(width=6.6, height=10)
   } else {
@@ -208,6 +221,101 @@ if("expdiff" %in% what){
   }
   if(!interact)
     dev.off()
+}
+
+##
+## GO analysis of UTR lengths
+##
+if("go" %in% what){
+
+  ## create environment of ancestors
+  library("GO")
+  e = new.env(hash=TRUE)
+  for(j in ls(GOMFANCESTOR))
+    assign(j, get(j, GOMFANCESTOR), envir=e)
+  for(j in ls(GOBPANCESTOR))
+    assign(j, get(j, GOBPANCESTOR), envir=e)
+  for(j in ls(GOCCANCESTOR))
+    assign(j, get(j, GOCCANCESTOR), envir=e)
+  stopifnot(length(ls(e))==length(ls(GOMFANCESTOR))+
+            length(ls(GOBPANCESTOR))+length(ls(GOCCANCESTOR)))
+
+  if(!"Ontology_term" %in% names(gff))
+    gff$"Ontology_term" =getAttributeField(gff$attributes, "Ontology_term")
+
+  ## for each gene in 'x', get the GO classes
+  whg = which(gff[, "feature"]=="gene")
+  getGO = function(x) {
+    mt  = match(x, gff[whg, "Name"])
+    stopifnot(!any(is.na(mt)))
+    rv = strsplit(gff[whg[mt], "Ontology_term"], split=",")
+    stopifnot(!any(sapply(rv, function(x) any(duplicated(x)))))
+    
+    ## extend by ancestors
+    rv = sapply(rv, function(v) {
+      if(any(is.na(v))) {
+        stopifnot(length(v)==1)
+        k = character(0)
+      } else {
+        k  = mget(v, e, ifnotfound=list(character(0)))
+        k  = sort(unique(unlist(k)))
+      }
+      return(k)
+    })
+    names(rv) = x
+    stopifnot(all(gff[whg[mt], "Name"] == names(rv)))
+    rv
+  }
+  
+  if(!exists("goCat"))
+    goCat = getGO(rownames(utr[["combined"]]))
+  
+  allGO = unique(unlist(goCat))
+  gm = matrix(FALSE, nrow=length(allGO), ncol=length(goCat))
+  rownames(gm) = allGO
+  colnames(gm) = names(goCat)
+  
+  for(i in seq(along=goCat)) {
+    gm[ goCat[[i]], i] = TRUE
+  }
+
+  wtfun = function() {
+    function(z) {
+      sz = sum(z)
+      if(sz>=5&&(length(z)-sz)>=5) {
+        w5 = wilcox.test(utr[["combined"]][, "5' UTR"] ~ z)
+        w3 = wilcox.test(utr[["combined"]][, "3' UTR"] ~ z)
+        rv = c(w5$p.value, w3$p.value)
+      } else {
+        rv = rep(NA, 2)
+      }
+      return(rv)
+    }
+  }
+  wt = wtfun()
+  res = apply(gm, 1, wt)
+
+  ## print the GO TERMS
+  for(j in 1:ncol(utr[["combined"]])) {
+    cat("--------------------------------------------------\n",
+        colnames(utr[["combined"]])[j], "\n",
+        "--------------------------------------------------\n", sep="")
+    sel = order(res[j,])[1:40]
+    for(s in sel) {
+      g   = rownames(gm)[s]
+      cat(g, " p=", format.pval(res[j,s]), "  median=",
+          median(utr[["combined"]][names(which(gm[s,])), j]),
+          " (versus ",
+          median(utr[["combined"]][names(which(!gm[s,])), j]),
+          ")\n", sep="")
+      print(get(rownames(gm)[s], GOTERM))
+      nr = sum(gm[s,]) 
+      cat(nr, " genes", sep="")
+      if(nr<=20)
+        cat(":", replaceSystematicByCommonName(names(which(gm[s,]))))
+      cat("\n\n")
+    }
+  }
 }
 
 if(!interact) {

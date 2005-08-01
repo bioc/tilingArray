@@ -4,7 +4,7 @@ library("genefilter")
 if(!exists("a"))load("a.rda")
 if(!exists("probeAnno"))load("probeAnno.rda")
 
-rrr = 4
+rrr = 5
 hybeSets = list(
   "polyA2" = c("05_04_27_2xpolyA_NAP3.cel.gz",
     "05_04_26_2xpolyA_NAP2.cel.gz",
@@ -15,14 +15,16 @@ hybeSets = list(
     "050411_totcDNA_20ug_affy.cel.gz",
     "050415_totcDNA_20ug_Affy11.cel.gz"),
   "dir" = c("050621_dirPolyARNA_10ug_2-3.cel.gz",
-    "050621_dirPolyARNA_10ug_2-3_4x.cel.gz"))[rrr]
+    "050621_dirPolyARNA_10ug_2-3_4x.cel.gz"),
+  "odT" = c("041112_S96_polyA-dT-cDNA1_16H_45C.cel.gz"))[rrr]
 
 outdir = c("polyA2" = "seg-polyA-050521",
            "tot"    = "seg-tot-050521",
            "tot2"   = "seg-tot2-050521",
-           "dir"    = "seg-dir-050721")[rrr]
+           "dir"    = "seg-dir-050721",
+           "odT"    = "seg-odT-050801")[rrr]
 
-normMethod = "vsn"
+normMethod = c(rep("vsn", 4), "shiftlog")[rrr]
 names(normMethod) = names(outdir)
 
 ##
