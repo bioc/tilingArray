@@ -8,16 +8,13 @@ S = length(l)
 maxk = 30
 
 cp = 1+cumsum(l)
-s  = 0.1
+s  = 0.6
 
 y = unlist(lapply(seq(along=l), function(i) {
   rnorm(l[i], mean=m[i], sd=s)
 }))
 
 estcp = findSegments(y, maxcp=S, maxk=maxk, verbose=0)$th[S,]
-
-plot(y)
-abline(v=estcp, col="red")
 
 sqr = function(x){x*x}
 
@@ -51,9 +48,9 @@ w = function(y, cp, alpha=0.95) {
   
   qchisq(alpha, df=1)
  
- dsl = dsr = numeric(as.numeric(NA), ncol=length(cp)-1)
+  dsl = dsr = vector(mode="list", length=length(cp)-1)
  
- for(j in 1:ncol(dsl)) {
+  for(j in 1:length(dsl)) {
 
    th  = cp[j]
    thl = if(j>=2) {cp[j-1]} else {1}
@@ -62,6 +59,7 @@ w = function(y, cp, alpha=0.95) {
    yj  = y[thl:(thr-1)]
    sj  = (segSS[j]+segSS[j+1])
    
+   res = numeric(th-thl)
    for(i in 1:(th-thl)) {
      ## extend to the left by i
      yl  = sum(y[th-(1:i)])
@@ -69,9 +67,12 @@ w = function(y, cp, alpha=0.95) {
      m2l = (segSum[j+1] + yl) / (segLen[j+1]+i)
      nml = rep(c(m1l, m2l), c(th-thl-i, thr-th+i))
      ssl = sum(sqr( yj-nml ))
-     dsl[i,j] = ssl - sj
+     res[i] = ssl - sj
    }
+   stopifnot(all(res>=0))
+   dsl[[j]] = res
    
+   res = numeric(thr-th)
    for(i in 1:(thr-th)) {
      ## extend to the right by i
      yr  = sum(y[th+(0:(i-1))])
@@ -79,13 +80,25 @@ w = function(y, cp, alpha=0.95) {
      m2r = (segSum[j+1] - yr) / (segLen[j+1] -i)
      nmr = rep(c(m1r, m2r), c(th-thl+i, thr-th-i))
      ssr = sum(sqr( yj-nmr ))
-
-     dsr[i,j] = ssr - sj
+     res[i] = ssr - sj
    }
+   stopifnot(all(res>=0))
+   dsr[[j]] = res
  }
- stopifnot(all(dsr>=0), all(dsl>=0))
+ return(list(dsl=dsl, dsr=dsr))
 }
 
 
 cat("w\n")
-w(y, estcp)
+z=w(y, estcp)
+
+par(mfrow=c(2,3))
+plot(y)
+abline(v=estcp, col="red")
+
+mapply(function(dsl, dsr){
+  plot(seq(-length(dsl), length(dsr)),
+       c(rev(dsl), 0, dsr), type="b", pch=16, col="blue", ylim=c(0,20))
+}, z$dsl, z$dsr)
+
+
