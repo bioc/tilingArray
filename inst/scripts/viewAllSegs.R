@@ -2,7 +2,13 @@ options(error=recover, warn=0)
 interact =  !TRUE
 library("tilingArray")
 
-rnaTypes  = c("seg-polyA-050525", "seg-tot-050525")
+rnaTypes  = c("seg-polyA-050525", "seg-tot-050525",
+              "seg-dir-050721" , "seg-polyA-050804", "seg-odT-050801")[3:5]
+isDirect  = c(FALSE, FALSE, TRUE, FALSE, FALSE)[3:5]
+names(isDirect) = rnaTypes
+
+stopifnot(length(isDirect)==length(rnaTypes))
+
 source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
 source("scripts/writeSegmentTable.R") 
@@ -32,7 +38,7 @@ write.table(outtab, file="gff.txt",
 ##
 ## Write the pictures
 ## 
-for(rt in rnaTypes[1:2]) {
+for(rt in rnaTypes) {
   cat(">>>", rt, "<<<\n")
   convCmd = "#!/bin/sh"
 
@@ -64,7 +70,7 @@ for(rt in rnaTypes[1:2]) {
       }
       grid.newpage()
       plotAlongChrom(chr=chr, coord=c(start, start+alongChromWidth),
-                     segObj=get(rt), gff = gff, ylim=ylim)
+                     segObj=get(rt), gff = gff, ylim=ylim, isDirect=isDirect[rt])
       dev.off()
       
       convCmd = c(convCmd, paste("convert -density 120", pdfname, "-quality 100", pixname))

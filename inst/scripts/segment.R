@@ -7,9 +7,13 @@ options(error=recover, warn=2)
 if(!exists("probeAnno"))
   load("probeAnno.rda")
 
-outdirList = c("polyA2" = "seg-polyA-050525",
-  "tot"    = "seg-tot-050525",
-  "tot2"   = "seg-tot2-050525")
+##outdirs = c("seg-polyA-050525", "seg-tot-050525", "seg-dir-050721" ,
+##  "seg-odT-050801", "seg-polyA-050804")[3:5]
+
+## these use the same normalized data as the ones above, but they
+## use newer probeAnno file (0508)
+outdirs = c("seg-polyA-050811", "seg-tot-050811", "seg-dir-050811",
+  "seg-odT-050811", "seg-polyA0420-050811")
 
 chrstr = paste(rep(1:17, each=2),
                rep(c("+", "-"), 17), sep=".")
@@ -21,7 +25,7 @@ allPM = unique(unlist(lapply(chrstr, function(chr)
 ## main
 ## ------------------------------------------------------------
 
-for(outdir in outdirList) {
+for(outdir in outdirs) {
   if(!file.exists(outdir))
     stop(paste("Directory '", outdir, "' does not exist.", sep=""))
   if(!file.info(outdir)$isdir)
@@ -32,7 +36,6 @@ for(outdir in outdirList) {
     if(ichr==1) {
       load(file.path(outdir, "xn.rda"))
       lxj = exprs(xn)
-      stopifnot(ncol(lxj) %in% c(2,3))
       refSigThresh = quantile(refSig[allPM], probs=0.05)
     } 
     
@@ -55,7 +58,7 @@ for(outdir in outdirList) {
       mid = mid[ord]
       ind = get(paste(chr, "index", sep="."), probeAnno)[ord]
       uni = get(paste(chr, "unique", sep="."), probeAnno)[ord]
-      y   = lxj[ind, ]
+      y   = lxj[ind,, drop=FALSE]
 
       ## eliminate the bad probes
       sel = (refSig[ind] >= refSigThresh)
@@ -65,7 +68,7 @@ for(outdir in outdirList) {
       
       dat  = list(start  = sta[sel],
                   end    = end[sel],
-                  y      = y[sel,],
+                  y      = y[sel,, drop=FALSE],
                   unique = uni[sel],
                   ss     = ss)
      
@@ -74,7 +77,7 @@ for(outdir in outdirList) {
       maxk  = 1500
       maxcp = round( (max(end)-min(sta)) / nrBasesPerSeg)
       
-      seg = findSegments(dat$y[ss, ], maxk=maxk, maxcp=maxcp, verbose=99)
+      seg = findSegments(dat$y[ss,,drop=FALSE], maxk=maxk, maxcp=maxcp, verbose=99)
       
       save(seg, dat, file=datfn, compress=TRUE)
     } else {

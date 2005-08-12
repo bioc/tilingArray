@@ -1,8 +1,11 @@
+
 options(error=recover, warn=2)
 library("tilingArray")
 source("/homes/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 
-rnaTypes  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")[1:2]
+rnaTypes  = c("seg-polyA-050525", "seg-tot-050525",
+                "seg-dir-050721" , "seg-polyA-050804", "seg-odT-050801")[5]
+
 doNotLoadSegScore=TRUE
 source("scripts/readSegments.R")
 

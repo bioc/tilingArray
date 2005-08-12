@@ -6,35 +6,24 @@ if(!exists("probeAnno"))load("probeAnno.rda")
 
 rrr = 5
 hybeSets = list(
-  "polyA2" = c("05_04_27_2xpolyA_NAP3.cel.gz",
-    "05_04_26_2xpolyA_NAP2.cel.gz",
-    "05_04_20_2xpolyA_NAP_2to1.cel.gz"),
-  "tot" = c("050409_totcDNA_14ug_no52.cel.gz",
-    "030505_totcDNA_15ug_affy.cel.gz"),
-  "tot2" = c("050331_totcDNA_15ug_S96.cel.gz",
-    "050411_totcDNA_20ug_affy.cel.gz",
-    "050415_totcDNA_20ug_Affy11.cel.gz"),
-  "dir" = c("050621_dirPolyARNA_10ug_2-3.cel.gz",
-    "050621_dirPolyARNA_10ug_2-3_4x.cel.gz"),
-  "odT" = c("041112_S96_polyA-dT-cDNA1_16H_45C.cel.gz"))[rrr]
+  "seg-polyA-050525" =
+     c("05_04_27_2xpolyA_NAP3.cel.gz",
+       "05_04_26_2xpolyA_NAP2.cel.gz",
+       "05_04_20_2xpolyA_NAP_2to1.cel.gz"),
+  "seg-tot-050525" =
+     c("050409_totcDNA_14ug_no52.cel.gz",
+       "030505_totcDNA_15ug_affy.cel.gz"),
+  "seg-dir-050721" =
+     c("050621_dirPolyARNA_10ug_2-3.cel.gz",
+       "050621_dirPolyARNA_10ug_2-3_4x.cel.gz"),
+  "seg-odT-050801" =
+     c("041112_S96_polyA-dT-cDNA1_16H_45C.cel.gz"),
+  "seg-polyA-050804" =
+     c("05_04_20_2xpolyA_NAP_2to1.cel.gz"))[rrr]
 
-outdir = c("polyA2" = "seg-polyA-050521",
-           "tot"    = "seg-tot-050521",
-           "tot2"   = "seg-tot2-050521",
-           "dir"    = "seg-dir-050721",
-           "odT"    = "seg-odT-050801")[rrr]
+normMethod = c(rep("vsn", 3), rep("shiftlog", 2))[rrr]
+names(normMethod) = names(hybeSets)
 
-normMethod = c(rep("vsn", 4), "shiftlog")[rrr]
-names(normMethod) = names(outdir)
-
-##
-## check
-##
-stopifnot(length(outdir)==length(hybeSets),
-          names(hybeSets)==names(outdir),
-          length(hybeSets)==length(normMethod),
-          names(hybeSets)==names(normMethod))
-          
 ##
 ## DNA hybes
 ## 
@@ -67,7 +56,8 @@ if(!exists("refSigPM")) {
 }
 
 for(hs in seq(along=hybeSets)) {
-  cat(names(hybeSets)[hs], "\n")
+  outdir = names(hybeSets)[hs]
+  cat(outdir, "\n")
   fn = hybeSets[[hs]]
   
   x.bg  = tapply(refSigPM, strata, median)
@@ -106,5 +96,5 @@ for(hs in seq(along=hybeSets)) {
        stop("Zapperlot")
   )
 
-  save(xn, refSig, file=file.path(outdir[hs], "xn.rda"), compress=TRUE)
+  save(xn, refSig, file=file.path(outdir, "xn.rda"), compress=TRUE)
 }
