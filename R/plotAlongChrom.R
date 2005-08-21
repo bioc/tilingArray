@@ -183,8 +183,10 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
   popViewport(2)
 
 
+  ## This code would plot a false color representation of some segment score
+  ## (e.g. "p-value")
   if(FALSE) {
-  ## if(!is.null(segScore)) {
+    if(!is.null(segScore)) {
     pushViewport(dataViewport(xData=xlim, yscale=c(0,2), extension=0, clip="on",
        layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("z%d", istrand))))
 
@@ -211,7 +213,9 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
               gp     = gpar(col="#a0a0a0", fill=colo))
     popViewport(1)
   }
-  
+  }
+
+  ## features
   pushViewport(dataViewport(xData=xlim, yscale=c(-1.2,1.2),  extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("gff%d", istrand))))
 
@@ -221,10 +225,18 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
               gff[, "start"] <= xlim[2] &
               gff[, "end"]   >= xlim[1])
 
-  nam1    = gff[sel, "gene"]
-  featnam = gff[sel, "Name"]
-  featnam[!is.na(nam1)] = nam1[!is.na(nam1)]
-  featsp  = split(seq(along=sel), gff$feature[sel])
+  geneName = gff[sel, "gene"]
+  featName = gff[sel, "Name"]
+  featName[!is.na(geneName)] = geneName[!is.na(geneName)]
+
+  feature  = as.character(gff[sel, "feature"])
+
+  ## NOTE this kind of hard-coding is ugly - should really be dealt with on the level of the
+  ## instanciation of the GFF object
+  feature[feature=="CDS" & gff[sel, "orf_classification"]=="Dubious"] = "CDS-dubious"
+
+  ## split!
+  featsp  = split(seq(along=sel), feature)
 
   ### gene ###
   whnames = integer(0)
@@ -234,18 +246,25 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     grid.segments(x0 = gff$start[s], x1 = gff$end[s], y0 = 0, y1 = 0,
                   default.units = "native", gp = gpar(col="#a0a0a0"))
     whnames = i
-    ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
   }
-  
-  featDraw = featureDrawing(featColScheme)
-  sfeatsp  = featsp[rownames(featDraw)]
+
+  featCols = featureColors(featColScheme)
+
+  ## check that we know how deal with all features
+  whm = names(featsp) %in% c(rownames(featCols), "gene", "intron")
+  if(!all(whm))
+    stop("Don't know how to handle feature(s) '", paste(names(featsp)[!whm], collapse=", "), "'.", sep="")
+
+  ## sort
+  ## doDraw   = !is.na(featCols$fill)
+  sfeatsp  = featsp[rownames(featCols)]
   ll       = listLen(sfeatsp)
 
   if(any(ll>0)) {
     i      = unlist(sfeatsp)
     ord    = order(gff$start[sel[i]])
-    gp     = gpar(col = rep(featDraw$col,  ll)[ord],
-                 fill = rep(featDraw$fill, ll)[ord])
+    gp     = gpar(col = rep(featCols$col,  ll)[ord],
+                 fill = rep(featCols$fill, ll)[ord])
     i      = i[ord]
     s      = sel[i]
     
@@ -262,7 +281,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
   if(haveNames && (length(whnames)>0)) {
     txtcex = 0.7
     txtdy  = 0.7
-    whnames = whnames[!duplicated(featnam[whnames])]
+    whnames = whnames[!duplicated(featName[whnames])]
     s      = sel[whnames]
     txtx   = (gff$start[s]+gff$end[s])/2
     txty   = numeric(length(s))
@@ -271,7 +290,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     s      = s[ord]
     txtx   = txtx[ord]
     
-    strw   = convertWidth(stringWidth(featnam[whnames]), "native", valueOnly=TRUE)*txtcex
+    strw   = convertWidth(stringWidth(featName[whnames]), "native", valueOnly=TRUE)*txtcex
     rightB = txtx[1] + 0.5*strw[1]
     doText = rep(TRUE, length(whnames))
     if(length(whnames)>1) {
@@ -292,7 +311,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
         } ##  else
       } ## for
     }
-    grid.text(label = featnam[whnames][doText],
+    grid.text(label = featName[whnames][doText],
               x = txtx[doText], y = txty, gp=gpar(cex=txtcex), 
               default.units = "native")
   } ## if
@@ -310,11 +329,11 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
                     y1 = c(1, -1)[istrand]*0.95,
                     default.units = "native",
                     gp = gpar(col="black"))
-    ## cat(paste(featnam[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
+    ## cat(paste(featName[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
   } ## if
   
 
-  ##notDealtWith = setdiff(names(featsp), c(rownames(featDraw), "gene", "intron"))
+  ##notDealtWith = setdiff(names(featsp), c(rownames(featCols), "gene", "intron"))
   ##if(length(notDealtWith)>0)
   ##  cat("Not displayed:", paste(notDealtWith, collapse=", "), "\n")
    
@@ -339,84 +358,96 @@ alongChromTicks = function(x){
 ##------------------------------------------------------------
 ## legend
 ##------------------------------------------------------------
-plotAlongChromLegend = function(vpr) {
-  featDraw = featureDrawing()
+plotAlongChromLegend = function(vpr=1, nr=3,
+  exclude=c("transposable_element_gene", "transposable_element", "chromosome")) {
+  
+  formatRow = function(featColsOneRow, row) {
+    print(featColsOneRow)
+    strWid   = convertWidth(stringWidth(rownames(featColsOneRow)), "npc", valueOnly=TRUE)
+    n        = length(strWid)
+    inbetWid = 0.2*min(strWid)
+    totWid   = sum(strWid)+(n-1)*inbetWid
+    x        = c(0, cumsum(strWid[-n])) + (0:(n-1))*inbetWid 
+    y        = numeric(length(x))
 
-  featDraw = featDraw[!(rownames(featDraw) %in% c("transposable_element_gene", "transposable_element")), ]
-  dx       = 1/(1+nrow(featDraw))
-  i        = 1:nrow(featDraw)
+    x      = x/totWid
+    strWid = strWid/totWid
+    grid.rect(x = x, width = strWid, 
+              y = unit(row, "native"), height = unit(1, "native") - unit(2, "mm"), 
+              just  = c("left", "center"), default.units="npc",
+              gp    = do.call("gpar", featColsOneRow))
+    
+    grid.text(label = rownames(featColsOneRow),
+              x = unit(x + strWid/2, "native"), y = unit(row, "native"),
+              just  = c("center", "center"))
+  }
+  
 
-  pushViewport(viewport(layout.pos.col=1, layout.pos.row=vpr))
+  featCols = featureColors()
+  featCols = featCols[!(rownames(featCols) %in% exclude), ]
 
+  pushViewport(viewport(layout.pos.col=1, layout.pos.row=vpr, yscale=c(0.5, nr+0.5)))
   grid.lines(c(0,1), c(1,1), default.units = "npc")
 
+  i = 1:nrow(featCols)
+  for(r in 1:nr)
+    formatRow(featCols[ceiling(i/nrow(featCols)*nr-1e-10)==r, ], row=nr-r+1)
   
-  grid.rect(x     = (i-1)*dx,
-            y     = 0.4,
-            width = dx*0.3,
-            height= 0.8, 
-            default.units = "npc", just  = c("left", "center"),
-            gp    = do.call("gpar", featDraw))
-
-  grid.text(label = rownames(featDraw),
-            x     = (i-0.65)*dx,
-            y     = 0.4,
-            default.units = "npc", just  = c("left", "center"),
-            gp    = gpar(cex=.7))
-
   popViewport()
+ 
 }
 
-
 ##------------------------------------------------------------
-## plotDuplication
+## featureColors
+## note that features are drawn in the order in which they appear
+## here, this can be used to let important features overdraw less
+## important ones (e.g. tRNA is more specific than ncRNA)
+## to test, say tilingArray:::plotAlongChromLegend()
 ##------------------------------------------------------------
-plotDuplication = function(xlim, chr, strand, probeAnno, VP) { 
+featureColors = function(scheme=1) {
 
-  istrand = match(strand, c("+", "-"))
-  stopifnot(length(strand)==1, !is.na(istrand))
+  defaultColors = c("chromosome"  = NA,
+                "CDS-dubious" = "#e0e0e0",    ## light gray
+                "pseudogene"  = "#e0e0e0",    ## light gray
+                "uORF"        = "#e0e0e0",    ## light gray
+      "nc_primary_transcript" = "#a0a0a0",    ## grey
+      "transposable_element"  = "#f1b6da",    ## pink
+   "transposable_element_gene"= "#f1b6da",   
+              "repeat_family" = "#e31a1c",    ## bright red
+              "repeat_region" = "#e31a1c",    ## bright red
+                     "region" = "#e31a1c",    ## bright red
+                "ARS"         = "#808080",    ## grey
+                "centromere"  = "#FFEDA0",    ## orange
+                "telomere"    = "#FFEDA0",    ## orange
+                "insertion"   = "#FFEDA0",    ## orange
+               "binding_site" = "#a6cee3",    ## pastel blue
+           "TF_binding_site"  = "#a6cee3",    ## pastel blue
+                "CDS"         = "#e0f3f8",    ## light blue
+                "ncRNA"       = "#a0a0a0",    ## grey
+                "tRNA"        = "#a6d96a",    ## green
+                "snRNA"       = "#8C6BB1",    ## purple
+                "rRNA"        = "#fdae61",    ## meat
+                "snoRNA"      = "#d73027")    ## red wine
 
-  sta = get(paste(chr, strand, "start", sep="."),  probeAnno)
-  uni = get(paste(chr, strand, "unique", sep="."), probeAnno)
-  ord = order(sta)
-  uni = uni[ord]
-  sta = sta[ord]
+   fill = switch(scheme,
+     default  = defaultColors,
+     unicolor = ifelse(is.na(defaultColors), NA, "#7AADD1"),
+     stop("Sapperlot"))
 
-  pp  = diff(uni)
-  x0 = which(pp==-1)  ## transition from TRUE to FALSE
-  x1 = which(pp==+1)  ## transition from FALSE to TRUE
-
-  if(!uni[1])
-    x0 = c(1, x0)
-  if(!uni[length(uni)])
-    x1 = c(x1, length(uni))
-
-  stopifnot(length(x0)==length(x1))
-  stopifnot(all(x1>x0))
-  
-  pushViewport(dataViewport(xData=xlim, yscale=c(-1,1),  extension=0,  clip="on",
-    layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("dup%d", istrand), "id")))
-
-  grid.segments(x0=sta[x0], x1=sta[x1], y0=0, y1=0, default.units = "native",
-                gp=gpar(lwd=3, col="#606060")) 
-  popViewport()
-}
-
-
-##------------------------------------------------------------
-## featureDrawing
-##------------------------------------------------------------
-featureDrawing = function(what=1) {
-  res = switch(what, 
-    data.frame(col  = I(c("#7AADD1", "#d94801", "#005a32", "#707070", "#fc4e2a", 
-                          "#A65628", "#A65628", "#FED976", "#FED976")),
-               fill = I(c("#d0e0f0", "#fd8d3c", "#41ab5d", "#e0e0e0", "#feb24c", 
-                          "#BF5B17", "#BF5B17", "#FFEDA0", "#FFEDA0"))),
-    data.frame(col  = I(rep("#7AADD1", 9)),
-               fill = I(rep("#d0e0f0", 9))),
-    stop("Sapperlot"))
+  ## calculate hex string for a color that is a little bit darker than the
+  ## hex string in the argument
+  darken = function(x) {
+    sel = !is.na(x)
+    xRGB = hex2RGB(x[sel])
+    xRGB@coords = 0.5 * coords(xRGB) ## unfortunately there is no coords<- method
+    res = rep(as.character(NA), length(x))
+    res[sel] = hex(xRGB)
+    return(res)
+  }
     
-  rownames(res) =   c("CDS",     "tRNA",    "snoRNA",  "pseudogene", "ncRNA",   
-            "transposable_element", "transposable_element_gene", "centromere", "telomere")
+  res = data.frame(fill=I(fill),
+                   col =I(darken(fill)))
+  rownames(res)=names(defaultColors) 
   return(res)
 }
+

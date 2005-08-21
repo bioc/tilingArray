@@ -1,11 +1,11 @@
 Package: tilingArray
-Version: 1.1.5
-Date: 25 July 2005
+Version: 1.1.6
+Date: 22 Aug 2005
 Title: Analysis of tiling arrays
 Author: Wolfgang Huber
 Maintainer: W. Huber <huber@ebi.ac.uk>
 Depends: R (>= 2.1.0), Biobase (>= 1.4.1), RColorBrewer (>= 0.2-2),
-        grid (>= 2.0.0)
+        grid (>= 2.0.0), colorspace (>= 0.9)
 Suggests:
 Description: Analysis of tiling arrays. The package provides a fast,
         model-based segmentation algorithm and functions for scoring
