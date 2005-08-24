@@ -5,8 +5,8 @@ Title: Analysis of tiling arrays
 Author: Wolfgang Huber, Joern Toedling
 Maintainer: W. Huber <huber@ebi.ac.uk>
 Depends: R (>= 2.1.0), Biobase (>= 1.4.1), RColorBrewer (>= 0.2-2),
-        grid (>= 2.0.0), colorspace (>= 0.9)
-Suggests: strucchange (>= 1.2-10)
+        grid (>= 2.0.0), colorspace (>= 0.9), strucchange (>= 1.2-10)
+Suggests:
 Description: Analysis of tiling arrays. The package provides a fast,
         model-based segmentation algorithm and functions for scoring
         and visualization of the segments. Currently, the focus has
