@@ -215,6 +215,8 @@ if("gff" %in% what) {
   gff$Name = getAttributeField(gff$attributes, "Name")
   theID    = getAttributeField(gff$attributes, "ID")
   stopifnot(all(gff$Name == theID, na.rm=TRUE))
+  gff$Name[is.na(gff$Name)] <- theID[is.na(gff$Name)]
+  
   gff$orf_classification = getAttributeField(gff$attributes, "orf_classification")
   gff$gene               = getAttributeField(gff$attributes, "gene")
 
@@ -224,6 +226,11 @@ if("gff" %in% what) {
       "chrX", "chrXI", "chrXII", "chrXIII", "chrXIV",
       "chrXV","chrXVI", "chrMito"))
   stopifnot(!any(is.na(gff$chr)), !any(gff$chr<1), !any(gff$chr>nrchr))
+
+  # 2005/08/24: added "CDS_dubious" as new (more precise) feature description
+  gff$feature <- as.character(gff$feature)
+  gff$feature[gff$feature=="CDS" & gff[,"orf_classification"]=="Dubious"] <- "CDS_dubious"
+
 }
 
 ##--------------------------------------------------
