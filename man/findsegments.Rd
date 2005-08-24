@@ -7,14 +7,14 @@
   algorithm of Picard et al. (full citation see below).
 }
 \usage{
-findSegments(x, maxcp, maxk, verbose=0)
+findSegments(x, maxcp, maxk, verbose=TRUE)
 }
 \arguments{
   \item{x}{Numeric (real) vector.}
   \item{maxcp}{Integer (length 1): maximum number of segments (= 1 + maximum
     number of change points).}
   \item{maxk}{Integer (length 1): maximum length of a segment.}
-  \item{verbose}{Integer (length 1): if this parameter has a positive
+  \item{verbose}{Logical: if this parameter has a positive
     value, various diagnostic output is printed.}
 }
 \details{The complexity of the algorithm is 
@@ -22,11 +22,19 @@ findSegments(x, maxcp, maxk, verbose=0)
 \code{length(x)*maxk*maxcp} in time.}
 
 \value{
-  A list with two elements \code{J} and \code{th}. See the vignette, and
+  An object of class \code{"segmentation"}
+  A list with elements
+  \item{J}{likelihood criterion}
+  \item{th}{matrix of segment start points}
+  \item{dat}{the data used for the segmentation}
+  \item{call}{the function call}.
+
+  See the vignette, and
   the paper cited below for details.
 }
 
-\author{W. Huber <huber@ebi.ac.uk>}
+\author{W. Huber \email{huber@ebi.ac.uk}, Joern Toedling
+  \email{toedling@ebi.ac.uk}}
 
 \references{A statistical approach for CGH microarray data analysis.
   Franck Picard, Stephane Robin, Marc Lavielle, Christian Vaisse,

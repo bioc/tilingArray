@@ -31,15 +31,15 @@ movingWindow = function(x, y, width) {
 }
 
 scoreSegments = function(s, gff, 
-  nrBasePerSeg = 1500, 
-  probeLength  = 25,
+  nrBasePerSeg = 1500, # average segment length in base-pairs 
+  probeLength  = 25, 
   params = c(overlapFraction = 0.5, oppositeWindow = 100, flankProbes=10),
   verbose = TRUE) {
 
   data(transcribedFeatures)
   
-  rv = NULL
-  for(chr in chrs) {
+  rv = NULL # initialize result
+  for(chr in chrs) { ## chrs (chromosomes) not defined anywhere!
     for(strand in c("+", "-")) {
       
       dat     = get(paste(chr, strand, "dat", sep="."), s)
@@ -48,7 +48,7 @@ scoreSegments = function(s, gff,
 
       lengthChr = dat[["end"]][length(dat[["end"]])]
       cp        = round(lengthChr/nrBasePerSeg)
-      
+      # cp: expected number of segments on this chromosome
       dzz = cp - nrow(seg[["th"]])
       if(dzz>0) {
         if(dzz<=2) {
@@ -264,12 +264,14 @@ scoreSegments = function(s, gff,
       segScore[, "oppositeExpression"] = oe
       segScore[, "level"]              = lev
       segScore[, "frac.dup"]           = fd
+
+      ### missing: enter confidence interval for each change-point (right segment border)
         
       rv = rbind(rv, segScore)
 
-      if(verbose)
+      if (verbose)
         cat("\n")
     } ## for strand
-  } ## for chr
+  } ## for chromosome
   return(rv)
 }
