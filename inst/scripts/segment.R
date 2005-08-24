@@ -21,7 +21,9 @@ outdirs = c("seg-polyA-050824", "seg-tot-050824", "seg-dir-050824",
   "seg-odT-050824", "seg-polyA0420-050824")
 
 ##  for(d in outdirs) {
-##    dir.create(d); dir.create(file.path(d, "viz")) }
+##    dir.create(d); dir.create(file.path(d, "viz")) 
+##    system(paste("cp ", gsub("824", "811", d), "/xn.rda ", d, sep=""))
+## }
 
 chrstr = paste(rep(1:17, each=2),
                rep(c("+", "-"), 17), sep=".")
