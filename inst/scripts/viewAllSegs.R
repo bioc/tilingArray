@@ -2,9 +2,8 @@ options(error=recover, warn=0)
 interact =  !TRUE
 library("tilingArray")
 
-rnaTypes  = c("seg-polyA-050525", "seg-tot-050525",
-              "seg-dir-050721" , "seg-polyA-050804", "seg-odT-050801")[3:5]
-isDirect  = c(FALSE, FALSE, TRUE, FALSE, FALSE)[3:5]
+rnaTypes  = c("seg-polyA-050804")
+isDirect  = c(FALSE)
 names(isDirect) = rnaTypes
 
 stopifnot(length(isDirect)==length(rnaTypes))

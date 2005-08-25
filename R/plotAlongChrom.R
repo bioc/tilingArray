@@ -408,6 +408,7 @@ featureColors = function(scheme=1) {
 
   defaultColors = c("chromosome"  = NA,
                 "CDS_dubious" = "#e0e0e0",    ## light gray
+                "nucleotide_match" = "#e0e0e0",    ## light gray
                 "pseudogene"  = "#e0e0e0",    ## light gray
                 "uORF"        = "#e0e0e0",    ## light gray
       "nc_primary_transcript" = "#a0a0a0",    ## grey
