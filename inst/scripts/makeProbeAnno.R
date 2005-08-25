@@ -24,7 +24,7 @@ options(error=recover)
 arraySize   = 2560
 nrProbes    = arraySize*arraySize
 
-what = c("hits", "arrayexpress", "probeAnno1", "gff", "probeAnno2", "probeAnnoSave")[5:6]
+what = c("hits", "arrayexpress", "probeAnno1", "gff", "probeAnno2", "probeAnnoSave")[4]
 
 if("hits" %in% what) {
   ## read the MUMmer output, parse and process
