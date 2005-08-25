@@ -5,7 +5,7 @@ options(error=recover, warn=0)
 library("tilingArray")
 library("geneplotter")
 
-source("~/madman/Rpacks/tilingArray/R/plotAlongChrom.R")
+#source("~/madman/Rpacks/tilingArray/R/plotAlongChrom.R")
 
 rnaTypes  = c("seg-polyA-050525")
 source("scripts/readSegments.R")
