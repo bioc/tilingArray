@@ -230,7 +230,6 @@ if("gff" %in% what) {
   # 2005/08/24: added "CDS_dubious" as new (more precise) feature description
   gff$feature <- as.character(gff$feature)
   gff$feature[gff$feature=="CDS" & gff[,"orf_classification"]=="Dubious"] <- "CDS_dubious"
-
 }
 
 ##--------------------------------------------------
