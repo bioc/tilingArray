@@ -4,9 +4,17 @@
 colMedians = function(x)
   apply(x, 2, median)
 
+options(error=recover, warn=2)
+library("tilingArray")
+#source("/homes/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
+
 vectornorm = function(x) {
   sqrt(mean(x*x))
 }
+
+
+rnaTypes  = c("seg-polyA-050804") #, "seg-tot-050525",
+#                "seg-dir-050721" , "seg-polyA-050804", "seg-odT-050801")[5]
 
 zscore = function(x, x0) {
   if(nrow(x)>2) {
@@ -15,6 +23,7 @@ zscore = function(x, x0) {
     as.numeric(NA)
   }
 }
+
 
 movingWindow = function(x, y, width) {
   stopifnot(length(x)==nrow(y))
