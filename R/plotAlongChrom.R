@@ -210,7 +210,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
               width  = unit(segend-segstart+1, "native"),
               height = unit(0.8, "npc"),
               just   = c("left", "center"),	
-              gp     = gpar(col="#a0a0a0", fill=colo))
+             gp     = gpar(col="#a0a0a0", fill=colo))
     popViewport(1)
   }
   }
