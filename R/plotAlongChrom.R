@@ -233,7 +233,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
 
   ## NOTE this kind of hard-coding is ugly - should really be dealt with on the level of the
   ## instanciation of the GFF object
-  feature[feature=="CDS" & gff[sel, "orf_classification"]=="Dubious"] = "CDS-dubious"
+  #feature[feature=="CDS" & gff[sel, "orf_classification"]=="Dubious"] = "CDS-dubious"
 
   ## split!
   featsp  = split(seq(along=sel), feature)
@@ -407,7 +407,7 @@ plotAlongChromLegend = function(vpr=1, nr=3,
 featureColors = function(scheme=1) {
 
   defaultColors = c("chromosome"  = NA,
-                "CDS-dubious" = "#e0e0e0",    ## light gray
+                "CDS_dubious" = "#e0e0e0",    ## light gray
                 "pseudogene"  = "#e0e0e0",    ## light gray
                 "uORF"        = "#e0e0e0",    ## light gray
       "nc_primary_transcript" = "#a0a0a0",    ## grey
