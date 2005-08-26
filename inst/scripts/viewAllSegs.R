@@ -2,6 +2,9 @@ options(error=recover, warn=0)
 interact =  !TRUE
 library("tilingArray")
 
+rfuncDir <- "/ebi/research/huber/users/joern/tilingArray/R"
+source(file.path(rfuncDir,"plotAlongChrom.R"))
+
 rnaTypes  = c("seg-polyA-050804")
 isDirect  = c(FALSE)
 names(isDirect) = rnaTypes

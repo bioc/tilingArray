@@ -22,7 +22,6 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
 
   ## do not draw p-value bars
   VP = VP[-which(names(VP)%in%c("z1", "z2"))]
-  
   if(!missing(y)) {
     if(missing(probeAnno))
       stop("If 'y' is specified, 'probeAnno' must also be specified.")
@@ -127,11 +126,16 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
 ## gff and chrSeqname into an environment or object?
 
 plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreShow,
-  gff, chr, strand, VP, colors, pointSize, haveNames, probeLength=25, featColScheme) {
+  gff, chr, strand, VP, colors, pointSize, haveNames, probeLength=25, featColScheme,
+  noTypeLabel = c("CDS"),
+  exclude=c("transposable_element", "chromosome","centromere","telomere","gene","region","ARS",
+    "nucleotide_match","insertion","repeat_region","repeat_family","intron","nc_primary_transcript",
+    "transposable_element_gene") # new version: 2005-08-26 J
+) {
 
   ## could this be done better?
   if(is.matrix(y))
-    y = rowMeans(y)
+    y = rowMeans(y) # if >1 samples take mean over samples?
     
   stopifnot(length(x)==length(y), length(x)==length(uniq))
 
@@ -248,10 +252,10 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     whnames = i
   }
 
-  featCols = featureColors(featColScheme)
+  featCols = featureColors(featColScheme, exclude)
 
   ## check that we know how deal with all features
-  whm = names(featsp) %in% c(rownames(featCols), "gene", "intron")
+  whm = names(featsp) %in% c(rownames(featCols), exclude) # change: 2005-08-25 J
   if(!all(whm))
     stop("Don't know how to handle feature(s) '", paste(names(featsp)[!whm], collapse=", "), "'.", sep="")
 
@@ -275,7 +279,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
               default.units = "native",
               just  = c("left", "center"),
               gp    = gp)
-    whnames = c(whnames, unlist(sfeatsp[ names(sfeatsp)!="CDS" ]))
+    whnames = c(whnames, unlist(sfeatsp[!(names(sfeatsp) %in% noTypeLabel)]))
   }
 
   if(haveNames && (length(whnames)>0)) {
@@ -293,6 +297,8 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     strw   = convertWidth(stringWidth(featName[whnames]), "native", valueOnly=TRUE)*txtcex
     rightB = txtx[1] + 0.5*strw[1]
     doText = rep(TRUE, length(whnames))
+
+    # adjust text labels to be still readable in feature-dense areas:
     if(length(whnames)>1) {
       for(k in 2:length(whnames)) {
         leftB = txtx[k] - 0.5*strw[k]
@@ -311,6 +317,10 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
         } ##  else
       } ## for
     }
+    
+    if (length(grep("binding",featName))>0)
+      featName <- gsub("binding.?site.*$","bs",featName)
+    
     grid.text(label = featName[whnames][doText],
               x = txtx[doText], y = txty, gp=gpar(cex=txtcex), 
               default.units = "native")
@@ -358,9 +368,11 @@ alongChromTicks = function(x){
 ##------------------------------------------------------------
 ## legend
 ##------------------------------------------------------------
-plotAlongChromLegend = function(vpr=1, nr=3,
-  exclude=c("transposable_element_gene", "transposable_element", "chromosome")) {
-  
+plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
+  exclude=c("transposable_element", "chromosome","centromere","telomere","gene","region","ARS",
+    "nucleotide_match","insertion","repeat_region","repeat_family","intron","nc_primary_transcript",
+    "transposable_element_gene","TF_binding_site") # new version: 2005-08-26 J
+  ) {
   formatRow = function(featColsOneRow, row) {
     print(featColsOneRow)
     strWid   = convertWidth(stringWidth(rownames(featColsOneRow)), "npc", valueOnly=TRUE)
@@ -373,29 +385,28 @@ plotAlongChromLegend = function(vpr=1, nr=3,
     x      = x/totWid
     strWid = strWid/totWid
     grid.rect(x = x, width = strWid, 
-              y = unit(row, "native"), height = unit(1, "native") - unit(2, "mm"), 
+              y = unit(row, "native"), height = unit(1, "native")- unit(1, "mm"), 
               just  = c("left", "center"), default.units="npc",
               gp    = do.call("gpar", featColsOneRow))
     
     grid.text(label = rownames(featColsOneRow),
               x = unit(x + strWid/2, "native"), y = unit(row, "native"),
-              just  = c("center", "center"))
+              just  = c("center", "center"), gp=gpar(cex=0.66))
   }
   
 
-  featCols = featureColors()
-  featCols = featCols[!(rownames(featCols) %in% exclude), ]
+  featCols = featureColors(1,exclude)
 
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=vpr, yscale=c(0.5, nr+0.5)))
-  grid.lines(c(0,1), c(1,1), default.units = "npc")
+  grid.lines(c(0,1), c(1,1), default.units = "npc", gp=gpar(col="black",lty=2))
 
   i = 1:nrow(featCols)
   for(r in 1:nr)
     formatRow(featCols[ceiling(i/nrow(featCols)*nr-1e-10)==r, ], row=nr-r+1)
   
   popViewport()
- 
-}
+  
+}#plotAlongChromLegend
 
 ##------------------------------------------------------------
 ## featureColors
@@ -404,36 +415,43 @@ plotAlongChromLegend = function(vpr=1, nr=3,
 ## important ones (e.g. tRNA is more specific than ncRNA)
 ## to test, say tilingArray:::plotAlongChromLegend()
 ##------------------------------------------------------------
-featureColors = function(scheme=1) {
+featureColors = function(scheme=1, exclude=c()) {
 
   defaultColors = c("chromosome"  = NA,
-                "CDS_dubious" = "#e0e0e0",    ## light gray
-                "nucleotide_match" = "#e0e0e0",    ## light gray
-                "pseudogene"  = "#e0e0e0",    ## light gray
-                "uORF"        = "#e0e0e0",    ## light gray
-      "nc_primary_transcript" = "#a0a0a0",    ## grey
-      "transposable_element"  = "#f1b6da",    ## pink
-   "transposable_element_gene"= "#f1b6da",   
-              "repeat_family" = "#e31a1c",    ## bright red
-              "repeat_region" = "#e31a1c",    ## bright red
-                     "region" = "#e31a1c",    ## bright red
-                "ARS"         = "#808080",    ## grey
-                "centromere"  = "#FFEDA0",    ## orange
-                "telomere"    = "#FFEDA0",    ## orange
-                "insertion"   = "#FFEDA0",    ## orange
-               "binding_site" = "#a6cee3",    ## pastel blue
-           "TF_binding_site"  = "#a6cee3",    ## pastel blue
-                "CDS"         = "#e0f3f8",    ## light blue
-                "ncRNA"       = "#a0a0a0",    ## grey
-                "tRNA"        = "#a6d96a",    ## green
-                "snRNA"       = "#8C6BB1",    ## purple
-                "rRNA"        = "#fdae61",    ## meat
-                "snoRNA"      = "#d73027")    ## red wine
+                    "nucleotide_match" = "#e0e0e0",    ## light gray
+                    "pseudogene"  = "#e0e0e0",    ## light gray
+                    "uORF"        = "#e0e0e0",    ## light gray
+                    "nc_primary_transcript" = "#a0a0a0",    ## grey
+                    "transposable_element"  = "#f1b6da",    ## pink
+                    "transposable_element_gene"= "#f1b6da",   
+                    "repeat_family" = "#e31a1c",    ## bright red
+                    "repeat_region" = "#e31a1c",    ## bright red
+                    "region" = "#e31a1c",    ## bright red
+                    "ARS"         = "#808080",    ## grey
+                    "centromere"  = "#FFEDA0",    ## orange
+                    "telomere"    = "#FFEDA0",    ## orange
+                    "insertion"   = "#FFEDA0",    ## orange
+                    #"binding_site" = "#a6cee3",    ## pastel blue  
+                    #"TF_binding_site"  = "#a6cee3",## pastel blue
+                    "binding_site" = "#C9C299",     ## lemon chiffon
+                    "TF_binding_site"  = "#C9C299", ## lemon chiffon
+                    "CDS"         = "#e0f3f8",    ## light blue
+                    "CDS_dubious" = "#e0f1f2",    ## lighter blue
+                    "ncRNA"       = "#a0a0a0",    ## grey
+                    "tRNA"        = "#a6d96a",    ## green
+                    "snRNA"       = "#8C6BB1",    ## purple
+                    "rRNA"        = "#fdae61",    ## meat
+                    "snoRNA"      = "#d73027")    ## red wine
 
-   fill = switch(scheme,
-     default  = defaultColors,
-     unicolor = ifelse(is.na(defaultColors), NA, "#7AADD1"),
-     stop("Sapperlot"))
+  # kick out unwanted Features, no need to return a color defintion for them
+  defaultFeatures  <- names(defaultColors)
+  selectedFeatures <- setdiff(defaultFeatures, exclude)
+  defaultColors    <- defaultColors[selectedFeatures]
+
+  fill = switch(scheme,
+    default  = defaultColors,
+    unicolor = ifelse(is.na(defaultColors), NA, "#7AADD1"),
+    stop("Sapperlot"))
 
   ## calculate hex string for a color that is a little bit darker than the
   ## hex string in the argument
