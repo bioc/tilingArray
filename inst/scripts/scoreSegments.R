@@ -1,13 +1,21 @@
+### 2005-08-26: run function 'scoreSegments' on data; see tilingArray/R/scoreSegments.R for the used functions.
 
-options(error=recover, warn=2)
 library("tilingArray")
-source("/homes/huber/madman/Rpacks/tilingArray/R/scoreSegments.R")
 
-rnaTypes  = c("seg-polyA-050525", "seg-tot-050525",
-                "seg-dir-050721" , "seg-polyA-050804", "seg-odT-050801")[5]
+# where to find new versions of the functions without reinstalling tilingArray:
+rfuncDir <- "/ebi/research/huber/users/joern/tilingArray/R"
+# where to find the scripts:
+scriptsDir <-  "/ebi/research/huber/users/joern/tilingArray/inst/scripts"
+
+source(file.path(rfuncDir, "scoreSegments.R"))
+
+rnaTypes  = c("seg-polyA-050804", "seg-polyA-050811", "seg-tot-050811",
+  "seg-dir-050811" , "seg-odT-050811", "seg-polyA0420-050811")[1]
 
 doNotLoadSegScore=TRUE
-source("scripts/readSegments.R")
+source(file.path(scriptsDir, "readSegments.R"))
+
+names(indir) = indir = rnaTypes
 
 addDirectHybe = function(s) {
   dhl = numeric(nrow(s))
