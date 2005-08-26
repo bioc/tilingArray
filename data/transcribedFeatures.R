@@ -3,8 +3,10 @@
 #    "transposable_element", "transposable_element_gene")
 
 # 2005/08/24: new version with more different features:
-transcribedFeatures = c("repeat_family","telomere","gene",
-  "CDS_dubious","binding_site","CDS","repeat_region",
-  "region","intron","tRNA","ncRNA","snoRNA","centromere","ARS",
+transcribedFeatures = c("gene","CDS_dubious","binding_site","CDS",
+  "tRNA","ncRNA","snoRNA", "uORF",
   "transposable_element","transposable_element_gene","pseudogene",
-  "snRNA","insertion","rRNA","nc_primary_transcript","TF_binding_site","uORF")
+  "snRNA","rRNA","nc_primary_transcript","TF_binding_site")
+
+# disregarded: c("nucleotide_match","centromere","telomere","insertion",
+#                "repeat_region", "repeat_family", "region", "intron")

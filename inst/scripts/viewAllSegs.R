@@ -6,11 +6,13 @@ rnaTypes  = c("seg-polyA-050804")
 isDirect  = c(FALSE)
 names(isDirect) = rnaTypes
 
+setwd("/ebi/research/huber/Projects/tilingArray")
+
 stopifnot(length(isDirect)==length(rnaTypes))
 
-source("scripts/readSegments.R")
-source("scripts/calcThreshold.R") 
-source("scripts/writeSegmentTable.R") 
+source("jscripts/readSegments.R")
+source("jscripts/calcThreshold.R") 
+source("jscripts/writeSegmentTable.R") 
 
 nrChr = 16
 

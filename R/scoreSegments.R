@@ -117,9 +117,9 @@ scoreSegments = function(s, gff,
 
       ## for overlapFeatAll: all features, transcribable or not,
       ##  and either strand
-      #allsel = (gff[, "chr"]==chr & !(gff[, "feature"] %in% c("chromosome", "region")))
+      allsel = (gff[, "chr"]==chr & !(gff[, "feature"] %in% c("chromosome", "region")))
       # why exclude 'region'?, change: 2005-08-26 J
-      allsel = (gff[, "chr"]==chr & !(gff[, "feature"] %in% c("chromosome")))
+      # allsel = (gff[, "chr"]==chr & !(gff[, "feature"] %in% c("chromosome")))
       all.gff = gff[allsel, ]
 
       stopifnot(!any(is.na(all.gff[, "Name"])),
