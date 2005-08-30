@@ -127,15 +127,14 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
 
 plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreShow,
   gff, chr, strand, VP, colors, pointSize, haveNames, probeLength=25, featColScheme,
-  noTypeLabel = c("CDS"),
-  exclude=c("transposable_element", "chromosome","centromere","telomere","gene","region","ARS",
-    "nucleotide_match","insertion","repeat_region","repeat_family","intron","nc_primary_transcript",
-    "transposable_element_gene") # new version: 2005-08-26 J
+  noTypeLabel = c("CDS","binding_site", "TF_binding_site"),
+  exclude=c("transposable_element", "chromosome","centromere","telomere","gene","region","binding_site",
+    "nucleotide_match","insertion","intron","nc_primary_transcript", "transposable_element_gene")
+    #   ,"ARS","repeat_region","repeat_family",  # new version: 2005-08-30 J
 ) {
-
   ## could this be done better?
   if(is.matrix(y))
-    y = rowMeans(y) # if >1 samples take mean over samples?
+    y = rowMeans(y) #  if >1 samples? -> take mean over samples
     
   stopifnot(length(x)==length(y), length(x)==length(uniq))
 
@@ -280,6 +279,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
               just  = c("left", "center"),
               gp    = gp)
     whnames = c(whnames, unlist(sfeatsp[!(names(sfeatsp) %in% noTypeLabel)]))
+    #if (length(grep("binding", names(sfeatsp)))>0) browser()
   }
 
   if(haveNames && (length(whnames)>0)) {
@@ -369,9 +369,10 @@ alongChromTicks = function(x){
 ## legend
 ##------------------------------------------------------------
 plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
-  exclude=c("transposable_element", "chromosome","centromere","telomere","gene","region","ARS",
-    "nucleotide_match","insertion","repeat_region","repeat_family","intron","nc_primary_transcript",
-    "transposable_element_gene","TF_binding_site") # new version: 2005-08-26 J
+  exclude=c("transposable_element", "chromosome","centromere","telomere","gene","region",
+    "nucleotide_match","insertion", "transposable_element_gene","TF_binding_site",
+    "intron","nc_primary_transcript")
+    #"repeat_region","repeat_family","ARS","intron","nc_primary_transcript") # change Aug 30,2005 J
   ) {
   formatRow = function(featColsOneRow, row) {
     print(featColsOneRow)
@@ -435,13 +436,13 @@ featureColors = function(scheme=1, exclude=c()) {
                     #"TF_binding_site"  = "#a6cee3",## pastel blue
                     "binding_site" = "#C9C299",     ## lemon chiffon
                     "TF_binding_site"  = "#C9C299", ## lemon chiffon
-                    "CDS"         = "#e0f3f8",    ## light blue
+                    "CDS"         = "#addfff",    ## light blue
                     "CDS_dubious" = "#e0f1f2",    ## lighter blue
-                    "ncRNA"       = "#a0a0a0",    ## grey
+                    "ncRNA"       = "#3b9c9c",    ## cyan
                     "tRNA"        = "#a6d96a",    ## green
                     "snRNA"       = "#8C6BB1",    ## purple
                     "rRNA"        = "#fdae61",    ## meat
-                    "snoRNA"      = "#d73027")    ## red wine
+                    "snoRNA"      = "#7F5A58")    ## red brown
 
   # kick out unwanted Features, no need to return a color defintion for them
   defaultFeatures  <- names(defaultColors)

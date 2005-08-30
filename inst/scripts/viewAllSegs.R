@@ -1,5 +1,6 @@
 options(error=recover, warn=0)
 interact =  !TRUE
+writeGFF = FALSE
 library("tilingArray")
 
 rfuncDir <- "/ebi/research/huber/users/joern/tilingArray/R"
@@ -22,8 +23,10 @@ nrChr = 16
 ##
 ## Prepare and write the GFF-table
 ##
+
 if(!"Ontology_term" %in% names(gff))
   gff$Ontology_term = getAttributeField(gff$attributes, "Ontology_term")
+
 if(!"Note" %in% names(gff)) {
   tmp = getAttributeField(gff$attributes, "Note")
   tmp = gsub("%20", " ", tmp)
@@ -32,12 +35,13 @@ if(!"Note" %in% names(gff)) {
   gff$Note = tmp
 }
 
-outtab = gff[ gff$feature=="gene", c("chr", "start", "end",
-                "strand", "Name", "gene", "orf_classification",
-                "Note") ]
-outtab$plotfile = mapCoord2Plot(outtab$chr, outtab$start, outtab$end)
-write.table(outtab, file="gff.txt",
+if (writeGFF) {
+  outtab = gff[ gff$feature=="gene", c("chr", "start", "end", "strand",
+                  "Name", "gene", "orf_classification","Note") ]
+  outtab$plotfile = mapCoord2Plot(outtab$chr, outtab$start, outtab$end)
+  write.table(outtab, file="gff.txt",
               sep="\t", quote=FALSE, row.names=FALSE, col.names=TRUE)
+}
 
 ##
 ## Write the pictures

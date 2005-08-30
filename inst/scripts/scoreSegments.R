@@ -47,3 +47,14 @@ for(rt in rnaTypes) {
          compress=TRUE)
   } 
 }
+
+gffBS <- grep("binding_site", gff$feature)
+table(gff[gffBS,"strand"])
+#   -    .    +
+#  15    0 3369
+
+# compare with:
+table(gff[grep("CDS$", gff$feature),"strand"])
+#    -    .    +
+# 3049    0 3177
+
