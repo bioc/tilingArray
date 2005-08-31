@@ -208,7 +208,20 @@ if("gff" %in% what) {
   
   ## also read the regulatory features:
   gff1 = gffRead("SGD-0508/saccharomyces_cerevisiae.gff")
-  gff2 = gffRead("SGD-0508/scerevisiae_regulatory.gff")
+  #gff2 = gffRead("SGD-0508/scerevisiae_regulatory.gff")
+
+  # changed on Aug 31, 2005 to include corrected binding site info, J
+  gff2     <- gffRead("SGD-0508/IGR_v24.2.p001.allowoverlap.GFF")
+  # prepare updated binding site info for adding to gff; 2005-08-31 J
+  gff2[,1] <- paste("chr",gff2[,1],sep="") 
+  gff2[,3] <- "TF_binding_site"
+  bsName <- function(x){
+    x2 <- gsub("^.*Site[[:space:]]?","",x)
+    x3 <- gsub(";$","", x2)
+    return(paste(x,"Name=",x3,"-binding-site",sep=""))
+  }
+  gff2[,9] <- sapply(gff2[,9],bsName)
+
   gff  = rbind(gff1, gff2)
 
   ## Add additional useful fields

@@ -128,8 +128,7 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
 plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreShow,
   gff, chr, strand, VP, colors, pointSize, haveNames, probeLength=25, featColScheme,
   noTypeLabel = c("CDS","binding_site", "TF_binding_site"),
-  exclude=c("transposable_element", "chromosome","centromere","telomere","gene","region","binding_site",
-    "nucleotide_match","insertion","intron","nc_primary_transcript", "transposable_element_gene")
+  exclude=c("chromosome","gene","nucleotide_match","insertion","intron")
     #   ,"ARS","repeat_region","repeat_family",  # new version: 2005-08-30 J
 ) {
   ## could this be done better?
@@ -234,10 +233,6 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
 
   feature  = as.character(gff[sel, "feature"])
 
-  ## NOTE this kind of hard-coding is ugly - should really be dealt with on the level of the
-  ## instanciation of the GFF object
-  #feature[feature=="CDS" & gff[sel, "orf_classification"]=="Dubious"] = "CDS-dubious"
-
   ## split!
   featsp  = split(seq(along=sel), feature)
 
@@ -302,6 +297,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     if(length(whnames)>1) {
       for(k in 2:length(whnames)) {
         leftB = txtx[k] - 0.5*strw[k]
+        browser() # for checking
         if(leftB > rightB) {
           rightB = txtx[k] + 0.5*strw[k]
         } else {
@@ -369,9 +365,7 @@ alongChromTicks = function(x){
 ## legend
 ##------------------------------------------------------------
 plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
-  exclude=c("transposable_element", "chromosome","centromere","telomere","gene","region",
-    "nucleotide_match","insertion", "transposable_element_gene","TF_binding_site",
-    "intron","nc_primary_transcript")
+    exclude=c("chromosome","gene","nucleotide_match","insertion","intron")
     #"repeat_region","repeat_family","ARS","intron","nc_primary_transcript") # change Aug 30,2005 J
   ) {
   formatRow = function(featColsOneRow, row) {
