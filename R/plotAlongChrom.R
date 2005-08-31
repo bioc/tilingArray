@@ -127,7 +127,7 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
 
 plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreShow,
   gff, chr, strand, VP, colors, pointSize, haveNames, probeLength=25, featColScheme,
-  noTypeLabel = c("CDS","binding_site", "TF_binding_site"),
+  noTypeLabel = c("CDS"), #,"binding_site", "TF_binding_site"),
   exclude=c("chromosome","gene","nucleotide_match","insertion","intron")
     #   ,"ARS","repeat_region","repeat_family",  # new version: 2005-08-30 J
 ) {
@@ -277,10 +277,13 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     #if (length(grep("binding", names(sfeatsp)))>0) browser()
   }
 
-  if(haveNames && (length(whnames)>0)) {
+  nNames  <- length(whnames) # used quite often, number of labels to put in
+  
+  if(haveNames && (nNames>0)) {
     txtcex = 0.7
     txtdy  = 0.7
     whnames = whnames[!duplicated(featName[whnames])]
+    nNames  <- length(whnames) 
     s      = sel[whnames]
     txtx   = (gff$start[s]+gff$end[s])/2
     txty   = numeric(length(s))
@@ -288,37 +291,41 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     whnames = whnames[ord]
     s      = s[ord]
     txtx   = txtx[ord]
+
+    if (length(grep("binding",featName))>0) # replace long labels
+      featName <- gsub("binding.?site.*$","bs",featName)
     
     strw   = convertWidth(stringWidth(featName[whnames]), "native", valueOnly=TRUE)*txtcex
     rightB = txtx[1] + 0.5*strw[1]
     doText = rep(TRUE, length(whnames))
 
+    # not used so far:
+    # textstarts <-  txtx - 0.5*strw
+    # textends   <-  txtx + 0.5*strw
+
     # adjust text labels to be still readable in feature-dense areas:
-    if(length(whnames)>1) {
-      for(k in 2:length(whnames)) {
+    if(nNames>1) {
+      for(k in 2:nNames) {
         leftB = txtx[k] - 0.5*strw[k]
-        browser() # for checking
-        if(leftB > rightB) {
+        if(leftB > rightB) { # all texts not overlapping next to each other?
           rightB = txtx[k] + 0.5*strw[k]
-        } else {
-          if(!any(txty[k-(1:2)]==txtdy)) {
-            txty[k]= txtdy
-          } else {
-            if(!any(txty[k-(1:2)]== -txtdy)) {
-              txty[k]= -txtdy
+        } else { # any overlaps?
+          if(!any(txty[k-(1:2)]==txtdy)) {#  2 previous labels not moved up?
+            txty[k]= txtdy                #   then this one 
+          } else {                        #  else try move down:
+            if(!any(txty[k-(1:2)]== -txtdy)) { 
+              txty[k]= -txtdy             #  if 2 previous ones weren't
             } else {
-              doText[k] = FALSE
+              doText[k] = FALSE           #  otherwise don't put the label
             }
           }
         } ##  else
       } ## for
     }
-    
-    if (length(grep("binding",featName))>0)
-      featName <- gsub("binding.?site.*$","bs",featName)
+    #browser()
     
     grid.text(label = featName[whnames][doText],
-              x = txtx[doText], y = txty, gp=gpar(cex=txtcex), 
+              x = txtx[doText], y = txty[doText], gp=gpar(cex=txtcex), 
               default.units = "native")
   } ## if
   
@@ -426,8 +433,6 @@ featureColors = function(scheme=1, exclude=c()) {
                     "centromere"  = "#FFEDA0",    ## orange
                     "telomere"    = "#FFEDA0",    ## orange
                     "insertion"   = "#FFEDA0",    ## orange
-                    #"binding_site" = "#a6cee3",    ## pastel blue  
-                    #"TF_binding_site"  = "#a6cee3",## pastel blue
                     "binding_site" = "#C9C299",     ## lemon chiffon
                     "TF_binding_site"  = "#C9C299", ## lemon chiffon
                     "CDS"         = "#addfff",    ## light blue
