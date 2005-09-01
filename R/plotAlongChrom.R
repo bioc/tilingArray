@@ -137,6 +137,9 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     
   stopifnot(length(x)==length(y), length(x)==length(uniq))
 
+  if (is.numeric(uniq)) # handle new, more precise numeric codes for uniqueness
+    uniq <- (uniq==0)   #  at present does not use their full potential!!
+
   if(missing(xlim)) {
     xlim=range(x)
   } else {

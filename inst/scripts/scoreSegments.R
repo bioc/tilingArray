@@ -9,8 +9,9 @@ scriptsDir <-  "/ebi/research/huber/users/joern/tilingArray/inst/scripts"
 
 source(file.path(rfuncDir, "scoreSegments.R"))
 
-rnaTypes  = c("seg-polyA-050804", "seg-polyA-050811", "seg-tot-050811",
-  "seg-dir-050811" , "seg-odT-050811", "seg-polyA0420-050811")[1]
+rnaTypes  = c("seg-polyA-050804",
+  "seg-polyA-050810", "seg-polyA-050811", "seg-tot-050811",
+  "seg-dir-050811" , "seg-odT-050811", "seg-polyA0420-050811")[-c(1,2)]
 
 doNotLoadSegScore=TRUE
 source(file.path(scriptsDir, "readSegments.R"))

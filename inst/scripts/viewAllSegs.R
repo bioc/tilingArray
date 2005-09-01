@@ -6,13 +6,19 @@ library("tilingArray")
 rfuncDir <- "/ebi/research/huber/users/joern/tilingArray/R"
 source(file.path(rfuncDir,"plotAlongChrom.R"))
 
-rnaTypes  = c("seg-polyA-050804")
-isDirect  = c(FALSE)
-names(isDirect) = rnaTypes
 
+rnaTypes  = c("seg-polyA-050804",
+  "seg-polyA-050810", "seg-polyA-050811", "seg-tot-050811",
+  "seg-dir-050811" , "seg-odT-050811", "seg-polyA0420-050811")[-c(1,2)]
+isDirect  = c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE) [-c(1,2)]
+
+names(isDirect) = rnaTypes
 setwd("/ebi/research/huber/Projects/tilingArray")
 
-stopifnot(length(isDirect)==length(rnaTypes))
+# check if rnaTypes were specified correctly:
+stopifnot(length(isDirect)==length(rnaTypes),
+          all(file.info(rnaTypes)$isdir),
+          all(file.info(file.path(rnaTypes,"viz"))$isdir))  
 
 source("jscripts/readSegments.R")
 source("jscripts/calcThreshold.R") 
@@ -53,7 +59,7 @@ for(rt in rnaTypes) {
   outdir = file.path(indir[rt], "viz")
   if(!file.exists(outdir) || !file.info(outdir)$isdir)
     stop(paste("Output directory", outdir, "does not exist."))
-
+    
   allY = unlist(lapply(1:nrChr, function(chr) {
     lapply(c("-", "+"), function(strand) {
       dat = get(paste(chr, strand, "dat", sep="."), get(rt))
