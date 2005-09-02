@@ -33,7 +33,7 @@ findSegments = function(x, maxcp, maxk, verbose=TRUE)
 }#findSegments
 
 
-plot.segmentation = function(x, nSegments=NULL, bcol=NULL, ...){
+plot.segmentation = function(x, nSegments=NULL, bcol=NULL, from=NULL, to=NULL, ...){
 
   stopifnot(all(c("th","dat") %in% names(x)), is.numeric(x$dat))
   
@@ -53,24 +53,39 @@ plot.segmentation = function(x, nSegments=NULL, bcol=NULL, ...){
       nSegments <- x$chosenSegNo[which.min(rssdiff)+1]
     }
   }#else
+
   breakp <- x$th[nSegments, 1:(nSegments-1), drop=TRUE]
   ncp    <- nSegments - 1 # number of change points
-
+  
   if (is.null(x$confInt))
     ci <- matrix(breakp, nrow=length(breakp), ncol=3, byrow=FALSE)
   else
     ci <- x$confInt[[match(nSegments,x$chosenSegNo)]] # confidence intervals
 
+  
+  # for handling too large segmentation objects:
+  if (!is.null(from)|!is.null(to)){
+    if (is.null(from)) from <- 1
+    if (is.null(to))   to   <- length(y)
+    stopifnot(from >= 1, from < to, to <= length(y))
+    y          <- y[from:to]
+    Index      <- Index[from:to]
+    keep.index <- which( breakp>from & breakp<=to)
+    breakp     <- breakp[keep.index]
+    ci         <- ci[keep.index, ,drop=FALSE]
+  }
+
   plot(x=Index, y=y, ...)
+  
   if (is.null(bcol))
-    mycols <- 1:ncp + 1
+    mycols <- 1:length(breakp) + 1
   else
     mycols <- bcol
   abline(v=ci[,2]-0.5,col=mycols,lty=2) # draw segment borders
 
   if (!is.null(x$confInt)){ # draw change point confidence intervals
     mtext(side=1, at=ci[,1]-0.5, text=rep("(",ncp), line=-0.7, col=mycols)
-    mtext(side=1, at=ci[,3]-0.5, text=rep(")",ncp), line=-0.7, col=mycols)
+    mtext(side=1, at=ci[,3]+0.5, text=rep(")",ncp), line=-0.7, col=mycols)
   }
   
   invisible(list(breakp=breakp, confInt=ci))
