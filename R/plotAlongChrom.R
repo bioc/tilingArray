@@ -325,7 +325,6 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
         } ##  else
       } ## for
     }
-    #browser()
     
     grid.text(label = featName[whnames][doText],
               x = txtx[doText], y = txty[doText], gp=gpar(cex=txtcex), 

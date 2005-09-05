@@ -95,7 +95,7 @@ scoreSegments = function(s, gff,
       wh = which(dat[["ss"]])
       dStart = dat[["start"]][wh]      ## start base of all probes 
       dEnd   = dat[["end"]][wh]        ## end base of all probes
-      dUniq  = dat[["unique"]]
+      dUniq  = dat[["unique"]][wh]
       dY     = dat[["y"]][wh,, drop=FALSE]
 
       ## extract relevant data from "datOppo"
