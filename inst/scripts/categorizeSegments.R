@@ -76,7 +76,9 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1,
   categIDs[["uncharacterized gene"]] = gff[ sel & gff[, "orf_classification"]=="Uncharacterized", "Name"]
   categIDs[["verified gene"]]        = gff[ sel & gff[, "orf_classification"]=="Verified", "Name"]
 
-  stopifnot(all(listLen(categIDs)>0))
+  categIDs <- categIDs[-which(listLen(categIDs)<1)]
+  #stopifnot(all(listLen(categIDs)>0))
+  #ignore non-found features, seems to apply only to uORFs so far
 
   ## Loop over <50%, >=50%, complete:
   for(i in seq(along=attrName)) {

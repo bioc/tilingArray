@@ -3,14 +3,14 @@ library("geneplotter")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = (TRUE)
-what     = c("fig2", "fig4", "cons", "lvsx", "wst")[1]
+interact = !(TRUE)
+what     = c("fig2", "fig4", "cons", "lvsx", "wst")
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
 
-rnaTypes  = c("seg-polyA-050811", "seg-tot-050811", "seg-tot2-050525")[1:2]
-outfile = "categtry/tableSegments"
+rnaTypes  = c("seg-polyA-050811", "seg-tot-050811")
+outfile = "tableSegments"
 
 source("jscripts/readSegments.R") 
 source("jscripts/categorizeSegments.R") 
