@@ -43,7 +43,11 @@ scoreSegments = function(s, gff,
     for(strand in c("+", "-")) {
       
       dat     = get(paste(chr, strand, "dat", sep="."), s)
+      ## handle new numeric uniqueness codes, still sub-optimal
+      if (is.numeric(dat$unique)) dat$unique <- (dat$unique==0)
       datOppo = get(paste(chr, otherStrand(strand), "dat", sep="."), s)
+      ## handle new numeric uniqueness codes, still sub-optimal
+      if (is.numeric(datOppo$unique)) datOppo$unique <- (datOppo$unique==0)
       seg     = get(paste(chr, strand, "seg", sep="."), s)
 
       lengthChr = dat[["end"]][length(dat[["end"]])]
@@ -91,7 +95,7 @@ scoreSegments = function(s, gff,
       wh = which(dat[["ss"]])
       dStart = dat[["start"]][wh]      ## start base of all probes 
       dEnd   = dat[["end"]][wh]        ## end base of all probes
-      dUniq  = dat[["unique"]][wh]
+      dUniq  = dat[["unique"]]
       dY     = dat[["y"]][wh,, drop=FALSE]
 
       ## extract relevant data from "datOppo"

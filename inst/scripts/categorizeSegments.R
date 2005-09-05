@@ -22,7 +22,8 @@ categorizeSegmentsUTRmap = function(env, zThresh=2) {
 ##
 allncRNA = c("ncRNA","snoRNA","snRNA","tRNA","rRNA")
   
-categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
+categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1,
+  maxDuplicated=0.5 ) {
 
   s = get("segScore", env)
   stopifnot(is(s, "data.frame"))
@@ -45,16 +46,16 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
     "novel antisense - filtered", "novel antisense - unassigned",
     "excluded", "untranscribed", "dubious gene")
   
-  ## Step 1: frac.dup
+  ## Step 1: frac.dup; exclude features with too many non-unique probes
   sel = s[,"frac.dup"] >= maxDuplicated
   catg[ sel ] = "excluded"
     
-  ## Step 2: untranscribed
+  ## Step 2: identify untranscribed regions
   sel = (is.na(catg) & s[,"level"] < 0)
   catg[ sel ] = "untranscribed"
   s$isUnIso = (sel & (s[, "overlapFeatAll"]==""))
   
-  ## step 3: annotated
+  ## step 3: identify already annotated regions (misses some so far!)
   wh  = which(is.na(catg))
   attrName = c("<50%"  = "overlappingFeature",
                ">=50%" = "mostOfFeatureInSegment",
@@ -101,6 +102,8 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1) {
   ## step 5: novel - isolated or antisense
   iso  = (s[,"oppositeFeature"]=="")
   isna = is.na(catg)
+
+  #browser() # for checking
 
   cat("Novelty filter: Considering ", sum(isna), " segments.\n1. z-scores < ", zThresh, ": ",
     sum(isna&filt1), "\n2. length < ", minNewSegmentLength, ": ",

@@ -4,25 +4,25 @@ library("geneplotter")
 graphics.off()
 options(error=recover, warn=2)
 interact = (TRUE)
-what     = c("fig2", "fig4", "cons", "lvsx", "wst")[0]
+what     = c("fig2", "fig4", "cons", "lvsx", "wst")[1]
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
 
-rnaTypes  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")[1:2]
-outfile = "tableSegments"
+rnaTypes  = c("seg-polyA-050811", "seg-tot-050811", "seg-tot2-050525")[1:2]
+outfile = "categtry/tableSegments"
 
-source("scripts/readSegments.R") 
-source("scripts/categorizeSegments.R") 
-source("scripts/writeSegmentTable.R")
-source("scripts/showDens.R")
+source("jscripts/readSegments.R") 
+source("jscripts/categorizeSegments.R") 
+source("jscripts/writeSegmentTable.R")
+source("jscripts/showDens.R")
 
 if(!interact){
   sink(paste(outfile, ".txt", sep=""))
   cat("Made on", date(), "\n\n")
 }
 
-source("scripts/calcThreshold.R") 
+source("jscripts/calcThreshold.R") 
 
 ##
 ## CATEGORIZE
@@ -120,9 +120,9 @@ if("fig2" %in% what){
   ##  "novel antisense - unassigned")
     
   isTr1  = !(s1[, "category"] %in% unTrCatgs)
-  
   jstart = jend = 1
   ov     = numeric(nrow(s2))
+
   for(k in 1:nrow(s2)) {
     ## make sure that jstart points to a segment in s1 whose
     ## start <= ks <= end, where ks=start of current segment in s2.
