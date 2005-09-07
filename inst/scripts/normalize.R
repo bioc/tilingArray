@@ -13,12 +13,12 @@ hybeSets = list(
   "seg-tot-050525" =
      c("050409_totcDNA_14ug_no52.cel.gz",
        "030505_totcDNA_15ug_affy.cel.gz"),
-  "seg-dir-050721" =
+  "seg-dir-050811" =
      c("050621_dirPolyARNA_10ug_2-3.cel.gz",
        "050621_dirPolyARNA_10ug_2-3_4x.cel.gz"),
-  "seg-odT-050801" =
+  "seg-odT-050811" =
      c("041112_S96_polyA-dT-cDNA1_16H_45C.cel.gz"),
-  "seg-polyA-050804" =
+  "seg-polyA0420-050811" =
      c("05_04_20_2xpolyA_NAP_2to1.cel.gz"))[rrr]
 
 normMethod = c(rep("vsn", 3), rep("shiftlog", 2))[rrr]
