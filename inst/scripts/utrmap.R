@@ -15,10 +15,10 @@ options(error=recover, warn=0)
 graphics.off()
 
 rnaTypes  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")[1:2]
-source("scripts/readSegments.R")
-source("scripts/calcThreshold.R") 
-source("scripts/categorizeSegments.R") 
-source("scripts/writeSegmentTable.R")
+source(scriptsDir("readSegments.R"))
+source(scriptsDir("calcThreshold.R"))
+source(scriptsDir("categorizeSegments.R")) 
+source(scriptsDir("writeSegmentTable.R"))
 
 what = c("stat", "wst", "explen", "polyAvstot", "go")[5]
 

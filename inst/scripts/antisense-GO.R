@@ -2,7 +2,7 @@
 ## run this script after "tableSegments"
 ##
 library("GOstats")
-source("scripts/GOHyperG.R")
+source(scriptsDir("GOHyperG.R"))
 
 what = c("filtered", "all")[2]
 switch(what,

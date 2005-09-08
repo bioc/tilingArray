@@ -12,17 +12,17 @@ consScoreFun = function(alignmentLength, percentIdentity, queryLength)
 rnaTypes  = c("seg-polyA-050811", "seg-tot-050811")
 outfile = "tableSegments"
 
-source("jscripts/readSegments.R") 
-source("jscripts/categorizeSegments.R") 
-source("jscripts/writeSegmentTable.R")
-source("jscripts/showDens.R")
+source(scriptsDir("readSegments.R"))
+source(scriptsDir("categorizeSegments.R")) 
+source(scriptsDir("writeSegmentTable.R"))
+source(scriptsDir("showDens.R"))
 
 if(!interact){
   sink(paste(outfile, ".txt", sep=""))
   cat("Made on", date(), "\n\n")
 }
 
-source("jscripts/calcThreshold.R") 
+source(scriptsDir("calcThreshold.R"))
 
 ##
 ## CATEGORIZE

@@ -6,9 +6,9 @@ interact = TRUE
 rnaTypes  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")[1]
 outfile = "tableSegments"
 
-source("scripts/readSegments.R") 
-source("scripts/categorizeSegments.R") 
-source("scripts/calcThreshold.R") 
+source(scriptsDir("readSegments.R"))
+source(scriptsDir("categorizeSegments.R"))
+source(scriptsDir("calcThreshold.R"))
 
 options(error=recover)
 

@@ -7,6 +7,12 @@ longNames = c("seg-polyA-050525"="poly-A RNA",
   "seg-tot-050525"="total RNA",
   "seg-tot2-050525"="total RNA (v2)")
 
+longNamesOK = names(longNames) %in% rnaTypes
+if(!all(longNamesOK))
+  stop(paste("'longNames' not defined for: '",
+       paste(names(longNames)[!longNamesOK], collapse="', '"),
+       "'.", sep=""))
+
 names(indir) = indir = rnaTypes
 
 for(rt in rnaTypes) {

@@ -1,6 +1,6 @@
 library("Biobase")
 library("RColorBrewer")
-source("scripts/readSegments.R") 
+source(scriptsDir("readSegments.R"))
 options(error=recover)
 
 interact=TRUE

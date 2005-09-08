@@ -3,8 +3,7 @@ interact =  !TRUE
 writeGFF = FALSE
 library("tilingArray")
 
-rfuncDir <- "/ebi/research/huber/users/joern/tilingArray/R"
-source(file.path(rfuncDir,"plotAlongChrom.R"))
+source(functionsDir("plotAlongChrom.R"))
 
 
 rnaTypes  = c("seg-polyA-050804",
@@ -20,9 +19,9 @@ stopifnot(length(isDirect)==length(rnaTypes),
           all(file.info(rnaTypes)$isdir),
           all(file.info(file.path(rnaTypes,"viz"))$isdir))  
 
-source("jscripts/readSegments.R")
-source("jscripts/calcThreshold.R") 
-source("jscripts/writeSegmentTable.R") 
+source(scriptsDir("readSegments.R"))
+source(scriptsDir("calcThreshold.R"))
+source(scriptsDir("writeSegmentTable.R"))
 
 nrChr = 16
 

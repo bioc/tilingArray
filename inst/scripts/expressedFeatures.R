@@ -5,7 +5,7 @@ library("tilingArray")
 library("multtest")
 
 rnaTypes  = c("seg-polyA-050525", "seg-tot-050525")
-source("scripts/readSegments.R") 
+source(scriptsDir("readSegments.R"))
 
 interact=!TRUE
 if(!interact) {
@@ -13,7 +13,7 @@ if(!interact) {
   cat("Made on", date(), "\n\n")
 }
 
-source("scripts/calcThreshold.R") 
+source(scriptsDir("calcThreshold.R"))
 
 if(!exists("intergenic")){
   probe = probeAnno$probeReverse
@@ -156,8 +156,8 @@ print(res)
 ##
 cat("\n\nGO-Analysis of the untranscribed verified genes:\n\n")
 
-source("scripts/GOHyperG.R")
-source("scripts/writeSegmentTable.R")
+source(scriptsDir("GOHyperG.R"))
+source(scriptsDir("writeSegmentTable.R"))
 
 unexpressedGenes = names(index)[hasEnoughProbes][!isExp & sgff[hasEnoughProbes, "category"]=="verified gene"]
 
