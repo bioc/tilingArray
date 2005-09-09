@@ -3,9 +3,8 @@ if(!exists("gff")) {
   load("probeAnno.rda")
 }
 
-longNames = c("seg-polyA-050525"="poly-A RNA",
-  "seg-tot-050525"="total RNA",
-  "seg-tot2-050525"="total RNA (v2)")
+longNames = c("seg-polyA-050811"    = "poly-A RNA",
+              "seg-tot-050811"      = "total RNA")
 
 longNamesOK = names(longNames) %in% rnaTypes
 if(!all(longNamesOK))
