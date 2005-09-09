@@ -1,15 +1,15 @@
 options(error=recover, warn=0)
 interact =  !TRUE
-writeGFF = FALSE
+writeGFF =  TRUE
 library("tilingArray")
 
+source("setScriptsDir.R")
 source(functionsDir("plotAlongChrom.R"))
 
 
-rnaTypes  = c("seg-polyA-050804",
-  "seg-polyA-050810", "seg-polyA-050811", "seg-tot-050811",
-  "seg-dir-050811" , "seg-odT-050811", "seg-polyA0420-050811")[-c(1,2)]
-isDirect  = c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE) [-c(1,2)]
+rnaTypes  = c("seg-polyA-050811", "seg-tot-050811",
+  "seg-dir-050811" , "seg-odT-050811", "seg-polyA0420-050811")
+isDirect  = c(FALSE, FALSE, TRUE, FALSE, FALSE)
 
 names(isDirect) = rnaTypes
 setwd("/ebi/research/huber/Projects/tilingArray")
@@ -22,6 +22,7 @@ stopifnot(length(isDirect)==length(rnaTypes),
 source(scriptsDir("readSegments.R"))
 source(scriptsDir("calcThreshold.R"))
 source(scriptsDir("writeSegmentTable.R"))
+
 
 nrChr = 16
 
@@ -84,11 +85,13 @@ for(rt in rnaTypes) {
       grid.newpage()
       plotAlongChrom(chr=chr, coord=c(start, start+alongChromWidth),
                      segObj=get(rt), gff = gff, ylim=ylim, isDirect=isDirect[rt])
-      dev.off()
+      if(!interact)
+        dev.off()
       
       convCmd = c(convCmd, paste("convert -density 120", pdfname, "-quality 100", pixname))
     }
   }
+  convCmd = c(convCmd, paste("chmod 664 ", outdir, "/*", sep=""))
   shellFile = paste("viewAllSeqs", rt, "sh", sep=".")
   writeLines(convCmd, con=shellFile)
   system(paste("chmod a+x", shellFile))

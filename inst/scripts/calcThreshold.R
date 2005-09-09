@@ -1,4 +1,4 @@
-calcThreshold = function(x, sel, FDRthresh, showPlot=FALSE, main) {
+calcThreshold = function(x, sel, FDRthresh, dir, main) {
   stopifnot(is.numeric(x), is.logical(sel))
 
   require("multtest")
@@ -20,7 +20,9 @@ calcThreshold = function(x, sel, FDRthresh, showPlot=FALSE, main) {
 
   thresh = min(x[sel][selfdr], na.rm=TRUE)
 
-  if(showPlot) {
+  if(!missing(dir)) {
+    pdf(file=file.path(dir, "threshold.pdf"), width=8, height=6)
+  
     adjust = 0.5
     d1 = density(x[!sel], na.rm=TRUE, n=128, adjust=adjust)
     n  = length(d1$x)
@@ -30,45 +32,35 @@ calcThreshold = function(x, sel, FDRthresh, showPlot=FALSE, main) {
     abline(v=c(loc, thresh), col=c("black", "blue"))
     dn = dnorm(x=d1$x, mean=loc, sd=scale)
     lines(d1$x, dn/max(dn)*max(d2$y), col="orange")
+
+    dev.off()
   }
+  
   cat(main, ": loc=", signif(loc,4), "scale=", signif(scale,4), "thresh=", signif(thresh,4), "\n")
   return(thresh)
 }
 
-alreadyDone = sapply(rnaTypes, function(rt) {
-  "theThreshold" %in% ls(get(rt))
-})
 
-if(all(alreadyDone)) {
-  cat("Skipping threshold calculation since it was already done.\n")
-} else {
-  stopifnot(!any(alreadyDone))
 
-  if(interact) {
-    ## x11(width=10, height=length(rnaTypes)*3)
+cat("Calculation of thresholds:\n",
+    "==========================\n", sep="")
+
+maxDuplicated = 0.5
+FDRthresh     = 1e-3
+cat("FDRthresh=", FDRthresh, "\n")
+
+for(rt in rnaTypes) {
+
+  alreadyDone = ("theThreshold" %in% ls(get(rt)))
+  if(alreadyDone) {
+    cat(rt, ": skipping threshold calculation since it was already done.\n", sep="")
   } else {
-    pdf(file="tableSegments-thresh.pdf", width=11, height=length(rnaTypes)*4)
-  }
-  par(mfrow=c(length(rnaTypes),1))
-  
-  cat("Calculation of thresholds for transcribed yes/no:\n",
-      "=================================================\n", sep="")
-  
-  maxDuplicated = 0.5
-  FDRthresh     = 1e-3
-  cat("FDRthresh=", FDRthresh, "\n")
-  
-  for(rt in rnaTypes) {
     s   = get("segScore", get(rt))
     sel = (s[, "frac.dup"] < maxDuplicated) & (s[, "overlappingFeature"] == "")
-    thr = calcThreshold(s[, "level"], sel = sel, main=rt, FDRthresh=FDRthresh, showPlot=TRUE)
+    thr = calcThreshold(s[, "level"], sel = sel, main=rt, FDRthresh=FDRthresh, dir=rt)
     s$level              = s[, "level"] - thr
     s$oppositeExpression = s[, "oppositeExpression"] - thr
     assign("segScore",  s,   envir=get(rt))
     assign("theThreshold", thr, envir=get(rt))
   }
-
-  if(!interact)
-    dev.off()
-  cat("\n")
 }

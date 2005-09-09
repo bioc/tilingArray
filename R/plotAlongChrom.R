@@ -376,7 +376,7 @@ plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
     #"repeat_region","repeat_family","ARS","intron","nc_primary_transcript") # change Aug 30,2005 J
   ) {
   formatRow = function(featColsOneRow, row) {
-    print(featColsOneRow)
+    ## print(featColsOneRow)
     strWid   = convertWidth(stringWidth(rownames(featColsOneRow)), "npc", valueOnly=TRUE)
     n        = length(strWid)
     inbetWid = 0.2*min(strWid)
@@ -400,7 +400,7 @@ plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
   featCols = featureColors(1,exclude)
 
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=vpr, yscale=c(0.5, nr+0.5)))
-  grid.lines(c(0,1), c(1,1), default.units = "npc", gp=gpar(col="black",lty=2))
+  ## grid.lines(c(0,1), c(1,1), default.units = "npc", gp=gpar(col="black",lty=2))
 
   i = 1:nrow(featCols)
   for(r in 1:nr)
