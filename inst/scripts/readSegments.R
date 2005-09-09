@@ -6,10 +6,10 @@ if(!exists("gff")) {
 longNames = c("seg-polyA-050811"    = "poly-A RNA",
               "seg-tot-050811"      = "total RNA")
 
-longNamesOK = names(longNames) %in% rnaTypes
-if(!all(longNamesOK))
+rtOK = rnaTypes %in% names(longNames)
+if(!all(rtOK))
   stop(paste("'longNames' not defined for: '",
-       paste(names(longNames)[!longNamesOK], collapse="', '"),
+       paste(rnaTypes[!rtOK], collapse="', '"),
        "'.", sep=""))
 
 names(indir) = indir = rnaTypes
