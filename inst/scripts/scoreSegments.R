@@ -29,7 +29,7 @@ addDirectHybe = function(s) {
     ind = get(paste(s$chr[i], strand[i], "index",  sep="."), probeAnno)
     sta = get(paste(s$chr[i], strand[i], "start",  sep="."), probeAnno)
     end = get(paste(s$chr[i], strand[i], "end",    sep="."), probeAnno)
-    sel = ind[uni & (sta >= s[i, "start"]) & (end <= s[i, "end"])]
+    sel = ind[(uni==0) & (sta >= s[i, "start"]) & (end <= s[i, "end"])]
     dhl[i] = mean(y[sel])
   }
   cat("\n")

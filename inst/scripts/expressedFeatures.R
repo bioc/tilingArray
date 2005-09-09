@@ -67,6 +67,7 @@ if(!exists("index")) {
   sta = paste(gff$chr, gff$strand, "start", sep=".")
   end = paste(gff$chr, gff$strand, "end",   sep=".")
   uni = paste(gff$chr, gff$strand, "unique",   sep=".")
+  stopifnot(is.numeric(uni))
   
   sp = split(1:nrow(gff), gff[, "Name"])
   for(i in seq(along=index)) {
@@ -100,7 +101,7 @@ if(!exists("index")) {
     res = integer(0)
     for(w in whf[fset])
       res = c(res, get(ind[w], probeAnno)[
-         get(uni[w], probeAnno) &
+        (get(uni[w], probeAnno)==0) &
         (get(sta[w], probeAnno) >= gff$start[w])&
         (get(end[w], probeAnno) <= gff$end[w]) ])
     index[[i]] = sort(unique(res))

@@ -45,6 +45,7 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
       dat = list(mid = (sta+end)/2,
                  y   = y[index],
                  unique = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
+      stopifnot(is.numeric(dat$unique))
       lengthChr = end[length(end)]
       sgs = NULL     
     } else {
@@ -137,9 +138,6 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     
   stopifnot(length(x)==length(y), length(x)==length(uniq))
 
-  if (is.numeric(uniq)) # handle new, more precise numeric codes for uniqueness
-    uniq <- (uniq==0)   #  at present does not use their full potential!!
-
   if(missing(xlim)) {
     xlim=range(x)
   } else {
@@ -166,8 +164,8 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=vpr))
 
-  ord  = c(which(!uniq), which(uniq))
-  colo = ifelse(uniq[ord], colors[strand], colors["duplicated"])
+  ord  = c(which(uniq!=0), which(uniq==0))
+  colo = ifelse(uniq[ord]==0, colors[strand], colors["duplicated"])
 
   if(!is.na(threshold))
     grid.lines(y=unit(0, "native"), gp=gpar(col=colors["threshold"]))

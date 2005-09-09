@@ -43,12 +43,10 @@ scoreSegments = function(s, gff,
     for(strand in c("+", "-")) {
       
       dat     = get(paste(chr, strand, "dat", sep="."), s)
-      ## handle new numeric uniqueness codes, still sub-optimal
-      if (is.numeric(dat$unique)) dat$unique <- (dat$unique==0)
       datOppo = get(paste(chr, otherStrand(strand), "dat", sep="."), s)
-      ## handle new numeric uniqueness codes, still sub-optimal
-      if (is.numeric(datOppo$unique)) datOppo$unique <- (datOppo$unique==0)
       seg     = get(paste(chr, strand, "seg", sep="."), s)
+
+      stopifnot(is.numeric(dat$unique), is.numeric(datOppo$unique))
 
       lengthChr = dat[["end"]][length(dat[["end"]])]
       cp        = round(lengthChr/nrBasePerSeg)
@@ -145,13 +143,13 @@ scoreSegments = function(s, gff,
         
         ## data from segment, and opposite
         kw     = (dStart>=startj) & (dEnd<=endj)
-        ksel   = dUniq & kw
+        ksel   = (dUniq==0) & kw
         ym     = dY[ksel,,drop=FALSE]
 
         ## frac.dup
-        fd[j]  = 1-mean(dUniq[kw])
+        fd[j]  = 1-mean(dUniq[kw]==0)
         
-        ksel   = dOppoUniq & (dOppoStart>=startj) & (dOppoEnd<=endj)
+        ksel   = (dOppoUniq==0) & (dOppoStart>=startj) & (dOppoEnd<=endj)
         xOppo  = (dOppoStart[ksel]+dOppoEnd[ksel])/2
         yOppo  = dOppoY[ksel,,drop=FALSE]
         
@@ -163,14 +161,14 @@ scoreSegments = function(s, gff,
                   
         ## data from flanks, for segment quality scores
         if(j>1) {
-          probesLeft = which(dUniq & (dEnd<startj) & (dStart>=dStart[i1[j-1]]))
+          probesLeft = which((dUniq==0) & (dEnd<startj) & (dStart>=dStart[i1[j-1]]))
           if(length(probesLeft) > nrFlankProbes)
             probesLeft = probesLeft[1:nrFlankProbes]
           yl = dY[probesLeft,, drop=FALSE]
           zl[j] = zscore(yl, cmym)
         }
         if(j<cp) {
-          probesRight = which(dUniq & (dStart>endj) & (dEnd<=dEnd[i2[j+1]]))
+          probesRight = which((dUniq==0) & (dStart>endj) & (dEnd<=dEnd[i2[j+1]]))
           if(length(probesRight) > nrFlankProbes)
             probesRight = probesRight[1:nrFlankProbes]
           yr    = dY[probesRight,, drop=FALSE]
