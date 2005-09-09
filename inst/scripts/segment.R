@@ -17,13 +17,15 @@ outdirs = c("seg-polyA-050811", "seg-tot-050811", "seg-dir-050811",
 
 ## these use the same normalized data as the ones above, but they
 ## use newer probeAnno file (0508) and the new findSegments (tilingArray
-outdirs = c("seg-polyA-050824", "seg-tot-050824", "seg-dir-050824",
-  "seg-odT-050824", "seg-polyA0420-050824")
+outdirs = c("seg-polyA-050909", "seg-tot-050909", "seg-dir-050909",
+  "seg-odT-050909", "seg-polyA0420-050909")
 
-##  for(d in outdirs) {
-##    dir.create(d); dir.create(file.path(d, "viz")) 
-##    system(paste("cp ", gsub("824", "811", d), "/xn.rda ", d, sep=""))
-## }
+if(FALSE) {
+  for(d in outdirs) {
+    dir.create(d); dir.create(file.path(d, "viz")) 
+    system(paste("cp ", gsub("0909", "0811", d), "/xn.rda ", d, sep=""))
+  }
+}
 
 chrstr = paste(rep(1:17, each=2),
                rep(c("+", "-"), 17), sep=".")
