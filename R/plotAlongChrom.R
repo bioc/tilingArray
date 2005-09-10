@@ -261,7 +261,9 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
 
   if(any(ll>0)) {
     i      = unlist(sfeatsp)
-    ord    = order(gff$start[sel[i]])
+    # change, 05/09/10 J, do ordering  by specificity not by start base
+    # ord    = order(gff$start[sel[i]])
+    ord = 1:length(i)
     gp     = gpar(col = rep(featCols$col,  ll)[ord],
                  fill = rep(featCols$fill, ll)[ord])
     i      = i[ord]
@@ -278,7 +280,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     #if (length(grep("binding", names(sfeatsp)))>0) browser()
   }
 
-  nNames  <- length(whnames) # used quite often, number of labels to put in
+  nNames  <- length(whnames) # used quite often, number of labels to put in plot
   
   if(haveNames && (nNames>0)) {
     txtcex = 0.7
@@ -424,12 +426,12 @@ featureColors = function(scheme=1, exclude=c()) {
                     "pseudogene"  = "#e0e0e0",    ## light gray
                     "uORF"        = "#e0e0e0",    ## light gray
                     "nc_primary_transcript" = "#a0a0a0",    ## grey
+			  "region" = "#cc66cc",    ## light red-violet	
+                    "repeat_family" = "#CC3333",    ## light red
+                    "repeat_region" = "#e31a1c",    ## bright red                    
                     "transposable_element"  = "#f1b6da",    ## pink
-                    "transposable_element_gene"= "#f1b6da",   
-                    "repeat_family" = "#e31a1c",    ## bright red
-                    "repeat_region" = "#e31a1c",    ## bright red
-                    "region" = "#e31a1c",    ## bright red
-                    "ARS"         = "#808080",    ## grey
+                    "transposable_element_gene"= "#f1b6da",   				      
+                    "ARS"         = "#CC9966",    ## light brown
                     "centromere"  = "#FFEDA0",    ## orange
                     "telomere"    = "#FFEDA0",    ## orange
                     "insertion"   = "#FFEDA0",    ## orange
