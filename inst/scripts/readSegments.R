@@ -4,7 +4,12 @@ if(!exists("gff")) {
 }
 
 longNames = c("seg-polyA-050811"    = "poly-A RNA",
-              "seg-tot-050811"      = "total RNA")
+              "seg-tot-050811"      = "total RNA",
+		  "seg-dir-050811"      = "direct hybe", 
+              "seg-odT-050811"      = "oligo-dT hybe", 
+              "seg-polyA0420-050811"= "very clean poly-A hybe"),
+isDirect  = c(FALSE, FALSE, TRUE, FALSE, FALSE)
+
 
 rtOK = rnaTypes %in% names(longNames)
 if(!all(rtOK))
