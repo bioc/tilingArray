@@ -427,7 +427,7 @@ featureColors = function(scheme=1, exclude=c()) {
                     "uORF"        = "#e0e0e0",    ## light gray
                     "nc_primary_transcript" = "#a0a0a0",    ## grey
 			  "region" = "#cc66cc",    ## light red-violet	
-                    "repeat_family" = "#CC3333",    ## light red
+                    "repeat_family" = "#CC6666",    ## light red
                     "repeat_region" = "#e31a1c",    ## bright red                    
                     "transposable_element"  = "#f1b6da",    ## pink
                     "transposable_element_gene"= "#f1b6da",   				      
