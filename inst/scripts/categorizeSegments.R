@@ -26,14 +26,14 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1,
   maxDuplicated=0.5 ) {
 
   require(tilingArray)
-  data(transcribedFeatures)
+  data(yeastFeatures)
 
   s = get("segScore", env)
   stopifnot(is(s, "data.frame"))
 
+  
   feat1 = c("verified gene", "uncharacterized gene", "dubious gene")
-  #feat2 = c("tRNA", "rRNA", "snoRNA","snRNA", "ncRNA","transposable_element_gene", "transposable_element")
-  feat2 <- rev(transcribedFeatures)
+  feat2 = rev(rownames(yeastFeatures)[yeastFeatures$isTranscribed]) ## trumping order
   
   ## results data structure: a factor which assigns a category to each segment:
   overlap = factor(rep(NA, nrow(s)),

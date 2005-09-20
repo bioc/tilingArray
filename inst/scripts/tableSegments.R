@@ -272,8 +272,10 @@ if("fig2" %in% what){
 ## and how many genes do we find expressed
 ##
 if("fig4" %in% what){
-  data(transcribedFeatures)
-  feats = transcribedFeatures[transcribedFeatures!="gene"]
+
+  data(yeastFeatures)
+  transcribedFeatures = rownames(yeastFeatures)[yeastFeatures$isTranscribed]
+
   nrChr = 16
 
   chrlen = sapply(1:nrChr, function(chr)

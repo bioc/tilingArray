@@ -7,8 +7,12 @@ source("setScriptsDir.R")
 source(functionsDir("plotAlongChrom.R"))
 
 
-rnaTypes  = c("seg-polyA-050811", "seg-tot-050811",
-  "seg-dir-050811" , "seg-odT-050811", "seg-polyA0420-050811")
+## rnaTypes  = c("seg-polyA-050811", "seg-tot-050811",
+##  "seg-dir-050811" , "seg-odT-050811", "seg-polyA0420-050811")
+
+rnaTypes  = c("seg-polyA-050909", "seg-tot-050909",
+  "seg-dir-050909" , "seg-odT-050909", "seg-polyA0420-050909")
+
 isDirect  = c(FALSE, FALSE, TRUE, FALSE, FALSE)
 
 names(isDirect) = rnaTypes
@@ -92,7 +96,7 @@ for(rt in rnaTypes) {
     }
   }
   convCmd = c(convCmd, paste("chmod 664 ", outdir, "/*", sep=""))
-  shellFile = paste("viewAllSeqs", rt, "sh", sep=".")
+  shellFile = paste("v", rt, "sh", sep=".")
   writeLines(convCmd, con=shellFile)
   system(paste("chmod a+x", shellFile))
   cat("\n\nYou can now run", shellFile, "\n\n")

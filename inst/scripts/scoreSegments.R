@@ -1,23 +1,33 @@
 ### 2005-08-26: run function 'scoreSegments' on data; see tilingArray/R/scoreSegments.R for the used functions.
 
 library("tilingArray")
+source("setScriptsDir.R")
 
-# where to find new versions of the functions without reinstalling tilingArray:
-rfuncDir <- "/ebi/research/huber/users/joern/tilingArray/R"
-# where to find the scripts:
-scriptsDir <-  "/ebi/research/huber/users/joern/tilingArray/inst/scripts"
+source(functionsDir("scoreSegments.R"))
+options(error=recover)
 
-source(file.path(rfuncDir, "scoreSegments.R"))
-
-rnaTypes  = c("seg-polyA-050804",
-  "seg-polyA-050810", "seg-polyA-050811", "seg-tot-050811",
-  "seg-dir-050811" , "seg-odT-050811", "seg-polyA0420-050811")[-c(1,2)]
+rnaTypes  = c("seg-polyA-050909", "seg-tot-050909",
+  "seg-dir-050909" , "seg-odT-050909", "seg-polyA0420-050909")
+isDirect  = c(FALSE, FALSE, TRUE, FALSE, FALSE)
 
 doNotLoadSegScore=TRUE
-source(file.path(scriptsDir, "readSegments.R"))
+source(scriptsDir("readSegments.R"))
 
 names(indir) = indir = rnaTypes
+nrbpsList = c(1500)
 
+for(rt in rnaTypes) {
+  for(nrbps in nrbpsList) {
+    cat(">> ", rt, nrbps, "<<\n")
+    segScore = scoreSegments(get(rt), gff=gff, nrBasePerSeg=nrbps)
+    ## segScore = addDirectHybe(segScore)
+    save(segScore, file=file.path(indir[rt], sprintf("segScore-%d.rda", as.integer(nrbps))),
+         compress=TRUE)
+  } 
+}
+
+
+### obsolete:
 addDirectHybe = function(s) {
   dhl = numeric(nrow(s))
   strand = otherStrand(s$strand)
@@ -37,25 +47,13 @@ addDirectHybe = function(s) {
   return(s)
 }
 
-nrbpsList = c(1500)
-
-for(rt in rnaTypes) {
-  for(nrbps in nrbpsList) {
-    cat(">> ", rt, nrbps, "<<\n")
-    segScore = scoreSegments(get(rt), gff=gff, nrBasePerSeg=nrbps)
-    ## segScore = addDirectHybe(segScore)
-    save(segScore, file=file.path(indir[rt], sprintf("segScore-%d.rda", as.integer(nrbps))),
-         compress=TRUE)
-  } 
-}
-
-gffBS <- grep("binding_site", gff$feature)
-table(gff[gffBS,"strand"])
+## gffBS <- grep("binding_site", gff$feature)
+## table(gff[gffBS,"strand"])
 #   -    .    +
 #  15    0 3369
 
-# compare with:
-table(gff[grep("CDS$", gff$feature),"strand"])
+## compare with:
+## table(gff[grep("CDS$", gff$feature),"strand"])
 #    -    .    +
 # 3049    0 3177
 

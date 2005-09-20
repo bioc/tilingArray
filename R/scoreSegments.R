@@ -36,8 +36,10 @@ scoreSegments = function(s, gff,
   params = c(overlapFraction = 0.5, oppositeWindow = 100, flankProbes=10),
   verbose = TRUE) {
 
-  data(transcribedFeatures)
-  
+  data(yeastFeatures)
+  stopifnot(all(gff$feature %in% rownames(yeastFeatures)))
+  transcribedFeatures = rownames(yeastFeatures)[yeastFeatures$isTranscribed]
+    
   rv = NULL # initialize result
   for(chr in chrs) { ## chrs (chromosomes) not defined anywhere!
     for(strand in c("+", "-")) {
@@ -117,12 +119,8 @@ scoreSegments = function(s, gff,
       same.gff = gff[ sel & gff[, "strand"]==strand, ] 
       oppo.gff = gff[ sel & gff[, "strand"]==otherStrand(strand), ]
 
-      ## for overlapFeatAll: all features, transcribable or not,
-      ##  and either strand
-      allsel = (gff[, "chr"]==chr & !(gff[, "feature"] %in% c("chromosome", "region")))
-      # why exclude 'region'?, change: 2005-08-26 J
-      # allsel = (gff[, "chr"]==chr & !(gff[, "feature"] %in% c("chromosome")))
-      all.gff = gff[allsel, ]
+      ## for overlapFeatAll: features on either strand
+      all.gff = gff[sel, ]
 
       stopifnot(!any(is.na(all.gff[, "Name"])),
                 !any(is.na(same.gff[, "Name"])),
