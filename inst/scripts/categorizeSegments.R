@@ -100,23 +100,19 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=1,
   xOp  = s[,"oppositeExpression"]
   filt1 = (is.na(zmin) | (zmin <zThresh))
   filt2 = (s[,"length"] < minNewSegmentLength)
-  filt3 = (!is.na(xOp) & xOp > 0)
-  filt4 = (!is.na(xOp) & xOp > pmax(0, s[,"level"]-1))
-  filt  = (filt1|filt2|filt4)
+  filt3 = (!is.na(xOp) & xOp > pmax(0, s[,"level"]-1))
+  filt  = (filt1|filt2|filt3)
   stopifnot(!any(is.na(filt)))
   
   ## step 5: novel - isolated or antisense
   iso  = (s[,"oppositeFeature"]=="")
   isna = is.na(catg)
 
-  #browser() # for checking
-
-  cat("Novelty filter: Considering ", sum(isna), " segments.\n1. z-scores < ", zThresh, ": ",
-    sum(isna&filt1), "\n2. length < ", minNewSegmentLength, ": ",
-    sum(isna&filt2), "\n3. oppositeExpression > 0: ",
-    sum(isna&filt3), "\n4. oppositeExpression > max(0, segment level - 1): ",
-    sum(isna&filt4), "\nRejected by (1 or 2 or 4): ",
-    sum(isna&filt), ".\n\n", sep="")
+  cat("Novelty filter: Considering ", sum(isna), " segments.\n",
+    "1. z-scores < ", zThresh, ": ", sum(isna&filt1), "\n",
+    "2. length < ", minNewSegmentLength, ": ", sum(isna&filt2), "\n",
+    "3. oppositeExpression > max(0, segment level - 1): ", sum(isna&filt3), "\n",
+    "Rejected by (1 or 2 or 3): ", sum(isna&filt), ".\n\n", sep="")
 
   catg[isna &  iso & !filt ] = "novel isolated - filtered"
   catg[isna &  iso &  filt ] = "novel isolated - unassigned"

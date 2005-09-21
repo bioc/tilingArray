@@ -1,15 +1,16 @@
 library("tilingArray")
 library("geneplotter")
+source("setScriptsDir.R")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = !(TRUE)
+interact = (TRUE)
 what     = c("fig2", "fig4", "cons", "lvsx", "wst")
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
 
-rnaTypes  = c("seg-polyA-050811", "seg-tot-050811")
+rnaTypes  = c("seg-polyA-050909", "seg-tot-050909")
 outfile = "tableSegments"
 
 source(scriptsDir("readSegments.R"))
