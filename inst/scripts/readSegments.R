@@ -15,6 +15,15 @@ longNames = c("seg-polyA-050811"    = "poly-A RNA",
               "seg-polyA0420-050909"= "clean poly-A")
 
 
+fixSegScore = function(s) {
+  w = which(s$chr==1&s$end==230210)
+  if(length(w)>0) {
+    cat("fixSegScore: Replacing end=230210 on chr 1 by 230208.\n")
+    s$end[w]=230208
+  }
+  s
+}
+
 rtOK = rnaTypes %in% names(longNames)
 if(!all(rtOK))
   stop(paste("'longNames' not defined for: '",
@@ -37,12 +46,14 @@ for(rt in rnaTypes) {
         assign(paste(chr, strand, "dat", sep="."), dat, envir=get(rt))
       }
     } ## for chr
+    cat("\n")
     if(!exists("doNotLoadSegScore")) {
       fn="segScore-1500.rda"
       cat(fn)
       load(file.path(indir[rt], fn), envir=get(rt))
+
+      assign("segScore", fixSegScore(get("segScore", envir=get(rt))), envir=get(rt))
     }
-    cat("\n")
   } ## if
 } ## rnaTypes
 

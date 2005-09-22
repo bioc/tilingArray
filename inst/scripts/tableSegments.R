@@ -5,12 +5,12 @@ source("setScriptsDir.R")
 graphics.off()
 options(error=recover, warn=2)
 interact = (TRUE)
-what     = c("fig2", "fig4", "cons", "lvsx", "wst")
+what     = c("fig2", "cons", "lvsx", "wst")
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
 
-rnaTypes  = c("seg-polyA-050909", "seg-tot-050909")
+rnaTypes = c("seg-polyA-050909", "seg-tot-050909")
 outfile = "tableSegments"
 
 source(scriptsDir("readSegments.R"))
@@ -109,6 +109,7 @@ if("fig2" %in% what){
   ## Compare total to poly-A, the goal is: which transcripts do we find 
   ## specifically in total RNA?
   ##
+  stopifnot(length(rnaTypes)==2)
   s1     = cs[[rnaTypes[1]]]
   s2     = cs[[rnaTypes[2]]]
   start1 = s1[, "start"]
@@ -266,88 +267,6 @@ if("fig2" %in% what){
   
   if(!interact)
     dev.off()
-}
-
-##
-## What fraction of basepairs in the genome are transcribed
-## and how many genes do we find expressed
-##
-if("fig4" %in% what){
-
-  data(yeastFeatures)
-  transcribedFeatures = rownames(yeastFeatures)[yeastFeatures$isTranscribed]
-
-  nrChr = 16
-
-  chrlen = sapply(1:nrChr, function(chr)
-    max(gff[gff[, "chr"]==chr , "end"]))
-
-  isAnno = lapply(1:nrChr, function(chr) {
-    res  = logical(chrlen[chr])
-    selg = which((gff[, "chr"]==chr) & (gff[, "feature"] %in% transcribedFeatures))
-    for(j in selg)
-      res[gff$start[j]:gff$end[j]] = TRUE
-    res
-  })
-  isAnno = unlist(isAnno)
-
-  isTrans = segLev = vector(mode="list", length=3)
-  names(isTrans) = names(segLev) = c(rnaTypes, "both")
-  
-  for(rt in rnaTypes) {
-    s   = cs[[rt]]
-    lev = s[, "level"]
-    res = lapply(1:nrChr, function(chr) {
-      res  = rep(-Inf, chrlen[chr])
-      selt = which(s[, "chr"]==chr & !is.na(s[, "level"]) & s[,"frac.dup"]<maxDuplicated)
-      for(i in selt) {
-        rg = s$start[i]:s$end[i] 
-        res[rg] = pmax(res[rg], lev[i])
-      }
-      res
-    })
-    segLev[[rt]]  = unlist(res)
-    isTrans[[rt]] = (segLev[[rt]] >= 0)
-  }
-  isTrans[["both"]] = (isTrans[[1]] | isTrans[[2]])
-  segLev[["both"]]  = pmax(segLev[[1]], segLev[[2]])
-  
-  cat("Fraction of transcribed basepairs\n",
-      "=================================\n\n", sep="")
-  percent ="%"
-  cat(sprintf("%31s: %7d of %7d bp (%3.1f%s)\n\n", "Annotated", sum(isAnno), length(isAnno),
-      signif(mean(isAnno)*100, 3), percent))
-  for(i in seq(along=isTrans)) {
-    n1    = sum(isTrans[[i]])
-    n2    = sum(isTrans[[i]] & !isAnno)
-    denom = sum(is.finite(segLev[[i]]))
-    cat(sprintf("Transcribed in %16s: %7d of %7d bp (%3.1f%s)\n", names(isTrans)[i], 
-      n1, denom, signif(n1/denom*100, 3), percent))
-    cat(sprintf("          ... and not annotated: %7d of %7d bp (%3.1f%s)\n\n", 
-      n2, denom, signif(n2/denom*100, 3), percent))
-    
-  }
-  cat("\n")
-
-  if(!interact)
-    pdf(paste(outfile, "fig4.pdf", sep="-"), height=3, width=4)
-  par(mfrow=c(1,1))
-  myHist = function(x) {
-    xmax = quantile(x, 0.9999, na.rm=TRUE)
-    xmin = min(x[is.finite(x)])
-    x[x>xmax] = xmax
-    by = 0.1
-    breaks = c(rev(seq(0, xmin-by, by=-by)), seq(by, xmax+by, by=by))
-    theCol = brewer.pal(4, "Paired")[3]
-    ##hist(x, breaks=breaks, col=cols[1], main="", yaxt="n", ylab="", xlab="level")
-    sf = showDens(z=list(x=x), breaks=breaks, col=theCol, main="",  xlab="expression level")
-    
-    axis(side=2, at=(0:2)*2e5*sf[1], labels=c("0", "200000", "400000"), las=1)
-    abline(v=0, col="black", lwd=3)
-  }
-  myHist(segLev[["both"]])
-  if(!interact)
-    dev.off()  
 }
 
 ##

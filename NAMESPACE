@@ -2,8 +2,9 @@ useDynLib(tilingArray)
 
 export("findSegments", "sampleStep", "scoreSegments", "costMatrix", 
        "isWithinInterval", "posMin", "getAttributeField", "otherStrand",
-       "qualityReport", "plotAlongChrom",
-       "plot.segmentation", "confint.segmentation", "computeConfInt")
+       "qualityReport", "plotAlongChrom", 
+       "plot.segmentation", "confint.segmentation", "computeConfInt",
+       "showDens")
 
 S3method(plot, segmentation)
 S3method(confint, segmentation)
