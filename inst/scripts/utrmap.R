@@ -9,12 +9,13 @@
 
 library("tilingArray")
 library("geneplotter")
+source("setScriptsDir.R")
 
 interact=(!TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
-rnaTypes  = c("seg-polyA-050525", "seg-tot-050525", "seg-tot2-050525")[1:2]
+rnaTypes  =  c("seg-polyA-050909", "seg-tot-050909")
 source(scriptsDir("readSegments.R"))
 source(scriptsDir("calcThreshold.R"))
 source(scriptsDir("categorizeSegments.R")) 
@@ -316,6 +317,31 @@ if("go" %in% what){
       cat("\n\n")
     }
   }
+
+  ## Look at 3' UTR lengths of Cellular Components
+  cat("-----------------------------------------------------------------\n",
+      "Cellular Component Categories with large median length of 3' UTRs\n",
+      "-----------------------------------------------------------------\n\n\n", sep="")
+
+  GOterms = mget(rownames(gm)[-1], GOTERM)
+  cellularComponents = names(GOterms)[ sapply(GOterms, Ontology) == "CC" ]
+
+  threePrimeUTRLengths = vector(mode="list", length=length(cellularComponents))
+  names(threePrimeUTRLengths) = cellularComponents
+  for(i in seq(along=cellularComponents)) {
+    genes = colnames(gm)[ gm[cellularComponents[i], ] ]
+    res = utr[["combined"]][ genes, "3' UTR"]
+    names(res) = genes
+    threePrimeUTRLengths[[i]] = res
+  }
+
+  
+  ord = order(sapply(threePrimeUTRLengths, median), decreasing=TRUE)
+  for(j in ord[1:25]) {
+    print(get(names(threePrimeUTRLengths)[j], GOTERM))
+    print(threePrimeUTRLengths[[j]])
+    cat("\n\n")
+  }  
 }
 
 if(!interact) {
