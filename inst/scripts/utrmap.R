@@ -11,7 +11,7 @@ library("tilingArray")
 library("geneplotter")
 source("setScriptsDir.R")
 
-interact=(!TRUE)
+interact=(TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
@@ -232,12 +232,14 @@ if("go" %in% what){
   ## create environment of ancestors
   library("GO")
   e = new.env(hash=TRUE)
+
   for(j in ls(GOMFANCESTOR))
     assign(j, get(j, GOMFANCESTOR), envir=e)
   for(j in ls(GOBPANCESTOR))
     assign(j, get(j, GOBPANCESTOR), envir=e)
   for(j in ls(GOCCANCESTOR))
     assign(j, get(j, GOCCANCESTOR), envir=e)
+  
   stopifnot(length(ls(e))==length(ls(GOMFANCESTOR))+
             length(ls(GOBPANCESTOR))+length(ls(GOCCANCESTOR)))
 
@@ -272,45 +274,54 @@ if("go" %in% what){
     goCat = getGO(rownames(utr[["combined"]]))
   
   allGO = unique(unlist(goCat))
-  gm = matrix(FALSE, nrow=length(allGO), ncol=length(goCat))
+  gm    = matrix(FALSE, nrow=length(allGO), ncol=length(goCat))
   rownames(gm) = allGO
   colnames(gm) = names(goCat)
   
   for(i in seq(along=goCat)) {
     gm[ goCat[[i]], i] = TRUE
   }
-
+  w.all = which(rownames(gm)=="all")
+  stopifnot(length(w.all)==1, all(gm[w.all, ]))
+  gm = gm[-w.all,]
+  
   wtfun = function() {
     function(z) {
       sz = sum(z)
       if(sz>=5&&(length(z)-sz)>=5) {
-        w5 = wilcox.test(utr[["combined"]][, "5' UTR"] ~ z)
-        w3 = wilcox.test(utr[["combined"]][, "3' UTR"] ~ z)
-        rv = c(w5$p.value, w3$p.value)
+        w5 = wilcox.test(utr[["combined"]][, "5' UTR"] ~ z)$p.value
+        w3 = wilcox.test(utr[["combined"]][, "3' UTR"] ~ z)$p.value
       } else {
-        rv = rep(NA, 2)
+        w5 = w3 = as.numeric(NA)
       }
-      return(rv)
+      m5 = median(utr[["combined"]][z, "5' UTR"])
+      m3 = median(utr[["combined"]][z, "3' UTR"])
+      c(w5, m5, w3, m3, sz)
     }
   }
+  
   wt = wtfun()
-  res = apply(gm, 1, wt)
+  pGO = t(apply(gm, 1, wt))
+  colnames(pGO) = c("p 5' UTR", "median 5' UTR", "p 3' UTR", "median 3' UTR", "nrGenes")
 
+  medAll = apply(utr[["combined"]], 2, median)
+  
   ## print the GO TERMS
+  GOterms = mget(rownames(gm), GOTERM)
+
   for(j in 1:ncol(utr[["combined"]])) {
+    pname = paste("p",      colnames(utr[["combined"]])[j])
+    mname = paste("median", colnames(utr[["combined"]])[j])
     cat("--------------------------------------------------\n",
         colnames(utr[["combined"]])[j], "\n",
         "--------------------------------------------------\n", sep="")
-    sel = order(res[j,])[1:40]
+    sel = order(pGO[, pname])[1:40]
     for(s in sel) {
       g   = rownames(gm)[s]
-      cat(g, " p=", format.pval(res[j,s]), "  median=",
-          median(utr[["combined"]][names(which(gm[s,])), j]),
-          " (versus ",
-          median(utr[["combined"]][names(which(!gm[s,])), j]),
-          ")\n", sep="")
-      print(get(rownames(gm)[s], GOTERM))
-      nr = sum(gm[s,]) 
+      cat(g, " p=", format.pval(pGO[s, pname]), "  median=",
+          pGO[s, mname], " (versus ", medAll[j], ")\n", sep="")
+      print(GOterms[[s]])
+      nr = pGO[s, "nrGenes"]
       cat(nr, " genes", sep="")
       if(nr<=20)
         cat(":", replaceSystematicByCommonName(names(which(gm[s,]))))
@@ -318,21 +329,37 @@ if("go" %in% what){
     }
   }
 
+  ## Write tab-delimited table
+  ## GO-ID, Term, Median 3' UTR, Median 5' UTR, No. Genes
+  pp  = pmin(pGO[, "p 5' UTR"], pGO[, "p 3' UTR"])
+  ord = order(pp)
+  ord = ord[ which(pp[ord]<= 2e-3) ]
+  sGOterms = GOterms[ord]
+  
+  outtab = cbind(data.frame(
+    GOID = sapply(sGOterms, GOID),
+    Term = sapply(sGOterms, Term), 
+    Ontology = sapply(sGOterms, Ontology)), 
+    pGO[ord, ])
+
+  write.table(outtab, file="utrmap-GOcategories.txt", sep="\t", row.names=FALSE)
+
+  
+  
   ## Look at 3' UTR lengths of Cellular Components
   cat("-----------------------------------------------------------------\n",
       "Cellular Component Categories with large median length of 3' UTRs\n",
       "-----------------------------------------------------------------\n\n\n", sep="")
 
-  GOterms = mget(rownames(gm)[-1], GOTERM)
   cellularComponents = names(GOterms)[ sapply(GOterms, Ontology) == "CC" ]
 
   threePrimeUTRLengths = vector(mode="list", length=length(cellularComponents))
   names(threePrimeUTRLengths) = cellularComponents
   for(i in seq(along=cellularComponents)) {
     genes = colnames(gm)[ gm[cellularComponents[i], ] ]
-    res = utr[["combined"]][ genes, "3' UTR"]
-    names(res) = genes
-    threePrimeUTRLengths[[i]] = res
+    tmp = utr[["combined"]][ genes, "3' UTR"]
+    names(tmp) = genes
+    threePrimeUTRLengths[[i]] = tmp
   }
 
   
