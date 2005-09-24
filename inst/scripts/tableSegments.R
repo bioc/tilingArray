@@ -4,8 +4,8 @@ source("setScriptsDir.R")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = (!TRUE)
-what     = c("fig2", "lvsx", "wst", "cons")[1:2]
+interact = !TRUE
+what     = c("fig3", "lvsx", "wst", "cons")[1:2]
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
@@ -32,7 +32,7 @@ if(!exists("cs")) {
   cs = vector(mode="list", length=length(rnaTypes))
   names(cs)=rnaTypes
 
-  cat("Categorization of segments:\n",
+  cat("\n\nCategorization of segments:\n",
       "===========================\n", sep="")
   for(rt in rnaTypes) {
     cat(rt, ":\n", sep="")
@@ -62,12 +62,12 @@ names(lineColors) =c("annotated ORF", "ncRNA(all)",
 ##
 ## PIE: Four classes
 ##
-if("fig2" %in% what){
+if("fig3" %in% what){
 
   if(interact) {
     x11(width=3*length(rnaTypes), height=3*3.2)
   } else {
-    pdf(paste(outfile, "fig2.pdf", sep="-"), width=2.5*length(rnaTypes), height=2.6*3)
+    pdf("fig3.pdf", width=2.5*length(rnaTypes), height=2.6*3)
   }
 
   par(mfrow=c(3, length(rnaTypes)))
@@ -156,14 +156,8 @@ if("fig2" %in% what){
     ov[k] = (lns+lni+lne) / (ke-ks+1)
   }
   
-  ##if(!interact)
-  ##  pdf(paste(outfile, "overlap.pdf", sep="-"), width=7, height=4.8)
-  ##hist(ov, 100, col="orange", xlab="overlap", main="")
-  ##if(!interact)
-  ##  dev.off()
-  
   cat("\n\nOverlap of segments from total RNA with those from poly-A\n",
-          "(other than:", paste(unTrCatgs, collapse=", "), ")\n",
+          "(not counting: ", paste(unTrCatgs, collapse=", "), ")\n",
           "=========================================================\n", sep="")
   
   tab = table(s2[, "category"], ov > .5)
@@ -179,8 +173,8 @@ if("fig2" %in% what){
     "(3): 'complete' (i.e. in 'featureInSegment')",
     "(4): (1) AND (2), i.e. 'overlap <50%' in one segment and 'overlap >=50%' in another segment.\n")
   
-  selGenes = ((gff[,"feature"]=="gene") & (gff[, "orf_classification"] %in% c("Verified", "Uncharacterized")))
-  featNames = list("annotated ORFs" = unique(gff[ selGenes, "Name"]),
+  isGene = ((gff[,"feature"]=="gene") & (gff[, "orf_classification"] %in% c("Verified", "Uncharacterized")))
+  featNames = list("annotated ORFs" = unique(gff[ isGene, "Name"]),
                    "ncRNA(all)" = unique(gff[ gff[, "feature"] %in% allncRNA, "Name"]))
 
   nsc = length(selectedCategories)
@@ -188,7 +182,11 @@ if("fig2" %in% what){
   tab = matrix(NA, nrow=nsc*nfn, ncol=length(rnaTypes)+1)
   rownames(tab) = paste("(", rep(1:nsc, nfn), ") ", rep(names(featNames), each=nsc), sep="")
   colnames(tab) = c(rnaTypes, "in genome")
-
+  
+  multiGenesPerSegment = matrix(as.numeric(NA), nrow=2, ncol=length(rnaTypes))
+  colnames(multiGenesPerSegment) = rnaTypes
+  rownames(multiGenesPerSegment) = c("any feature", "only annotated ORFs")
+        
   for(irt in seq(along=rnaTypes)) {
     isT = !(cs[[irt]][, "category"] %in% c("excluded", "untranscribed"))
     ovf = strsplit(cs[[irt]][isT, "overlappingFeature"],     split=", ")
@@ -209,7 +207,9 @@ if("fig2" %in% what){
         if(irt==1 && isc==4 && k==1)
           writeLines(replaceSystematicByCommonName(m), con="tableSegments-unusual-architecture.txt")
       }
-    }    
+    }
+    multiGenesPerSegment[1, irt] = sum(listLen(mof)>=2)
+    multiGenesPerSegment[2, irt] = sum(listLen(mof)>=2 & sapply(fis, function(g) all(g %in% featNames$"annotated ORFs")))
   }
   tab[ , "in genome" ] = rep(listLen(featNames), each=length(selectedCategories))
 
@@ -219,6 +219,10 @@ if("fig2" %in% what){
   print(tab)  
   cat("\n\n")
 
+  cat("How many segments have more than one verified/uncharaterized gene in featureInSegment:\n",
+      "======================================================================================\n", sep="")
+  print(multiGenesPerSegment)
+  
   ##
   ## LENGTH & LEVEL DISTRIBUTIONS
   ##

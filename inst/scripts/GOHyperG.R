@@ -86,11 +86,12 @@ GOHyperG = function(candidates) {
   par(mfrow=c(1,2))
   cols=rep("grey", nrow(nr))
   cols[ksel]="orange"
-  
-  for (xmax in c(max(nr[,1], na.rm=TRUE),  20)){
+
+  xmax = c(max(nr[,1], na.rm=TRUE),  20)
+  for (i in seq(along=xmax)) {
     plot(nr, pch=16, xlab="antisense genes", ylab="control: all genes",
-         main="Frequency of occurence of GO classes",
-         xlim=c(0, xmax), ylim=c(0, xmax/thSlop), col=cols)
+         main=c("Frequency of occurence of GO classes", "zoom in")[i], 
+         xlim=c(0, xmax[i]), ylim=c(0, xmax/thSlop), col=cols)
     abline(a=0, b=1/thSlop, col="blue")
   }
 }

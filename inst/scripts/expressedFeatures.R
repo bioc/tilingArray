@@ -1,7 +1,7 @@
 ##
 ## How much of the genome is transcribed
 ## 1. By ORFs
-## 2. By Basepairs --> (Fig.4)
+## 2. By Basepairs
 ##
 ## As background, we use in both cases the background estimated from the segmentation (in calcThreshold).
 ## For the ORF detection, we detect in poly-A and total separately, using FDR threshold 0.1%,
@@ -235,7 +235,7 @@ for(i in seq(along=isTrans)) {
 cat("\n")
 
 if(!interact)
-  pdf("expressedFeatures.pdf", height=3, width=4)
+  pdf("expressedFeatures.pdf", height=4.8, width=7)
 par(mfrow=c(1,1))
 myHist = function(x) {
   xmax = quantile(x, 0.9999, na.rm=TRUE)

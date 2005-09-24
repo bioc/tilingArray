@@ -1,17 +1,18 @@
-doSave = !TRUE
+doSave = TRUE
 interact = !doSave
 
 options(error=recover, warn=0)
 library("tilingArray")
 library("geneplotter")
 
-#source("~/madman/Rpacks/tilingArray/R/plotAlongChrom.R")
+source("~/madman/Rpacks/tilingArray/R/plotAlongChrom.R")
 
-rnaTypes  = c("seg-polyA-050525")
+rnaTypes  = c("seg-polyA-050909")
 source("scripts/readSegments.R")
 source("scripts/calcThreshold.R") 
 
-so = get("seg-polyA-050525")
+stopifnot(length(rnaTypes)==1)
+so = get(rnaTypes)
 
 density = 100
 width   = 10
@@ -42,48 +43,62 @@ plotAlongChrom(chr=14, coord= c(410000,488150),
                 ylim=ylim, segObj=so, colors=c(cp="#d0d0d0"), 
                 probeAnno = probeAnno, gff=gff,
                 haveNames=FALSE, haveLegend=FALSE, pointSize=unit(0.1, "mm"),
-                featColScheme=2)
+                featColScheme=1)
 popViewport(2)
 
 ## -------------------------------------------------------------
 ## second level of layout
 pushViewport(viewport(layout.pos.col=1, layout.pos.row=2,
-      layout=grid.layout(2, 6, height=c(1, 1), width=c(0.1, 1, 0.07, 1, 0.07, 1))))
+      layout=grid.layout(2, 6, height=c(1, 1), width=c(0.1, 1, 0.12, 1, 0.12, 1))))
 
 ##
 ## B) 13:550k splicing RPS16A, RPL13B
 ## middle row, left
 pushViewport(viewport(layout.pos.col=2, layout.pos.row=1))
 plotAlongChrom(chr=13, coord = c(550044, 553360), ylim=ylim, segObj=so, 
-                probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
+                probeAnno = probeAnno, gff=gff, haveLegend=FALSE) # , colors=c(cp="#d0d0d0"))
+popViewport()
+
+## C) MET7, novel architecture
+## middle row, middle
+pushViewport(viewport(layout.pos.col=4, layout.pos.row=1))
+plotAlongChrom(chr=15, coord = c(784700, 790000), ylim=ylim, segObj=so, 
+                probeAnno = probeAnno, gff=gff, haveLegend=FALSE) # , colors=c(cp="#d0d0d0"))
 popViewport()
 
 ## C) 11:65k: MNN4, novel architecture
 ## middle row, middle
-pushViewport(viewport(layout.pos.col=4, layout.pos.row=1))
-plotAlongChrom(chr=11, coord = c(63370, 68270), ylim=ylim, segObj=so, 
-                probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
-popViewport()
+##pushViewport(viewport(layout.pos.col=4, layout.pos.row=1))
+##plotAlongChrom(chr=11, coord = c(63370, 68270), ylim=ylim, segObj=so, 
+##                probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
+##popViewport()
 
 ## D) overlapping transcripts
 ## middle row, right
 pushViewport(viewport(layout.pos.col=6, layout.pos.row=1))
 plotAlongChrom(chr=14, coord = c(342500, 347545), ylim=ylim, segObj=so, 
-                probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
+                probeAnno = probeAnno, gff=gff, haveLegend=FALSE) # , colors=c(cp="#d0d0d0"))
 popViewport()
 
-## E) 2:360.5-366.5: novel isolated
+## E) SER3
 ## bottom row, left
 pushViewport(viewport(layout.pos.col=2, layout.pos.row=2))
-plotAlongChrom(chr=2, coord = c(360500, 365970), ylim=ylim, segObj=so, 
-                probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
+plotAlongChrom(chr=5, coord = c(321900, 326100), ylim=ylim, segObj=so, 
+                probeAnno = probeAnno, gff=gff, haveLegend=FALSE) # , colors=c(cp="#d0d0d0"))
 popViewport()
 
-## F) 9:221-227: novel antisense SPO22
+## F) 2:360.5-366.5: novel isolated
 ## bottom row, middle
 pushViewport(viewport(layout.pos.col=4, layout.pos.row=2))
+plotAlongChrom(chr=2, coord = c(360500, 365970), ylim=ylim, segObj=so, 
+                probeAnno = probeAnno, gff=gff, haveLegend=FALSE) # , colors=c(cp="#d0d0d0"))
+popViewport()
+
+## G) 9:221-227: novel antisense SPO22
+## bottom row, right
+pushViewport(viewport(layout.pos.col=6, layout.pos.row=2))
 plotAlongChrom(chr=9, coord = c(221000, 226500), ylim=ylim, segObj=so, 
-                probeAnno = probeAnno, gff=gff, haveLegend=FALSE, colors=c(cp="#d0d0d0"))
+                probeAnno = probeAnno, gff=gff, haveLegend=FALSE) # , colors=c(cp="#d0d0d0"))
 popViewport()
 
 ## pop 2,1

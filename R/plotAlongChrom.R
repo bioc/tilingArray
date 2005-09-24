@@ -254,8 +254,6 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
   if(!all(whm))
     stop("Don't know how to handle feature(s) '", paste(names(featsp)[!whm], collapse=", "), "'.", sep="")
 
-  ## sort
-  ## doDraw   = !is.na(featCols$fill)
   sfeatsp  = featsp[rownames(featCols)]
   ll       = listLen(sfeatsp)
 
@@ -264,6 +262,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     # change, 05/09/10 J, do ordering  by specificity not by start base
     # ord    = order(gff$start[sel[i]])
     ord = 1:length(i)
+
     gp     = gpar(col = rep(featCols$col,  ll)[ord],
                  fill = rep(featCols$fill, ll)[ord])
     i      = i[ord]
@@ -280,12 +279,18 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     #if (length(grep("binding", names(sfeatsp)))>0) browser()
   }
 
-  nNames  <- length(whnames) # used quite often, number of labels to put in plot
-  
-  if(haveNames && (nNames>0)) {
+  if(haveNames && (length(whnames)>0)) {
+    bindingRegexpr = "binding.?site.*$"
+    isBindingSite = (regexpr(bindingRegexpr, featName[whnames]) > 0)
+    if(any(isBindingSite)) {
+      ## replace long labels
+      featName[whnames] = gsub(bindingRegexpr, "bs", featName[whnames])
+    }
+    ## remove duplicated names that are not binding sites
+    whnames = whnames[isBindingSite | !duplicated(featName[whnames])]
+
     txtcex = 0.7
     txtdy  = 0.7
-    whnames = whnames[!duplicated(featName[whnames])]
     nNames  <- length(whnames) 
     s      = sel[whnames]
     txtx   = (gff$start[s]+gff$end[s])/2
@@ -295,8 +300,6 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     s      = s[ord]
     txtx   = txtx[ord]
 
-    if (length(grep("binding",featName))>0) # replace long labels
-      featName <- gsub("binding.?site.*$","bs",featName)
     
     strw   = convertWidth(stringWidth(featName[whnames]), "native", valueOnly=TRUE)*txtcex
     rightB = txtx[1] + 0.5*strw[1]
@@ -435,15 +438,15 @@ featureColors = function(scheme=1, exclude=c()) {
                     "centromere"  = "#FFEDA0",    ## orange
                     "telomere"    = "#FFEDA0",    ## orange
                     "insertion"   = "#FFEDA0",    ## orange
-                    "binding_site" = "#C9C299",     ## lemon chiffon
-                    "TF_binding_site"  = "#C9C299", ## lemon chiffon
                     "CDS"         = "#addfff",    ## light blue
                     "CDS_dubious" = "#e0f1f2",    ## lighter blue
                     "ncRNA"       = "#3b9c9c",    ## cyan
                     "tRNA"        = "#a6d96a",    ## green
                     "snRNA"       = "#8C6BB1",    ## purple
                     "rRNA"        = "#fdae61",    ## meat
-                    "snoRNA"      = "#7F5A58")    ## red brown
+                    "snoRNA"      = "#7F5A58",    ## red brown
+                    "binding_site"    = "#C9C299", ## lemon chiffon
+                    "TF_binding_site" = "#C9C299") ## lemon chiffon
 
   # kick out unwanted Features, no need to return a color defintion for them
   defaultFeatures  <- names(defaultColors)
@@ -452,7 +455,7 @@ featureColors = function(scheme=1, exclude=c()) {
 
   fill = switch(scheme,
     default  = defaultColors,
-    unicolor = ifelse(is.na(defaultColors), NA, "#7AADD1"),
+    unicolor = ifelse(is.na(defaultColors), NA,  "#addfff"),  ## light blue
     stop("Sapperlot"))
 
   ## calculate hex string for a color that is a little bit darker than the

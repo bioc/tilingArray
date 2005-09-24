@@ -44,8 +44,9 @@ if(!exists("cs")) {
   }
   
   utr[["combined"]] = rbind(utr[[1]], utr[[2]][ !(rownames(utr[[2]])%in%rownames(utr[[1]])), ])
-      
+  save(utr, file=paste("utr-", date(), ".rda", sep=""))
   rm(list=c("s", "z"))
+  
 } else {
   cat("\n**************************************************\n",
         "*      NOT REDOING categorizeSegments            *\n",
