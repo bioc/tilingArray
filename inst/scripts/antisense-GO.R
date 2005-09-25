@@ -4,7 +4,7 @@
 library("GOstats")
 source(scriptsDir("GOHyperG.R"))
 
-interact= !TRUE
+interact= TRUE
 
 outfile = "antisense-GO"
 if(!interact)
@@ -18,12 +18,14 @@ for(what in colnames(asCand)) {
   catgSel = list(filtered = "novel antisense - filtered",
            all = c("novel antisense - filtered", "novel antisense - unassigned"))[[what]]
 
+  cat("Category: ", catgSel, "\n")
+  cat("==================================================================\n")
+
   count = numeric(2)
   hit   = numeric(3)
   names(hit) = c("5'", "3'", "tot")
   
-  cat("Analysis of level differences:\n")
-  cat("=====================================\n")
+  cat("\nLevel differences:\n")
   for(rt in rnaTypes) {
     s = cs[[rt]]
     selSeg = which(s[, "category"] %in% catgSel)
@@ -66,7 +68,7 @@ for(what in colnames(asCand)) {
     x2 = s$level[isGeneSegment &  isAntiSenseGeneSegment]
     cat(rt, " & ", catgSel, ": ",
         "median level: ", signif(median(x2), 3), " vs ",
-        signif(median(x1), 3), "   p=", format.pval(wilcox.test(x1, x2)$p.value), "\n\n", sep="")
+        signif(median(x1), 3), "   p=", format.pval(wilcox.test(x1, x2)$p.value), "\n", sep="")
   } ## for rt
   
   cat(sum(asCand[, what]), " genes were found opposite a segment of category ",
@@ -90,15 +92,23 @@ cat("\n\nDo antisense genes have longer/shorter UTRs?\n")
 cat("================================================\n\n")
 if(!exists("utr"))
   load("utr.rda")
+
+par(mfrow=c(2,2))
 utrls = utr[["combined"]]
 for(j in colnames(utrls)) {
   for(what in colnames(asCand)) {
     x1 = utrls[ (rownames(utrls) %in% names(which(asCand[, what]))), j] 
-    x2 = utrls[!(rownames(utrls) %in% names(which(asCand[, what]))), j] 
+    x2 = utrls[!(rownames(utrls) %in% names(which(asCand[, what]))), j]
+    maxx=400; breaks = seq(0, maxx, len=21)
+    x1[x1>=maxx]=maxx
+    x2[x2>=maxx]=maxx
+    histStack(list(x1,x2), breaks=breaks, col=c("orange", "lightblue"), main=paste(j, what))
     p = wilcox.test(x1, x2)$p.value
-    cat(j, " & ", what, ": median length=", median(x1), " vs ", median(x2), "   p=", format.pval(p), "\n", sep="")
+    cat(j, " & ", what, ": median length=", median(x1), " (n=", length(x1), ") vs ",
+        median(x2), " (n=", length(x2), ")   p=", format.pval(p), "\n", sep="")
   }
 }
+stop()
 
 
 what="all"

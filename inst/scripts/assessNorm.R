@@ -1,7 +1,16 @@
 library("Biobase")
 library("RColorBrewer")
-source(scriptsDir("readSegments.R"))
+source("setScriptsDir.R")
 options(error=recover)
+
+rnaTypes = c("seg-polyA-050909", "seg-tot-050909")
+hybeSets = list("seg-polyA-050909" = c("05_04_27_2xpolyA_NAP3.cel.gz",
+      "05_04_26_2xpolyA_NAP2.cel.gz",
+      "05_04_20_2xpolyA_NAP_2to1.cel.gz"),
+    "seg-tot-050909"   = c("050409_totcDNA_14ug_no52.cel.gz",
+      "030505_totcDNA_15ug_affy.cel.gz"))
+
+source(scriptsDir("readSegments.R"))
 
 interact=TRUE
 makeFig=!TRUE
@@ -65,7 +74,7 @@ sel  = (sta>=115000 & sta<=125000)
 isel = ind[sel]
 xsel = sta[sel]
 
-qsel = (sta>=0) ##  & (sta<=300000)
+qsel = (sta>=0)
 qi   = ind[qsel]
 qx   = sta[qsel]
 xout = seq(min(qx), max(qx), by=8)
@@ -87,13 +96,7 @@ ass = matrix(NA, nrow=5, ncol=length(rnaTypes))
 colnames(ass)=rnaTypes
 
 for(rt in rnaTypes) {
-  fn = switch(rt,
-    "seg-polyA-050525" = c("05_04_27_2xpolyA_NAP3.cel.gz",
-      "05_04_26_2xpolyA_NAP2.cel.gz",
-      "05_04_20_2xpolyA_NAP_2to1.cel.gz"),
-    "seg-tot-050525"   = c("050409_totcDNA_14ug_no52.cel.gz",
-      "030505_totcDNA_15ug_affy.cel.gz"),
-    stop("Zapperlot"))
+  fn = hybeSets[[rt]]
 
   ##
   ## plot
@@ -102,7 +105,7 @@ for(rt in rnaTypes) {
     if(interact) {
       x11(width=8, height=12)
     } else {
-      pdf(width=8, height=12, file=paste("assessNorm-", rt, ".pdf", sep=""))
+      pdf(width=8, height=12, file=file.path(rt, "assessNorm.pdf"))
     }
     
     py = calcY(isel, fn, rt)
@@ -128,14 +131,8 @@ for(rt in rnaTypes) {
   for(i in 1:ncol(py)) {
     sl  = !is.na(py[,i])
     ap = approx(x=qx[sl], y=py[sl, i], xout=xout, ties=mean)
-    if(FALSE){
-      ac = acf(ap$y, lag.max=max.lag, na.action=na.pass, plot=FALSE)
-      stopifnot(ac$lag[wh+1]==wh)
-      acr[, i]   = ac$acf
-    }
-        
+
     dd = calcdd(ap$y)
-    ## ee = calcdd(ap$y, k=1250)
     
     sig = diff(quantile(ap$y, probs=c(0.01, 0.99)))
     noi = median(dd)
