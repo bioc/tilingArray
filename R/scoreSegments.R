@@ -126,9 +126,12 @@ scoreSegments = function(s, gff,
                 !any(is.na(same.gff[, "Name"])),
                 !any(is.na(oppo.gff[, "Name"])))
                 
-      ## is used below, in the definition of "featureInSegment"
-      CDSfeature ="CDS"
-      stopifnot(CDSfeature %in% transcribedFeatures)
+      ## 'incompleteFeature' is used below, in the definition of "featureInSegment"
+      ## Note: for the 050909 segmentation, the following definition was used:
+      ## incompleteFeature ="CDS"
+      ## this is one is more correct, for subsequent versions:
+      incompleteFeature =c("CDS", "intron") ## wh 25.Sep 2005
+      stopifnot(incompleteFeature %in% transcribedFeatures)
       
       utrLeft  = utrRight = dl = dr = rep(as.integer(NA), cp)   
       ft1 = ft2 = ft3 = ft4 = ft5 = character(cp)  
@@ -186,7 +189,7 @@ scoreSegments = function(s, gff,
         wh1 = which(
           (same.gff[, "start"] >= startj) &
           (same.gff[, "end"]   <= endj ) &
-          (same.gff[, "feature"] != CDSfeature))
+          (same.gff[, "feature"] != incompleteFeature))
         if(length(wh1)>0) {
           nm1 = unique(same.gff[wh1, "Name"])
           stopifnot(!any(duplicated(nm1)))

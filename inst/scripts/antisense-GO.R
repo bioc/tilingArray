@@ -4,115 +4,147 @@
 library("GOstats")
 source(scriptsDir("GOHyperG.R"))
 
-interact= TRUE
+interact= !TRUE
 
 outfile = "antisense-GO"
 if(!interact)
   sink(paste(outfile, "txt", sep="."))
 
-asCand = matrix(FALSE, nrow=length(featNames$"annotated ORFs"), ncol=2)
-rownames(asCand)=featNames$"annotated ORFs"
-colnames(asCand)=c("filtered", "all")
-
-for(what in colnames(asCand)) {
-  catgSel = list(filtered = "novel antisense - filtered",
-           all = c("novel antisense - filtered", "novel antisense - unassigned"))[[what]]
-
-  cat("Category: ", catgSel, "\n")
-  cat("==================================================================\n")
-
-  count = numeric(2)
-  hit   = numeric(3)
-  names(hit) = c("5'", "3'", "tot")
-  
-  cat("\nLevel differences:\n")
-  for(rt in rnaTypes) {
-    s = cs[[rt]]
-    selSeg = which(s[, "category"] %in% catgSel)
-    asGenes = unique(unlist(strsplit(s[selSeg, "oppositeFeature"], split=", ")))
-    asGenes = intersect(asGenes, rownames(asCand))
-    asCand[ asGenes, what ] = TRUE
-
-    ## count how often antisense overlaps 3' and 5' ends of gene
-    isGeneSegment = (s$featureInSegment %in% featNames$"annotated ORFs") & (!is.na(s$level))
-    isAntiSenseGeneSegment = rep(FALSE, length(isGeneSegment))
-  
-    for(j in selSeg) {
-      of = strsplit(s[j, "oppositeFeature"], ", ")[[1]]
-      stopifnot(length(of)>=1)
-      if(length(of)==1) {
-        w = which(gff$Name==of & isGene)
-        stopifnot(length(w)<=1)
-        if(length(w)==1) {
-          delta   = c((s[j, "start"]-50)<=gff$start[w],
-                      (s[j, "end"]+50)  >=gff$end[w],
-            TRUE) 
-          strand = as.character(gff$strand[w])
-          stopifnot(strand%in%c("+", "-"))
-          if(strand=="-") ## reverse
-            delta[1:2]=delta[2:1]
-          hit = hit + delta
-          
-          v = which(s$featureInSegment==of)
-          stopifnot(all(isGeneSegment[v]))
-          isAntiSenseGeneSegment[v] = TRUE
-          
-        } else {
-          count[2]=count[2]+1
-        }
-      } else {
-        count[1]=count[1]+1
-      }
-    }
-    x1 = s$level[isGeneSegment & !isAntiSenseGeneSegment]
-    x2 = s$level[isGeneSegment &  isAntiSenseGeneSegment]
-    cat(rt, " & ", catgSel, ": ",
-        "median level: ", signif(median(x2), 3), " vs ",
-        signif(median(x1), 3), "   p=", format.pval(wilcox.test(x1, x2)$p.value), "\n", sep="")
-  } ## for rt
-  
-  cat(sum(asCand[, what]), " genes were found opposite a segment of category ",
-      paste("'", catgSel, "'", sep="", collapse=", "), ".\n\n", sep="")
-
-  cat("Analysis of 3'/5' preference of potential antisense transcripts:\n")
-  cat("================================================================\n")
-  cat("Number of cases where more than one feature in oppositeFeature:", count[1], "\n")
-  cat("Number of cases where oppositeFeature not a gene:", count[2], "\n")
-
-  cat("hit:\n")
-  print(hit)
-  cat("\n\n\n")
-
-} ## for what
-
-##--------------------------------------------------
-## Do antisense genes have longer/shorter UTRs?
-##--------------------------------------------------
-cat("\n\nDo antisense genes have longer/shorter UTRs?\n")
-cat("================================================\n\n")
 if(!exists("utr"))
   load("utr.rda")
 
-par(mfrow=c(2,2))
-utrls = utr[["combined"]]
-for(j in colnames(utrls)) {
-  for(what in colnames(asCand)) {
-    x1 = utrls[ (rownames(utrls) %in% names(which(asCand[, what]))), j] 
-    x2 = utrls[!(rownames(utrls) %in% names(which(asCand[, what]))), j]
-    maxx=400; breaks = seq(0, maxx, len=21)
-    x1[x1>=maxx]=maxx
-    x2[x2>=maxx]=maxx
-    histStack(list(x1,x2), breaks=breaks, col=c("orange", "lightblue"), main=paste(j, what))
-    p = wilcox.test(x1, x2)$p.value
-    cat(j, " & ", what, ": median length=", median(x1), " (n=", length(x1), ") vs ",
-        median(x2), " (n=", length(x2), ")   p=", format.pval(p), "\n", sep="")
+if(!exists("asCand")) {
+  
+## a matrix that corresponds to all ORFs
+nrGenes = length(featNames$"annotated ORFs")
+asCand = data.frame(
+  "any overlap, filtered" = rep(FALSE, nrGenes),
+  "3' overlap, filtered" = rep(FALSE, nrGenes),
+  "5' overlap, filtered" = rep(FALSE, nrGenes),
+  "any overlap, all" = rep(FALSE, nrGenes),
+  "3' overlap, all" = rep(FALSE, nrGenes),
+  "5' overlap, all" = rep(FALSE, nrGenes),
+  "level"  = rep(as.numeric(NA), nrGenes),
+  "3' UTR" = rep(as.numeric(NA), nrGenes),
+  "5' UTR" = rep(as.numeric(NA), nrGenes),
+  check.names=FALSE)
+
+rownames(asCand)=featNames$"annotated ORFs"
+
+## poly-A only....
+s = cs[[rnaTypes[1]]]
+
+## UTR lengths
+whUTR = utr[["seg-polyA-050909"]]
+stopifnot(colnames(whUTR) %in% colnames(asCand))
+for(j in colnames(whUTR))
+  asCand[rownames(whUTR), j] = whUTR[, j]
+
+## numeric vector, for each gene, the index of the segment it
+##   is contained in (if any)
+inSegment = rep(as.numeric(NA), nrow(asCand))
+names(inSegment) = rownames(asCand)
+spFeatInSeg = strsplit(s$featureInSegment, ", ") 
+for(i in seq(along=spFeatInSeg)) {
+  w = match(spFeatInSeg[[i]], names(inSegment))
+  if(any(!is.na(inSegment[w])))
+    cat("Warning - featureInSegment is defective - ", spFeatInSeg[[i]], "\n")
+  inSegment[w] = i
+}
+
+## numeric vector, for each gene, the index of the segments it
+##   that list it as oppositeFeature
+oppositeSegment = vector(mode="list", length=nrow(asCand))
+names(oppositeSegment) = rownames(asCand)
+spOppoFeat  = strsplit(s$oppositeFeature, ", ")
+for(i in seq(along=spOppoFeat)) {
+  w = match(spOppoFeat[[i]], names(oppositeSegment))
+  for(v in w[!is.na(w)])
+    oppositeSegment[[v]] = c(oppositeSegment[[v]], i)
+}
+
+ 
+asCand[, "level"] = s$level[inSegment]
+
+for(j in 1:nrow(asCand)) {
+  if(j%%1000==0)cat(j, "")
+  
+  ## segments that have this gene as their oppositeFeature
+  iseg = oppositeSegment[[j]]
+  if(length(iseg)>=1){
+    
+    wh1 = which(s$category[iseg] == "novel antisense - filtered")
+    wh2 = c(wh1, which(s$category[iseg] == "novel antisense - unassigned"))
+
+    if(length(wh2)>=1) {
+      ## isGene is defined in tableSegments
+      igff = which(gff$Name==rownames(asCand)[j] & isGene)
+      
+      asCand[j,  "any overlap, all"] = TRUE
+      overl  = c(any( (s[iseg[wh2], "start"]-50) <= gff$start[igff] ),
+                 any( (s[iseg[wh2], "end"]  +50) >= gff$end[igff]   ))
+      if(gff$strand[igff]=="-") ## reverse
+        overl = rev(overl)
+      asCand[j,  "3' overlap, all"] = overl[2]
+      asCand[j,  "5' overlap, all"] = overl[1]
+    }
+
+    if(length(wh1)>=1) {
+      asCand[j,  "any overlap, filtered"] = TRUE
+      overl  = c(any( (s[iseg[wh1], "start"]-50) <= gff$start[igff] ),
+                 any( (s[iseg[wh1], "end"]  +50) >= gff$end[igff]   ))
+      if(gff$strand[igff]=="-") ## reverse
+        overl = rev(overl)
+      asCand[j,  "3' overlap, filtered"] = overl[2]
+      asCand[j,  "5' overlap, filtered"] = overl[1]
+    }
+    
+  } ## if length(iseg)
+} ## for j
+
+} ## if(!exists("asCand"))
+
+## 1. Is there a preference for overlap of antisense transcripts with 3' or 5' UTR?
+cat("Is there a preference for overlap of antisense transcripts with 3' or 5' UTR?\n")
+for(cn in colnames(asCand)[1:6])
+  cat(sprintf("%30s: %4d\n", cn, as.integer(sum(asCand[, cn]))))
+cat("\n\n")
+
+## 2. Do genes with antisense transcripts have different levels?
+g1 = which(asCand$"any overlap, filtered")
+g2 = which(!asCand$"any overlap, all")
+wt = wilcox.test(asCand$level[g1],  asCand$level[g2])
+cat("Do genes with antisense transcripts have different levels from those without?\n")
+cat(sprintf("Median of genes opposite 'novel antisense - filtered' segment: %8g\n",
+            median(asCand$level[g1], na.rm=TRUE)),
+    sprintf("Median of genes not opposite any 'novel antisense' segment: %8g\n",
+            median(asCand$level[g2], na.rm=TRUE)),
+    sprintf("Wilcoxon test p=%10s\n\n\n", format.pval(wt$p.value)), sep="")
+
+## 3. Compare UTR lengths for UTRs that are overlapped by an antisense transcript
+##  (filtered) versus those that are not (unfiltered/all)
+cat("Compare UTR lengths for UTRs that are overlapped by an antisense transcript\n",
+    "(filtered) versus those that are not (unfiltered/all):", sep="")
+for(end in c("3'", "5'")) {
+  utr = paste(end, "UTR")
+  for(what in c("filtered", "all")) {
+    g1 = which( asCand[, paste(end, "overlap,", what)] & !is.na(asCand[, utr]))
+    g2 = which(!asCand[, "any overlap, all"] & !is.na(asCand[, utr]))
+    x1 = asCand[g1, utr]
+    x2 = asCand[g2, utr]
+    wt = wilcox.test(x1,  x2)
+    cat(sprintf("\n%2s, using >>%s<< putative antisense segments:\n", end, what),
+        sprintf("Median length of UTRs of %d genes opposite a 'novel antisense' segment: %8g\n",
+                length(x1), median(x1)),
+        sprintf("Median length for %d genes not opposite any 'novel antisense' segment, and with UTR length data: %8g\n",
+                length(x2), median(x2)),
+        sprintf("Wilcoxon test p=%10s\n", format.pval(wt$p.value)), sep="")
   }
 }
-stop()
 
 
 what="all"
-cat("\n\nGO category analysis (", what, "):\n", sep="")
+cat("\n\n\nGO category analysis (", what, "):\n", sep="")
 cat("======================================\n\n")
 GOHyperG(rownames(asCand)[asCand[, what]])
 
@@ -120,8 +152,6 @@ if(!interact) {
   dev.copy(pdf, paste(outfile, what, "pdf", sep="."), width=12, height=6.3)
   dev.off()
 }
-
-
 
 if(!interact)
   sink()
