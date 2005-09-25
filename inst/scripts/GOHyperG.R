@@ -76,9 +76,11 @@ GOHyperG = function(candidates) {
     cat("------------------------------------------------------------\n")
     print(get(L, GOTERM))
     cat("\nIn genome: ", nr[L,2], ", expected: ", round(nr[L,2]*thSlop,1), ", found: ", nr[L, 1],
-        ", p=", format.pval(ph[L]), "\n",
-        "Genes: ",
-        paste(sort(replaceSystematicByCommonName(candidates[sapply(asGO, function(x) L %in% x)])), collapse=" "),
+        ", p=", format.pval(ph[L]), "\n")
+    theCand = candidates[sapply(asGO, function(x) L %in% x)]
+    if(length(theCand)<=36) 
+        cat("Genes: ",
+        paste(sort(replaceSystematicByCommonName(theCand)), collapse=" "),
         "\n\n", sep="")
     
   }
@@ -91,7 +93,7 @@ GOHyperG = function(candidates) {
   for (i in seq(along=xmax)) {
     plot(nr, pch=16, xlab="antisense genes", ylab="control: all genes",
          main=c("Frequency of occurence of GO classes", "zoom in")[i], 
-         xlim=c(0, xmax[i]), ylim=c(0, xmax/thSlop), col=cols)
+         xlim=c(0, xmax[i]), ylim=c(0, xmax[i]/thSlop), col=cols)
     abline(a=0, b=1/thSlop, col="blue")
   }
 }

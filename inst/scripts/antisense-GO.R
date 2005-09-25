@@ -143,10 +143,31 @@ for(end in c("3'", "5'")) {
 }
 
 
-what="all"
+#######################################################################
+##  look for enriched GO classes - use combination of poly-A and total
+#######################################################################
+
+asMat = matrix(FALSE, nrow=length(featNames$"annotated ORFs"), ncol=2)
+rownames(asMat)=featNames$"annotated ORFs"
+colnames(asMat)=c("filtered", "all")
+
+for(what in colnames(asMat)) {
+  catgSel = list(filtered = "novel antisense - filtered",
+                 all = c("novel antisense - filtered", "novel antisense - unassigned"))[[what]]
+  for(rt in rnaTypes) {
+    s = cs[[rt]]
+    selSeg = which(s[, "category"] %in% catgSel)
+    asGenes = unique(unlist(strsplit(s[selSeg, "oppositeFeature"], split=", ")))
+    asGenes = intersect(asGenes, rownames(asMat))
+    asMat[ asGenes, what ] = TRUE
+  } ## for rt
+} ## for what
+
+
+what = "all"
 cat("\n\n\nGO category analysis (", what, "):\n", sep="")
 cat("======================================\n\n")
-GOHyperG(rownames(asCand)[asCand[, what]])
+GOHyperG(rownames(asMat)[asMat[, what]])
 
 if(!interact) {
   dev.copy(pdf, paste(outfile, what, "pdf", sep="."), width=12, height=6.3)
