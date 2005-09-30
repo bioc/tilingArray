@@ -4,8 +4,8 @@ source("setScriptsDir.R")
 
 graphics.off()
 options(error=recover, warn=2)
-interact = !TRUE
-what     = c("fig3", "lvsx", "wst", "cons")[1:2]
+interact = TRUE
+what     = c("fig3", "lvsx", "wst", "cons")[1]
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
