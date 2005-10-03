@@ -21,7 +21,7 @@ calcThreshold = function(x, sel, FDRthresh, dir, main) {
   thresh = min(x[sel][selfdr], na.rm=TRUE)
 
   if(!missing(dir)) {
-    pdf(file=file.path(dir, "threshold.pdf"), width=8, height=6)
+    pdf(file=file.path(dir, "threshold2.pdf"), width=8, height=6)
   
     adjust = 0.5
     d1 = density(x[!sel], na.rm=TRUE, n=128, adjust=adjust)
