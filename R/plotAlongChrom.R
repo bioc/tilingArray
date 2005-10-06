@@ -128,7 +128,7 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
 
 plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreShow,
   gff, chr, strand, VP, colors, pointSize, haveNames, probeLength=25, featColScheme,
-  noTypeLabel = c("CDS"), #,"binding_site", "TF_binding_site"),
+  noTypeLabel = c("CDS", "uORF"), #,"binding_site", "TF_binding_site"),
   exclude=c("chromosome","gene","nucleotide_match","insertion","intron")
     #   ,"ARS","repeat_region","repeat_family",  # new version: 2005-08-30 J
 ) {
@@ -422,32 +422,33 @@ plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
 ## important ones (e.g. tRNA is more specific than ncRNA)
 ## to test, say tilingArray:::plotAlongChromLegend()
 ##------------------------------------------------------------
-featureColors = function(scheme=1, exclude=c()) {
-
-  defaultColors = c("chromosome"  = NA,
-                    "nucleotide_match" = "#e0e0e0",    ## light gray
-                    "pseudogene"  = "#e0e0e0",    ## light gray
-                    "uORF"        = "#e0e0e0",    ## light gray
-                    "nc_primary_transcript" = "#a0a0a0",    ## grey
-			  "region" = "#cc66cc",    ## light red-violet	
-                    "repeat_family" = "#CC6666",    ## light red
-                    "repeat_region" = "#e31a1c",    ## bright red                    
-                    "transposable_element"  = "#f1b6da",    ## pink
-                    "transposable_element_gene"= "#f1b6da",   				      
-                    "ARS"         = "#CC9966",    ## light brown
-                    "centromere"  = "#FFEDA0",    ## orange
-                    "telomere"    = "#FFEDA0",    ## orange
-                    "insertion"   = "#FFEDA0",    ## orange
-                    "CDS"         = "#addfff",    ## light blue
-                    "CDS_dubious" = "#e0f1f2",    ## lighter blue
-                    "ncRNA"       = "#3b9c9c",    ## cyan
-                    "tRNA"        = "#a6d96a",    ## green
-                    "snRNA"       = "#8C6BB1",    ## purple
-                    "rRNA"        = "#fdae61",    ## meat
-                    "snoRNA"      = "#7F5A58",    ## red brown
-                    "binding_site"    = "#C9C299", ## lemon chiffon
-                    "TF_binding_site" = "#C9C299") ## lemon chiffon
-
+featureColors = function(scheme=1, exclude=c()){
+  
+  defaultColors = c(
+    "chromosome"  = NA,
+    "nucleotide_match" = "#e0e0e0",## light gray
+    "pseudogene"  = "#e0e0e0",## light gray
+    "uORF"        = "#6699CC",    ## light gray
+    "nc_primary_transcript" = "#a0a0a0",    ## grey
+    "region" = "#cc66cc",    ## light red-violet	
+    "repeat_family" = "#CC6666",    ## light red
+    "repeat_region" = "#e31a1c",    ## bright red                    
+    "transposable_element"  = "#f1b6da",    ## pink
+    "transposable_element_gene"= "#f1b6da",
+    "ARS"         = "#CC9966",    ## light brown
+    "centromere"  = "#FFEDA0",    ## orange
+    "telomere"    = "#FFEDA0",    ## orange
+    "insertion"   = "#FFEDA0",    ## orange
+    "CDS"         = "#addfff",    ## light blue
+    "CDS_dubious" = "#e0f1f2",    ## lighter blue
+    "ncRNA"       = "#3b9c9c",    ## cyan
+    "tRNA"        = "#a6d96a",    ## green
+    "snRNA"       = "#8C6BB1",    ## purple
+    "rRNA"        = "#fdae61",    ## meat
+    "snoRNA"      = "#7F5A58",    ## red brown
+    "binding_site"    = "#C9C299", ## lemon chiffon
+    "TF_binding_site" = "#C9C299" ## lemon chiffon
+  )
   # kick out unwanted Features, no need to return a color defintion for them
   defaultFeatures  <- names(defaultColors)
   selectedFeatures <- setdiff(defaultFeatures, exclude)
@@ -457,7 +458,7 @@ featureColors = function(scheme=1, exclude=c()) {
     default  = defaultColors,
     unicolor = ifelse(is.na(defaultColors), NA,  "#addfff"),  ## light blue
     stop("Sapperlot"))
-
+  
   ## calculate hex string for a color that is a little bit darker than the
   ## hex string in the argument
   darken = function(x) {
@@ -468,10 +469,10 @@ featureColors = function(scheme=1, exclude=c()) {
     res[sel] = hex(xRGB)
     return(res)
   }
-    
   res = data.frame(fill=I(fill),
-                   col =I(darken(fill)))
+    col =I(darken(fill)))
   rownames(res)=names(defaultColors) 
   return(res)
 }
+
 

@@ -192,7 +192,7 @@ if("probeAnno1" %in% what) {
 ## Part 4: gff
 ##--------------------------------------------------
 if("gff" %in% what) { 
-  nrchr = 17
+  nrchr = 17 # number of chromosomes
   ## GFF Files
   gffRead = function(gffFile) {
     cat("Reading ", gffFile, ": ", sep="")
@@ -224,6 +224,13 @@ if("gff" %in% what) {
 
   gff  = rbind(gff1, gff2)
 
+
+  # 2005/09/30: recover uORFs from replaced gff_regulatory:
+  gff3 <- gffRead("SGD-0508/scerevisiae_regulatory.gff")
+  # discard everything but uORFs, because better info available
+  gff3 <- gff3[gff3$feature=="uORF",]
+  gff  <- rbind(gff,gff3)
+  
   ## Add additional useful fields
   gff$Name = getAttributeField(gff$attributes, "Name")
   theID    = getAttributeField(gff$attributes, "ID")
@@ -313,5 +320,5 @@ cat("\n")
 ##
 if("probeAnnoSave" %in% what) { 
   cat("Saving probeAnno.rda.\n")
-  save(probeAnno, gff, file="probeAnno.rda", compress=TRUE)
+  save(probeAnno, gff, file="probeAnno-051006.rda", compress=TRUE)
 }
