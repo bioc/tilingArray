@@ -49,7 +49,7 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=0,
     "novel isolated - filtered",  "novel isolated - unassigned",
     "novel antisense - filtered", "novel antisense - unassigned",
     "excluded", "untranscribed", "dubious gene")
-  
+
   ## Step 1: frac.dup; exclude features with too many non-unique probes
   sel = s[,"frac.dup"] >= maxDuplicated
   catg[ sel ] = "excluded"
@@ -76,8 +76,8 @@ categorizeSegments = function(env, minNewSegmentLength=48, zThresh=0,
   categIDs[["uncharacterized gene"]] = gff[ sel & gff[, "orf_classification"]=="Uncharacterized", "Name"]
   categIDs[["verified gene"]]        = gff[ sel & gff[, "orf_classification"]=="Verified", "Name"]
 
-  categIDs <- categIDs[-which(listLen(categIDs)<1)]
-  #stopifnot(all(listLen(categIDs)>0))
+  stopifnot(all(listLen(categIDs)>0))
+  # categIDs <- categIDs[-which(listLen(categIDs)<1)] 
   #ignore non-found features, seems to apply only to uORFs so far
 
   ## Loop over <50%, >=50%, complete:

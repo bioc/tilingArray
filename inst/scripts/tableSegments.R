@@ -4,19 +4,18 @@ source("setScriptsDir.R")
 
 graphics.off()
 options(error=recover, warn=2)
-<<<<<<< .mine
-interact = !(TRUE)
-what     = c("fig2", "fig4", "cons", "lvsx", "wst")[0]
-=======
-interact = TRUE
-what     = c("fig3", "lvsx", "wst", "cons")[1]
->>>>>>> .r14335
+
+interact = (!TRUE)
+what     = c("fig3", "lvsx", "wst", "cons")[1:3]
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
 
-rnaTypes = c("seg-polyA-050909", "seg-tot-050909")
-outfile = "tableSegments"
+#rnaTypes = c("seg-polyA-050909", "seg-tot-050909")
+#outfile = "tableSegments"
+
+rnaTypes = c("seg-odT-050909", "seg-tot-050909")
+outfile = "tableSegments-odT-tot"
 
 source(scriptsDir("readSegments.R"))
 source(scriptsDir("categorizeSegments.R")) 
