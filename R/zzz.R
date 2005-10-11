@@ -1,7 +1,6 @@
-.First.lib <- function(lib, pkgname, where) {
+.onAttach <- function(libname, pkgname) {
   ## load the compiled code
-  library.dynam(pkgname, pkgname, lib)
-  if(.Platform$OS.type == "windows" && require(Biobase) && interactive()
+  if(.Platform$OS.type == "windows" && require("Biobase") && interactive()
         && .Platform$GUI ==  "Rgui"){
         addVigs2WinMenu("tilingArray")
     }
