@@ -5,8 +5,8 @@ source("setScriptsDir.R")
 graphics.off()
 options(error=recover, warn=2)
 
-interact = (!TRUE)
-what     = c("fig3", "lvsx", "wst", "cons")[1:3]
+interact = TRUE
+what     = c("fig3", "lvsx", "wst", "cons")[1]
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
@@ -14,8 +14,9 @@ consScoreFun = function(alignmentLength, percentIdentity, queryLength)
 #rnaTypes = c("seg-polyA-050909", "seg-tot-050909")
 #outfile = "tableSegments"
 
-rnaTypes = c("seg-odT-050909", "seg-tot-050909")
+rnaTypes = c("seg-odT-050909", "seg-tot-050909","seg-polyA-050909")[1:2]
 outfile = "tableSegments-odT-tot"
+#outfile="tableSegments-polyA"
 
 source(scriptsDir("readSegments.R"))
 source(scriptsDir("categorizeSegments.R")) 
@@ -88,7 +89,7 @@ if("fig3" %in% what){
     labels = LETTERS[ match(names(px), levels(s[, "pieCat"])) ]
     stopifnot(all(names(px) %in% names(fillColors)))
     counts = cbind(counts, px)
-    pie(px, radius=0.75, main=longNames[rt], 
+    pie(px, radius=0.9, main=longNames[rt], 
         col = fillColors[names(px)], labels = paste(labels, " (", px, ")", sep=""))
 
     category = s[, "category"]
@@ -246,8 +247,9 @@ if("fig3" %in% what){
     ## len = lapply(len, function(z) {z[z>maxlen]=maxlen; z})
     slen = lapply(len, function(z) {z[z>maxlen]=NA; z})
     cols = fillColors[names(len)]
+    densLabels= names(len)
     showDens(slen,
-      breaks=br, col=cols, main="", xlab="length (nucleotides)")
+      breaks=br, col=cols, main="", xlab="Segment Length (Nucleotides)")
     cat("\n", rnaTypes[irt], "\n")
     print(sapply(len, summary))
   }
