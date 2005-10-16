@@ -1,7 +1,7 @@
 # used for Figure 4, more than one density plot in one figure
-showDens = function(z, breaks, col, ylab="",  ...) {
+showDens = function(z, breaks, col, ylab="", densLabels=NULL,  ...) {
 
-  if (exists("densLabels")) stopifnot(length(densLabels)==length(z))
+  if (!is.null("densLabels")) stopifnot(length(densLabels)==length(z))
   
   y  = matrix(NA, nrow=length(breaks)-1, ncol=length(z))
   scaleFac = numeric(length(z))
@@ -21,7 +21,7 @@ showDens = function(z, breaks, col, ylab="",  ...) {
     poy = (length(z)-k) + c(0, rep(y[,k], each=2), 0, 0)
     pox = breaks[c(rep(seq(along=breaks), each=2), length(breaks))]
     polygon(pox, poy, col=col[k])
-    if (exists("densLabels")) text(max(pox),0.9*max(poy),densLabels[k],
+    if (!is.null("densLabels")) text(max(pox),0.9*max(poy),densLabels[k],
                                    col=col[k],font=2,pos=2)
   }
 

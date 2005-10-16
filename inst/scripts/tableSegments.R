@@ -3,7 +3,8 @@ library("geneplotter")
 source("setScriptsDir.R")
 
 graphics.off()
-options(error=recover, warn=2)
+#options(error=recover, warn=2)
+
 
 interact = TRUE
 what     = c("fig3", "lvsx", "wst", "cons")[1]
@@ -11,22 +12,18 @@ what     = c("fig3", "lvsx", "wst", "cons")[1]
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
   (alignmentLength*percentIdentity/queryLength)
 
-#rnaTypes = c("seg-polyA-050909", "seg-tot-050909")
-#outfile = "tableSegments"
-
 rnaTypes = c("seg-odT-050909", "seg-tot-050909","seg-polyA-050909")[1:2]
 outfile = "tableSegments-odT-tot"
-#outfile="tableSegments-polyA"
 
 source(scriptsDir("readSegments.R"))
 source(scriptsDir("categorizeSegments.R")) 
 source(scriptsDir("writeSegmentTable.R"))
 source(scriptsDir("showDens.R"))
 
-if(!interact){
-  sink(paste(outfile, ".txt", sep=""))
-  cat("Made on", date(), "\n\n")
-}
+#if(!interact){
+#  sink(paste(outfile, ".txt", sep=""))
+#  cat("Made on", date(), "\n\n")
+#}
 
 source(scriptsDir("calcThreshold.R"))
 
@@ -69,27 +66,28 @@ names(lineColors) =c("annotated ORF", "ncRNA(all)",
 if("fig3" %in% what){
 
   if(interact) {
-    x11(width=4*length(rnaTypes), height=3*3.2)
+    x11(width=5*length(rnaTypes), height=4*3.2)
   } else {
     pdf("fig3.pdf", width=2.5*length(rnaTypes), height=2.6*3)
   }
 
-  par(mfrow=c(3, length(rnaTypes)), mar=c(5,5,2,5))
+  par(mfrow=c(3, length(rnaTypes)), mar=c(1,5,1,5))
   counts = NULL
 
   cat("\nSegment overlap with known features (genes):\n",
         "============================================\n\n", sep="")
-  #mai.old = par(mai=c(0,0,0.5,0))
+  mai.old = par(mai=c(0.3,0.1,0.3,0))
   for(irt in seq(along=rnaTypes)) {
     rt = rnaTypes[irt]
     s  = cs[[rt]] 
    
     px = table(s[, "pieCat"])
-    labels = LETTERS[ match(names(px), levels(s[, "pieCat"])) ]
+    #labels = LETTERS[ match(names(px), levels(s[, "pieCat"])) ]
+    labels = names(px)[ match(names(px), levels(s[, "pieCat"])) ]
+    
     stopifnot(all(names(px) %in% names(fillColors)))
     counts = cbind(counts, px)
-    pie(px, radius=0.9, main=longNames[rt], 
-        col = fillColors[names(px)], labels = paste(labels, " (", px, ")", sep=""))
+    pie(px, radius=0.9, main=longNames[rt], col = fillColors[names(px)], labels = paste(gsub("-","\n",labels), " (", px, ")", sep=""))
 
     category = s[, "category"]
     levels(category) = sub("ncRNA", "ncRNA(all)", levels(category))
@@ -234,7 +232,7 @@ if("fig3" %in% what){
           "=====================\n", sep="")
   maxlen=4000
   mai = par("mai")
-  mai[2:3] = 0.1
+  mai[2:3] = c(0.5,0.1)
   par(mai=mai)
   br = seq(0, maxlen, by=50)
   ## breaksFun = function(z) paste(signif(z, 3))
@@ -246,9 +244,8 @@ if("fig3" %in% what){
     ## len = lapply(len, function(z) {z[z>maxlen]=maxlen; z})
     slen = lapply(len, function(z) {z[z>maxlen]=NA; z})
     cols = fillColors[names(len)]
-    densLabels= names(px)
-    showDens(slen,
-      breaks=br, col=cols, main="", xlab="Segment Length (Nucleotides)")
+
+    showDens(slen, breaks=br, col=cols, main="", xlab="Segment Length (Nucleotides)", densLabels=names(px), ylab="Number of Segments")
     cat("\n", rnaTypes[irt], "\n")
     print(sapply(len, summary))
   }
