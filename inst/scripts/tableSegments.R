@@ -51,7 +51,6 @@ if(!exists("cs")) {
 }
 
 
-
 fillColors = c(c(brewer.pal(10, "Paired")[c(1, 2, 6, 8, 5:8, 2, 10)]), "#d0d0d0")
 names(fillColors) = c("overlap <50%", "overlap >=50%",
        "novel antisense", "novel isolated",
@@ -70,17 +69,17 @@ names(lineColors) =c("annotated ORF", "ncRNA(all)",
 if("fig3" %in% what){
 
   if(interact) {
-    x11(width=3*length(rnaTypes), height=3*3.2)
+    x11(width=4*length(rnaTypes), height=3*3.2)
   } else {
     pdf("fig3.pdf", width=2.5*length(rnaTypes), height=2.6*3)
   }
 
-  par(mfrow=c(3, length(rnaTypes)))
+  par(mfrow=c(3, length(rnaTypes)), mar=c(5,5,2,5))
   counts = NULL
 
   cat("\nSegment overlap with known features (genes):\n",
         "============================================\n\n", sep="")
-  mai.old = par(mai=c(0,0,0.5,0))
+  #mai.old = par(mai=c(0,0,0.5,0))
   for(irt in seq(along=rnaTypes)) {
     rt = rnaTypes[irt]
     s  = cs[[rt]] 
@@ -247,7 +246,7 @@ if("fig3" %in% what){
     ## len = lapply(len, function(z) {z[z>maxlen]=maxlen; z})
     slen = lapply(len, function(z) {z[z>maxlen]=NA; z})
     cols = fillColors[names(len)]
-    densLabels= names(len)
+    densLabels= names(px)
     showDens(slen,
       breaks=br, col=cols, main="", xlab="Segment Length (Nucleotides)")
     cat("\n", rnaTypes[irt], "\n")
