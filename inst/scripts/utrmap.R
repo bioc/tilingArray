@@ -11,9 +11,13 @@ library("tilingArray")
 library("geneplotter")
 source("setScriptsDir.R")
 
-interact=(TRUE)
+interact=(!TRUE)
 options(error=recover, warn=0)
 graphics.off()
+
+if(!interact) {
+  sink("utrmap.txt")
+}
 
 rnaTypes  =  c("seg-polyA-050909", "seg-tot-050909")
 source(scriptsDir("readSegments.R"))
@@ -21,12 +25,13 @@ source(scriptsDir("calcThreshold.R"))
 source(scriptsDir("categorizeSegments.R")) 
 source(scriptsDir("writeSegmentTable.R"))
 
-what = c("stat", "wst", "explen", "polyAvstot", "go")[5]
+what = c("stat", "wst", "explen", "polyAvstot", "go")[-2]
 
 ##
 ## CATEGORIZE
 ##
 if(!exists("cs")) {
+
   utr = vector(mode="list", length=length(rnaTypes)+1)
   names(utr) = c(rnaTypes, "combined")
   cs  = vector(mode="list", length=length(rnaTypes))
@@ -53,9 +58,6 @@ if(!exists("cs")) {
         "**************************************************\n", sep="")
 }
 
-if(!interact) {
-  sink("utrmap.txt")
-}
 graphics.off()
 cols = brewer.pal(12, "Paired")
 
@@ -230,6 +232,9 @@ if("polyAvstot" %in% what){
 ##
 if("go" %in% what){
 
+  ## Use poly-A data only
+  myUTR = utr[["seg-polyA-050909"]]  
+  
   ## create environment of ancestors
   library("GO")
   e = new.env(hash=TRUE)
@@ -272,7 +277,7 @@ if("go" %in% what){
   }
   
   if(!exists("goCat"))
-    goCat = getGO(rownames(utr[["combined"]]))
+    goCat = getGO(rownames(myUTR))
   
   allGO = unique(unlist(goCat))
   gm    = matrix(FALSE, nrow=length(allGO), ncol=length(goCat))
@@ -290,13 +295,13 @@ if("go" %in% what){
     function(z) {
       sz = sum(z)
       if(sz>=5&&(length(z)-sz)>=5) {
-        w5 = wilcox.test(utr[["combined"]][, "5' UTR"] ~ z)$p.value
-        w3 = wilcox.test(utr[["combined"]][, "3' UTR"] ~ z)$p.value
+        w5 = wilcox.test(myUTR[, "5' UTR"] ~ z)$p.value
+        w3 = wilcox.test(myUTR[, "3' UTR"] ~ z)$p.value
       } else {
         w5 = w3 = as.numeric(NA)
       }
-      m5 = median(utr[["combined"]][z, "5' UTR"])
-      m3 = median(utr[["combined"]][z, "3' UTR"])
+      m5 = median(myUTR[z, "5' UTR"])
+      m3 = median(myUTR[z, "3' UTR"])
       c(w5, m5, w3, m3, sz)
     }
   }
@@ -305,16 +310,16 @@ if("go" %in% what){
   pGO = t(apply(gm, 1, wt))
   colnames(pGO) = c("p 5' UTR", "median 5' UTR", "p 3' UTR", "median 3' UTR", "nrGenes")
 
-  medAll = apply(utr[["combined"]], 2, median)
+  medAll = apply(myUTR, 2, median)
   
   ## print the GO TERMS
   GOterms = mget(rownames(gm), GOTERM)
 
-  for(j in 1:ncol(utr[["combined"]])) {
-    pname = paste("p",      colnames(utr[["combined"]])[j])
-    mname = paste("median", colnames(utr[["combined"]])[j])
+  for(j in 1:ncol(myUTR)) {
+    pname = paste("p",      colnames(myUTR)[j])
+    mname = paste("median", colnames(myUTR)[j])
     cat("--------------------------------------------------\n",
-        colnames(utr[["combined"]])[j], "\n",
+        colnames(myUTR)[j], "\n",
         "--------------------------------------------------\n", sep="")
     sel = order(pGO[, pname])[1:40]
     for(s in sel) {
@@ -358,7 +363,7 @@ if("go" %in% what){
   names(threePrimeUTRLengths) = cellularComponents
   for(i in seq(along=cellularComponents)) {
     genes = colnames(gm)[ gm[cellularComponents[i], ] ]
-    tmp = utr[["combined"]][ genes, "3' UTR"]
+    tmp = myUTR[ genes, "3' UTR"]
     names(tmp) = genes
     threePrimeUTRLengths[[i]] = tmp
   }

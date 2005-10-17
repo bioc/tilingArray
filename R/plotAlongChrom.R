@@ -2,8 +2,8 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
                       probeAnno, gff,
                       colors, featColScheme=1,
                       isDirectHybe=FALSE, scoreShow = "pt", 
-                      haveNames=TRUE, haveLegend=TRUE, main="", 
-                      pointSize=unit(0.6, "mm")) {
+                      haveLegend=TRUE, main="", 
+                      ...) {
  
   VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
 
@@ -87,8 +87,8 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
                      segScore=sgs, threshold=threshold, scoreShow=scoreShow,
                      gff=gff, chr=chr,
                      strand=ifelse(isDirectHybe, otherStrand(strand), strand),
-                     VP=VP, colors=colors, pointSize=pointSize, haveNames=haveNames,
-                     featColScheme=featColScheme)
+                     VP=VP, colors=colors, 
+                     featColScheme=featColScheme, ...)
     
   }
 
@@ -127,10 +127,9 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
 ## gff and chrSeqname into an environment or object?
 
 plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreShow,
-  gff, chr, strand, VP, colors, pointSize, haveNames, probeLength=25, featColScheme,
-  noTypeLabel = c("CDS", "uORF"), #,"binding_site", "TF_binding_site"),
-  exclude=c("chromosome","gene","nucleotide_match","insertion","intron")
-    #   ,"ARS","repeat_region","repeat_family",  # new version: 2005-08-30 J
+  gff, chr, strand, VP, colors, pointSize=unit(0.6, "mm"), haveNames=TRUE , probeLength=25, featColScheme,
+  noTypeLabel = c("CDS", "uORF"), ## "binding_site", "TF_binding_site"
+  exclude = c("chromosome","gene","nucleotide_match", "insertion", "intron") ## "ARS","repeat_region","repeat_family"
 ) {
   ## could this be done better?
   if(is.matrix(y))
@@ -289,7 +288,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     ## remove duplicated names that are not binding sites
     whnames = whnames[isBindingSite | !duplicated(featName[whnames])]
 
-    txtcex = 0.7
+    txtcex = 0.6
     txtdy  = 0.7
     nNames  <- length(whnames) 
     s      = sel[whnames]
@@ -363,7 +362,7 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
 ##------------------------------------------------------------
 alongChromTicks = function(x){
   rx = range(x)
-  lz = log((rx[2]-rx[1])/4, 10)
+  lz = log((rx[2]-rx[1])/3, 10)
   fl = floor(lz)
   if( lz-fl > log(5, 10))
     fl = fl +  log(5, 10)
@@ -426,11 +425,11 @@ featureColors = function(scheme=1, exclude=c()){
   
   defaultColors = c(
     "chromosome"  = NA,
-    "nucleotide_match" = "#e0e0e0",## light gray
-    "pseudogene"  = "#e0e0e0",## light gray
-    "uORF"        = "#6699CC",    ## light gray
+    "nucleotide_match" = "#e0e0e0",   ## light gray
+    "pseudogene"  = "#e0e0e0",        ## light gray
+    "uORF"        =   "#FED976" ,     ## orange
     "nc_primary_transcript" = "#a0a0a0",    ## grey
-    "region" = "#cc66cc",    ## light red-violet	
+    "region" = "#cc66cc",           ## light red-violet	
     "repeat_family" = "#CC6666",    ## light red
     "repeat_region" = "#e31a1c",    ## bright red                    
     "transposable_element"  = "#f1b6da",    ## pink
@@ -441,7 +440,7 @@ featureColors = function(scheme=1, exclude=c()){
     "insertion"   = "#FFEDA0",    ## orange
     "CDS"         = "#addfff",    ## light blue
     "CDS_dubious" = "#e0f1f2",    ## lighter blue
-    "ncRNA"       = "#3b9c9c",    ## cyan
+    "ncRNA"       = "#a6d96a",    ## green 
     "tRNA"        = "#a6d96a",    ## green
     "snRNA"       = "#8C6BB1",    ## purple
     "rRNA"        = "#fdae61",    ## meat
@@ -449,11 +448,14 @@ featureColors = function(scheme=1, exclude=c()){
     "binding_site"    = "#C9C299", ## lemon chiffon
     "TF_binding_site" = "#C9C299" ## lemon chiffon
   )
+  darkenborder = as.logical(c(rep(1,3),0,rep(1, 17),0,0))
+  stopifnot(length(darkenborder)==length(defaultColors))
+  
   # kick out unwanted Features, no need to return a color defintion for them
-  defaultFeatures  <- names(defaultColors)
-  selectedFeatures <- setdiff(defaultFeatures, exclude)
-  defaultColors    <- defaultColors[selectedFeatures]
-
+  keep = !(names(defaultColors) %in% exclude)
+  defaultColors    <- defaultColors[keep]
+  darkenborder     <- darkenborder[keep]
+  
   fill = switch(scheme,
     default  = defaultColors,
     unicolor = ifelse(is.na(defaultColors), NA,  "#addfff"),  ## light blue
@@ -469,8 +471,10 @@ featureColors = function(scheme=1, exclude=c()){
     res[sel] = hex(xRGB)
     return(res)
   }
+  border = ifelse(darkenborder, darken(fill), fill)
+  
   res = data.frame(fill=I(fill),
-    col =I(darken(fill)))
+    col =I(border))
   rownames(res)=names(defaultColors) 
   return(res)
 }
