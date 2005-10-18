@@ -8,10 +8,11 @@
 ## the total RNA version is for the supplement.
 
 library("tilingArray")
+library("davidTiling")
 library("geneplotter")
 source("setScriptsDir.R")
 
-interact=(TRUE)
+interact=(!TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
@@ -234,9 +235,7 @@ if("go" %in% what){
 
   ## Use poly-A data only
   myUTR = utr[["seg-polyA-050909"]]  
-  
-  if(!exists("goCat"))
-    goCat = getGO(rownames(myUTR))
+  goCat = getAllGO(rownames(myUTR), gff)
   
   allGO = unique(unlist(goCat))
   gm    = matrix(FALSE, nrow=length(allGO), ncol=length(goCat))

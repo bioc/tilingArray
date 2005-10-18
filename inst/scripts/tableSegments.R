@@ -22,7 +22,6 @@ outfile = "tableSegments"
 source(scriptsDir("readSegments.R"))
 source(scriptsDir("categorizeSegments.R")) 
 source(scriptsDir("writeSegmentTable.R"))
-source(functionsDir("showDens.R"))
 
 if(!interact){
   sink(paste(outfile, ".txt", sep=""))
