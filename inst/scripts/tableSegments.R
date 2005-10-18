@@ -1,11 +1,11 @@
-library("tilingArray")
+library("davidTiling")
 library("geneplotter")
 source("setScriptsDir.R")
 
 graphics.off()
-options(error=recover, warn=2)
+options(error=recover, warn=0)
 
-interact = !TRUE
+interact = TRUE
 what     = c("fig3", "compare", "overlap", "lvsx", "wst", "cons")[1]
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
@@ -62,6 +62,10 @@ lineColors = c(brewer.pal(8, "Paired")[c(1,2,6,8)], "grey")
 names(lineColors) =c("annotated ORF", "ncRNA(all)", 
        "novel antisense - filtered", "novel isolated - filtered",
        "unexpressed isolated")
+
+isGene = ((gff[,"feature"]=="gene") & (gff[, "orf_classification"] %in% c("Verified", "Uncharacterized")))
+featNames = list("annotated ORFs" = unique(gff[ isGene, "Name"]),
+  "ncRNA(all)" = unique(gff[ gff[, "feature"] %in% allncRNA, "Name"]))
 
 ##
 ## piechart
@@ -249,10 +253,6 @@ if("overlap" %in% what){
     "(3): 'complete' (i.e. in 'featureInSegment')",
     "(4): (1) AND (2), i.e. 'overlap <50%' in one segment and 'overlap >=50%' in another segment.\n")
   
-  isGene = ((gff[,"feature"]=="gene") & (gff[, "orf_classification"] %in% c("Verified", "Uncharacterized")))
-  featNames = list("annotated ORFs" = unique(gff[ isGene, "Name"]),
-                   "ncRNA(all)" = unique(gff[ gff[, "feature"] %in% allncRNA, "Name"]))
-
   nsc = length(selectedCategories)
   nfn = length(featNames)
   tab = matrix(NA, nrow=nsc*nfn, ncol=length(rnaTypes)+1)

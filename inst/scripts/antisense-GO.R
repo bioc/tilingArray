@@ -3,8 +3,7 @@
 ##
 ##  Associations between presence of antisense transcripts and GO categories
 ##
-library("GOstats")
-source(scriptsDir("GOHyperG.R"))
+library("davidTiling")
 
 interact = !TRUE
 
@@ -41,8 +40,9 @@ for(what in colnames(asMat)) {
   cands = rownames(asMat)[asMat[, what]]
   cat("\nGO category analysis (", length(cands), " genes, from: '", what, "'):\n", sep="")
   cat("===================================================\n\n")
-  GOHyperG(cands, plottitle=what,
-           outtable=paste(outfile, "-table-", what, ".txt", sep=""))
+  gh = GOHyperG(cands, gff, plotmain=what)
+  write.table(gh, file=paste(outfile, "-table-", what, ".txt", sep=""),
+              sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 }
 
 if(!interact)
