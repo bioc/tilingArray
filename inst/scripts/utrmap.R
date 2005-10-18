@@ -11,7 +11,7 @@ library("tilingArray")
 library("geneplotter")
 source("setScriptsDir.R")
 
-interact=(!TRUE)
+interact=(TRUE)
 options(error=recover, warn=0)
 graphics.off()
 
@@ -234,47 +234,6 @@ if("go" %in% what){
 
   ## Use poly-A data only
   myUTR = utr[["seg-polyA-050909"]]  
-  
-  ## create environment of ancestors
-  library("GO")
-  e = new.env(hash=TRUE)
-
-  for(j in ls(GOMFANCESTOR))
-    assign(j, get(j, GOMFANCESTOR), envir=e)
-  for(j in ls(GOBPANCESTOR))
-    assign(j, get(j, GOBPANCESTOR), envir=e)
-  for(j in ls(GOCCANCESTOR))
-    assign(j, get(j, GOCCANCESTOR), envir=e)
-  
-  stopifnot(length(ls(e))==length(ls(GOMFANCESTOR))+
-            length(ls(GOBPANCESTOR))+length(ls(GOCCANCESTOR)))
-
-  if(!"Ontology_term" %in% names(gff))
-    gff$"Ontology_term" =getAttributeField(gff$attributes, "Ontology_term")
-
-  ## for each gene in 'x', get the GO classes
-  whg = which(gff[, "feature"]=="gene")
-  getGO = function(x) {
-    mt  = match(x, gff[whg, "Name"])
-    stopifnot(!any(is.na(mt)))
-    rv = strsplit(gff[whg[mt], "Ontology_term"], split=",")
-    stopifnot(!any(sapply(rv, function(x) any(duplicated(x)))))
-    
-    ## extend by ancestors
-    rv = sapply(rv, function(v) {
-      if(any(is.na(v))) {
-        stopifnot(length(v)==1)
-        k = character(0)
-      } else {
-        k  = mget(v, e, ifnotfound=list(character(0)))
-        k  = sort(unique(unlist(k)))
-      }
-      return(k)
-    })
-    names(rv) = x
-    stopifnot(all(gff[whg[mt], "Name"] == names(rv)))
-    rv
-  }
   
   if(!exists("goCat"))
     goCat = getGO(rownames(myUTR))

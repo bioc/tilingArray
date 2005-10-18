@@ -3,27 +3,31 @@ library("geneplotter")
 source("setScriptsDir.R")
 
 graphics.off()
-#options(error=recover, warn=2)
+options(error=recover, warn=2)
 
-
-interact = TRUE
-what     = c("fig3", "lvsx", "wst", "cons")[1]
+interact = !TRUE
+what     = c("fig3", "compare", "overlap", "lvsx", "wst", "cons")[1]
 
 consScoreFun = function(alignmentLength, percentIdentity, queryLength)
-  (alignmentLength*percentIdentity/queryLength)
+  (alignmentLength*percentIdentity/yqueryLength)
 
-rnaTypes = c("seg-odT-050909", "seg-tot-050909","seg-polyA-050909")[1:2]
-outfile = "tableSegments-odT-tot"
+## these are the hybe sets that we care about in the paper:
+rnaTypes = c("seg-polyA-050909", "seg-tot-050909")[1:2]
+outfile = "tableSegments"
+
+## this just for comparison
+# rnaTypes = c("seg-odT-050909", "seg-tot-050909")
+# outfile = "tableSegments-odT-tot"
 
 source(scriptsDir("readSegments.R"))
 source(scriptsDir("categorizeSegments.R")) 
 source(scriptsDir("writeSegmentTable.R"))
-source(scriptsDir("showDens.R"))
+source(functionsDir("showDens.R"))
 
-#if(!interact){
-#  sink(paste(outfile, ".txt", sep=""))
-#  cat("Made on", date(), "\n\n")
-#}
+if(!interact){
+  sink(paste(outfile, ".txt", sep=""))
+  cat("Made on", date(), "\n\n")
+}
 
 source(scriptsDir("calcThreshold.R"))
 
@@ -61,7 +65,7 @@ names(lineColors) =c("annotated ORF", "ncRNA(all)",
        "unexpressed isolated")
 
 ##
-## PIE: Four classes
+## piechart
 ##
 if("fig3" %in% what){
 
@@ -71,23 +75,23 @@ if("fig3" %in% what){
     pdf("fig3.pdf", width=2.5*length(rnaTypes), height=2.6*3)
   }
 
-  par(mfrow=c(3, length(rnaTypes)), mar=c(1,5,1,5))
+  layout(matrix(1:8, ncol=2, byrow=TRUE), widths=c(1,1), height=c(2,1,1,0.5))
   counts = NULL
 
   cat("\nSegment overlap with known features (genes):\n",
         "============================================\n\n", sep="")
-  mai.old = par(mai=c(0.3,0.1,0.3,0))
+  mai.old = par(mai=c(0.3,0.1,0.3,0.25))
   for(irt in seq(along=rnaTypes)) {
     rt = rnaTypes[irt]
     s  = cs[[rt]] 
    
     px = table(s[, "pieCat"])
-    #labels = LETTERS[ match(names(px), levels(s[, "pieCat"])) ]
-    labels = names(px)[ match(names(px), levels(s[, "pieCat"])) ]
+    ##labels = LETTERS[ match(names(px), levels(s[, "pieCat"])) ]
+    ##labels = names(px)[ match(names(px), levels(s[, "pieCat"])) ]
     
     stopifnot(all(names(px) %in% names(fillColors)))
     counts = cbind(counts, px)
-    pie(px, radius=0.9, main=longNames[rt], col = fillColors[names(px)], labels = paste(gsub("-","\n",labels), " (", px, ")", sep=""))
+    pie(px, radius=0.9, main=longNames[rt], col = fillColors[names(px)], labels = paste(px))
 
     category = s[, "category"]
     levels(category) = sub("ncRNA", "ncRNA(all)", levels(category))
@@ -108,9 +112,78 @@ if("fig3" %in% what){
   cat("\n")
   
   ##
-  ## Compare total to poly-A, the goal is: which transcripts do we find 
-  ## specifically in total RNA?
+  ## LENGTH & LEVEL DISTRIBUTIONS
   ##
+  cat("\n\nLength distributions:\n",
+          "=====================\n", sep="")
+  maxlen=4000
+  mai = par("mai")
+  mai[2:3] = c(0.5,0.1)
+  par(mai=mai)
+  br  = seq(1, 4, by=0.2)
+  xat = seq(1, 4, by=1)
+  xtickLabels = paste(10^xat)
+  for(irt in seq(along=rnaTypes)) {
+    s   = cs[[rnaTypes[irt]]]
+    plotCat = s[, "pieCat"]
+    stopifnot(all(levels(plotCat) %in% names(fillColors)))
+    len = split(s[, "length"], plotCat)
+    ## len = lapply(len, function(z) {z[z>maxlen]=maxlen; z})
+    slen = lapply(len, function(z) {z[z>maxlen]=NA; log(z, 10)})
+    cols = fillColors[names(len)]
+
+    showDens(slen, breaks=br, xat=xat, xtickLabels=xtickLabels, col=cols, main="",
+             xlab=expression(plain(Length)~~plain((Nucleotides))), ylab="")
+    text(2*br[1]-br[3], length(slen)/2, "Frequency", adj=c(0.5, 0.5), srt=90, xpd=NA)
+    cat("\n", rnaTypes[irt], "\n")
+    print(sapply(len, summary))
+  }
+
+
+  br  = seq(-0.2, 6.6, by=0.2)
+  xat = seq(0, 6, by=1)
+  lvall = lapply(rnaTypes, function(rt) cs[[rt]][, "level"] )
+  rg    = quantile(unlist(lvall), probs=c(0.001, 0.999), na.rm=TRUE)
+  stopifnot(rg[2]<=br[length(br)])
+  
+  for(irt in seq(along=rnaTypes)) {
+    s       = cs[[rnaTypes[irt]]]
+    plotCat = s[, "pieCat"]
+    ## levels(plotCat) = c(levels(plotCat), "untranscribed")
+    ## plotCat[ s[, "simpleCatg"]=="untranscribed" ] = "untranscribed"
+    stopifnot(all(levels(plotCat) %in% names(fillColors)))
+
+    lv = split(lvall[[irt]], plotCat)
+    lv = lapply(lv, function(z)
+      ifelse(z<=rg[2], ifelse(z>=rg[1], z, rg[1]), rg[2]))
+    showDens(lv, breaks=br, xat=xat, col=fillColors[names(lv)], main="",
+             xlab=expression(log[2]*~~plain(Level)), ylab="")
+    text(2*br[1]-br[5], length(lv)/2, "Frequency", adj=c(0.5, 0.5), srt=90, xpd=NA)
+  }
+
+  ## legend
+  opar = par(mai=rep(0,4))
+  dy = 0.45
+  
+  for(j in 1:2) {
+    w  = list(1:2, 3:6)[[j]]
+    x0 = c(0.3, 0)[j]
+    plot(c(0,1), c(0,5), type="n", bty="n", xaxt="n", yaxt="n")
+    y = 5-seq(along=w)
+    rect(rep(x0, length(y)), y-dy, rep(x0+0.22, length(y)), y+dy, col=fillColors[names(px)[w]], border="black")
+    text(rep(x0+0.25, length(y)), y, names(px)[w], adj=c(0, 0.5))
+  }
+  par(opar)
+  
+  if(!interact)
+    dev.off()
+}
+
+##
+## Compare total to poly-A, the goal is: which transcripts do we find 
+## specifically in total RNA?
+##
+if("compare" %in% what){
   stopifnot(length(rnaTypes)==2)
   s1     = cs[[rnaTypes[1]]]
   s2     = cs[[rnaTypes[2]]]
@@ -120,8 +193,6 @@ if("fig3" %in% what){
   end2   = s2[, "end"]
 
   unTrCatgs = c("excluded", "untranscribed")
-  ## unTrCatgs = c(unTrCatgs, "novel isolated - unassigned",
-  ##  "novel antisense - unassigned")
     
   isTr1  = !(s1[, "category"] %in% unTrCatgs)
   jstart = jend = 1
@@ -166,9 +237,13 @@ if("fig3" %in% what){
   tab = tab[ !(rownames(tab)%in%c("excluded", "untranscribed")), 2:1]
   print(tab)
   cat("\n\n")
+}
 
-  ##
-  ##
+
+
+##
+##
+if("overlap" %in% what){
   selectedCategories = c(
     "(1): only 'overlap <50%' (i.e. in 'overlappingFeature' but not 'mostOfFeatureinSegment')", 
     "(2): only 'overlap >=50%', but not 'complete' (i.e. in 'mostOfFeatureinSegment' but not 'featureInSegment')",
@@ -224,56 +299,8 @@ if("fig3" %in% what){
   cat("How many segments have more than one verified/uncharaterized gene in featureInSegment:\n",
       "======================================================================================\n", sep="")
   print(multiGenesPerSegment)
-  
-  ##
-  ## LENGTH & LEVEL DISTRIBUTIONS
-  ##
-  cat("\n\nLength distributions:\n",
-          "=====================\n", sep="")
-  maxlen=4000
-  mai = par("mai")
-  mai[2:3] = c(0.5,0.1)
-  par(mai=mai)
-  br = seq(0, maxlen, by=50)
-  ## breaksFun = function(z) paste(signif(z, 3))
-  for(irt in seq(along=rnaTypes)) {
-    s   = cs[[rnaTypes[irt]]]
-    plotCat = s[, "pieCat"]
-    stopifnot(all(levels(plotCat) %in% names(fillColors)))
-    len = split(s[, "length"], plotCat)
-    ## len = lapply(len, function(z) {z[z>maxlen]=maxlen; z})
-    slen = lapply(len, function(z) {z[z>maxlen]=NA; z})
-    cols = fillColors[names(len)]
-
-    showDens(slen, breaks=br, col=cols, main="", xlab="Segment Length (Nucleotides)", densLabels=names(px), ylab="Number of Segments")
-    cat("\n", rnaTypes[irt], "\n")
-    print(sapply(len, summary))
-  }
-
-
-  lvall = lapply(rnaTypes, function(rt) cs[[rt]][, "level"] )
-  rg    = quantile(unlist(lvall), probs=c(0.001, 0.999), na.rm=TRUE)
-  by    = 0.1
-  eps   = diff(rg)/1e6
-  br    = c(rev(seq(-eps, rg[1]-by, by=-by)), seq(by, rg[2]+by, by=by))
-    
-  for(irt in seq(along=rnaTypes)) {
-    s       = cs[[rnaTypes[irt]]]
-    plotCat = s[, "pieCat"]
-    levels(plotCat) = c(levels(plotCat), "untranscribed")
-    plotCat[ s[, "simpleCatg"]=="untranscribed" ] = "untranscribed"
-    stopifnot(all(levels(plotCat) %in% names(fillColors)))
-
-    lv = split(lvall[[irt]], plotCat)
-    lv = lapply(lv, function(z)
-      ifelse(z<=rg[2], ifelse(z>=rg[1], z, rg[1]), rg[2]))
-    showDens(lv,
-       breaks=br, col=fillColors[names(lv)], main="", xlab="level")
-  }
-  
-  if(!interact)
-    dev.off()
 }
+
 
 ##
 ## WRITE THE SEGMENT TABLE
