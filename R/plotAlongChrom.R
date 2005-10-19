@@ -2,10 +2,10 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
                       probeAnno, gff,
                       colors, featColScheme=1,
                       isDirectHybe=FALSE, scoreShow = "pt", 
-                      haveLegend=TRUE, main="", 
+                      haveLegend=TRUE, main, 
                       ...) {
  
-  VP = c(title=0.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
+  VP = c(title=1.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
 
   defaultColors = c("+" = "#00441b", "-" = "#081d58", "duplicated" = "grey",
     "cp" = "#101010", "highlight" = "red", "threshold" = "grey")
@@ -19,7 +19,6 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
     
   ##if(!haveLegend)
   ##  VP = VP[-which(names(VP)=="legend")]
-
   ## do not draw p-value bars
   VP = VP[-which(names(VP)%in%c("z1", "z2"))]
   if(!missing(y)) {
@@ -113,8 +112,9 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
 
   ## title
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=which(names(VP)=="title")))
-  grid.text(label=paste(main, "Chr ", chr, sep=""), x = 0.5, y = 0.5, 
-            just = "centre", gp = gpar(cex=1))
+  grid.text(label=paste("Chr ", chr, sep=""), x=0.5, y=1, just="centre", gp=gpar(cex=1))
+  if(!missing(main))
+    grid.text(label=main, x=-0.1, y=1, just="left", gp=gpar(cex=1))
   popViewport()
 
   ## legend
