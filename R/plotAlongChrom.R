@@ -1,3 +1,4 @@
+
 plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg, 
                       probeAnno, gff,
                       colors, featColScheme=1,
@@ -8,7 +9,7 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
   VP = c(title=1.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
 
   defaultColors = c("+" = "#00441b", "-" = "#081d58", "duplicated" = "grey",
-    "cp" = "#101010", "highlight" = "red", "threshold" = "grey")
+    "cp" = "#777777", "highlight" = "red", "threshold" = "grey")
   if(!missing(colors)) {
     mt = match(names(colors), names(defaultColors))
     if(any(is.na(mt)))
