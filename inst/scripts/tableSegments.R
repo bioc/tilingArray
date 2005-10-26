@@ -312,7 +312,9 @@ if("wst" %in% what){
     writeSegmentTable(s[!drop, ],
       fn = file.path(indir[rt], "viz", "index"), HTML=TRUE, 
       sortBy = "category-level",
-      title = paste(rt, " (", longNames[rt], ")", sep=""), interact=interact)
+      title    = paste("Segmentation table for", longNames[rt]),
+      subtitle = paste("<i>Version ",  strsplit(rt, "-")[[1]][3], "</i>", sep=""),
+      interact=interact)
   }
   cat("\n")
 }

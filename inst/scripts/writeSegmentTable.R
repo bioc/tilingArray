@@ -19,7 +19,7 @@ replaceSystematicByCommonName = function(z) {
   })
 }
 
-writeSegmentTable = function(sgs, title, fn, sortBy, sortDecreasing=FALSE,
+writeSegmentTable = function(sgs, title, subtitle, fn, sortBy, sortDecreasing=FALSE,
   colors=c("#d0d0d0", "#ffffff"), interact, HTML=TRUE) {
 
   fn = paste(fn, ifelse(HTML, "html", "txt"), sep=".")
@@ -93,9 +93,9 @@ writeSegmentTable = function(sgs, title, fn, sortBy, sortDecreasing=FALSE,
         "</STYLE>", "<head>", paste("<TITLE>", title, "</TITLE>", sep=""),
         "</head>", "<body bgcolor=#ffffff>", file = con, sep = "\n")
           if (title!="") 
-            cat("<CENTER><H1 ALIGN=\"CENTER\">", title, " </H1></CENTER>\n", 
+            cat("<CENTER><H1 ALIGN=\"CENTER\">", title, " </H1>", subtitle, "</CENTER>\n", 
                 file = con, sep = "\n")
-    cat("<CENTER>\n<TABLE BORDER=0>\n", file = con)
+    cat("<TABLE BORDER=0>\n", file = con)
     cat("<TR>\n", file=con)
     cat(paste("<TD><B><i>", rownames(out) , "</i></B></TD>", collapse=""), sep="", file=con)
     cat("</TR>\n", file=con)
@@ -105,7 +105,7 @@ writeSegmentTable = function(sgs, title, fn, sortBy, sortDecreasing=FALSE,
       cat("</TR>\n", file=con)
     }
     
-    cat("</CENTER>\n</TABLE>\n", file = con)
+    cat("</TABLE>\n", file = con)
     cat("<hr><i>Wolfgang Huber</i> -- ", date(), "</html>", file = con)
   } else {
     cat(paste(rownames(out) , collapse="\t"), "\n", sep="", file = con)
