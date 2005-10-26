@@ -3,16 +3,11 @@ if(!exists("gff")) {
   load("probeAnno.rda")
 }
 
-longNames = c("seg-polyA-050811"    = "poly-A RNA",
-              "seg-tot-050811"      = "total RNA",
-              "seg-dir-050811"      = "direct",
-              "seg-odT-050811"      = "oligo-dT",
-              "seg-polyA0420-050811"= "clean poly-A",
-              "seg-polyA-050909"    = "poly-A RNA",
+longNames = c("seg-polyA-050909"    = "poly(A) RNA",
               "seg-tot-050909"      = "total RNA",
               "seg-dir-050909"      = "direct",
               "seg-odT-050909"      = "oligo-dT",
-              "seg-polyA0420-050909"= "clean poly-A")
+              "seg-polyA0420-050909"= "clean poly(A)")
 
 
 fixSegScore = function(s) {
