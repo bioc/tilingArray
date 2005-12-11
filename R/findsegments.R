@@ -33,7 +33,7 @@ findSegments = function(x, maxcp, maxk, verbose=TRUE)
 }#findSegments
 
 
-plot.segmentation = function(x, nSegments=NULL, bcol=NULL, from=NULL, to=NULL, ...){
+plot.segmentation = function(x, nSegments, bcol=NULL, from=NULL, to=NULL, ...){
 
   stopifnot(all(c("th","dat") %in% names(x)), is.numeric(x$dat))
   

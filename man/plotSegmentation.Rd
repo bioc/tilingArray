@@ -12,8 +12,8 @@
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{object of class \code{"segmentation"}}
-  \item{nSegments}{number of segments in the data; if
-    \code{NULL}, it is determined within the function (see details)}
+  \item{nSegments}{number of segments in the data, has to be specified by the user}
+   %if \code{NULL}, it is determined within the function (see details)}
   \item{bcol}{color(s) to use for segment borders; if \code{NULL} they
     are taken to be the colors 2:\code{nSegments}}
   \item{from}{numeric, index of data point to start plot at; default
