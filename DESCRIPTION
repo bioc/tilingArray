@@ -1,7 +1,7 @@
 Package: tilingArray
-Version: 1.4.2
-Date: 11 Dec 2005
-Title: Analysis of tiling arrays
+Version: 1.4.3
+Date: 12 Dec 2005
+Title: Analysis of high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Joern Toedling
 Maintainer: W. Huber <huber@ebi.ac.uk>
 Depends: R (>= 2.1.0), Biobase (>= 1.4.1), RColorBrewer (>= 0.2-2),
@@ -9,10 +9,10 @@ Depends: R (>= 2.1.0), Biobase (>= 1.4.1), RColorBrewer (>= 0.2-2),
         vsn (>= 1.9.0), genefilter (>= 1.8.0), locfit (>= 1.1-11), 
         geneplotter (>= 1.8.0)
 Suggests:
-Description: Analysis of tiling arrays. The package provides a fast,
-        model-based segmentation algorithm and functions for scoring
-        and visualization of the segments. Currently, the focus has
-        been on algorithm development, the user-friendliness will be
-        improved in subsequent releases.
+Description: The package provides a function for DNA reference normalization
+	     of probe effects, a fast model-based segmentation algorithm, 
+	     and a nice along-chromosome visualization of the segmented data. 
+             Currently, the focus has been on algorithm development, the 
+             user-friendliness will be improved in subsequent versions.
 License: LGPL
 

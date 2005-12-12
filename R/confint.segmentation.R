@@ -1,7 +1,6 @@
+## (c) wolfgang huber 2005
 ## compute confidence intervals of segmentation(s)
-confint.segmentationNew <- function(object,  parm="breakpoints", level = 0.95,
-                                 nSegments, 
-                                 het.reg = FALSE, het.err = FALSE, ...)
+confint.segmentation <- function(object, n, ...)
 {
   ## Check arguments
   ##
@@ -17,28 +16,25 @@ confint.segmentationNew <- function(object,  parm="breakpoints", level = 0.95,
        (nrow(object$dat)==object$th[length(object$th)]-1))
     stop("'object' is not a valid instance of class 'segmentation'")
   
-  if(!missing(nSegments))
-    if(!(is.numeric(nSegments) &&
-         all(nSegments>1) &&
-         all(nSegments<=nrow(object$th))))
-      stop("'nSegments' must be numeric with values between 2 and nrow(object$th)")
+  if(!missing(n))
+    if(!(is.numeric(n) &&
+         all(n>1) &&
+         all(n<=nrow(object$th))))
+      stop("'n' must be numeric with values between 2 and nrow(object$th)")
 
-  if(!(is.numeric(level) && (length(level)==1) && abs(level-0.5)<0.5))
-      stop("'nSegments' must be numeric of length 1 with values between 0 and 1")
-  
   ## transpose: this way the replicate data points (different columns of object$dat)
   ##   come after another.
   y = t(object$dat)
   
   ## if number of Segments not specified, use all in 'th'
-  if (missing(nSegments)) 
-    nSegments <- 2:nrow(object$th)
+  if (missing(n)) 
+    n = 2:nrow(object$th)
 
-  allConfInt = vector(mode="list", length=length(nSegments))
-  names(allConfInt) = paste(nSegments)
+  allConfInt = vector(mode="list", length=length(n))
+  names(allConfInt) = paste(n)
   
-  ## loop over nSegments
-  for (j in seq(along=nSegments)) {
+  ## loop over n
+  for (j in seq(along=n)) {
 
     ## Breakpoints: subtract one, since "object$th" stores the indices of
     ## last points of each segment plus 1 (i.e. the first point of the
@@ -46,7 +42,7 @@ confint.segmentationNew <- function(object,  parm="breakpoints", level = 0.95,
     ## Multiply by nrow(y) since this is the number of replicates at each
     ## x-position.
     ## Omit the last breakpoint since that is implicit in strucchange.
-    breaks = (object$th[nSegments[j], 1:(nSegments[j]-1)] - 1) * nrow(y)
+    breaks = (object$th[n[j], 1:(n[j]-1)] - 1) * nrow(y)
 
     ## Residuals
     res = y
@@ -66,7 +62,7 @@ confint.segmentationNew <- function(object,  parm="breakpoints", level = 0.95,
                nreg=NULL, datatsp=NULL)
     class(bpp) = "breakpointsPretend"
     
-    ci = confint.breakpointsfull(bpp, level = level, het.reg= het.reg, het.err= het.err)
+    ci = confint.breakpointsfull(bpp, ...)
 
     ## extract the confidence intervals and add back 1 to be consistent with our ways
     stopifnot("confint" %in% names(ci), all(ci$confint[,2]==breaks))
@@ -74,7 +70,7 @@ confint.segmentationNew <- function(object,  parm="breakpoints", level = 0.95,
   } ## for j
   
   ## add results to segmentation object and return:
-  object$nSegments = nSegments   ## FIXME: this is redundant with the names of the confint slot - omit?
+  object$n =       n   ## FIXME: this is redundant with the names of the confint slot - omit?
   object$confint   = allConfInt
   object$call      = c(object$call, match.call())
   return(object)
