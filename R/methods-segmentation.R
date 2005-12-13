@@ -47,23 +47,26 @@ setMethod("plot", "segmentation",
   breakp = x@breakpoints[[y]]
   ply = x@y
   plx = row(ply)
+
+  ## since y is the number of segments = 1 +  number of breakpoints
+  stopifnot(nrow(breakp)==y-1)
   
-  ## for handling too large segmentation objects:
+  ## for handling large segmentation objects:
   if(!missing(xlim)) {
     stopifnot(is,numeric(xlim), length(xlim)==2)
     ply = ply[xlim[1]:xlim[2], ]
     plx = plx[xlim[1]:xlim[2], ]
     breakp = breakp[ (breakp[, "estimate"]>=xlim[1]) & (breakp[, "estimate"]<=xlim[2]), ]
   }
-
   
   if(missing(bpcol)){
-    ##bpcol=hex(polarLAB(70, 35, seq(0, 360, length=y)[-1]))
-    bpcol=rainbow(y)
+    ## bpcol=hex(polarLAB(70, 35, seq(0, 360, length=y)[-1]))
+    ## bpcol=rainbow(y-1)
+    bpcol = rep(brewer.pal(9, "Set1"), ceiling(nrow(breakp)/9))[1:nrow(breakp)]
   } else {
-    if(length(bpcol)!=y)
-      stop(sprintf("length of 'bpcol' is %d but must be the same as y=%d",
-                   length(bpcol), as.integer(y))) 
+    if(length(bpcol)!=y-1)
+      stop(sprintf("length of 'bpcol' is %d but must be y-1=%d",
+                   length(bpcol), as.integer(y-1))) 
   }
 
   plot(plx, ply, xlab=xlab, ylab=ylab, ...)
@@ -72,8 +75,9 @@ setMethod("plot", "segmentation",
   if (x@hasConfint[y]) { ##  confidence intervals
     for(j in 1:2) {
       at = breakp[, c("lower", "upper")[j]]
-      wh = !is.na(at)
-      mtext(side=1, at=at[wh]-0.5, adj=0.5, text=c("(", ")")[j], line=-0.7, col=bpcol[wh])
+      isnotna = !is.na(at)
+      isdup   = duplicated(at[isnotna])
+      mtext(side=1, at=at[isnotna]-0.5+0.25*isdup, adj=0.5, text=c("(", ")")[j], line=-0.7, col=bpcol[isnotna])
     }
   }
 }) # plot.segmentation

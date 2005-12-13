@@ -1,7 +1,7 @@
 ## (c) wolfgang huber 2005
 ## compute confidence intervals of segmentation(s)
 setMethod("confint", "segmentation",
-  function(object, parm, level=0.95, ...)
+  function(object, parm, level=0.95, het.reg = FALSE, het.err = FALSE, ...)
 {
   validObject(object)
   ## the list with breakpoints
@@ -51,7 +51,7 @@ setMethod("confint", "segmentation",
                nreg = NULL, datatsp = NULL)
     class(bpp) = "breakpointsPretend"
     
-    ci = confint.breakpointsfull(bpp, ...)
+    ci = confint.breakpointsfull(bpp, level=level, het.reg=het.reg, het.err=het.err, ...)
 
     ## extract the confidence intervals and add back 1 to be consistent with our ways
     m = ci$confint
