@@ -1,9 +1,10 @@
 useDynLib(tilingArray)
 
-export("findSegments", "sampleStep", "scoreSegments", "costMatrix", 
+export("segment",
+       "findSegments", ## this is for backward compatibility, should be deprecated
+       "sampleStep", "scoreSegments", "costMatrix", 
        "isWithinInterval", "posMin", "otherStrand",
-       "qualityReport", "plotAlongChrom", 
-       "plot.segmentation", "confint.segmentation", "computeConfInt")
+       "qualityReport", "plotAlongChrom")
 
-S3method(plot, segmentation)
-S3method(confint, segmentation)
+exportClasses("segmentation")
+exportMethods("plot", "show", "confint")

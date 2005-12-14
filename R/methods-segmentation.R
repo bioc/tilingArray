@@ -35,7 +35,7 @@ segment = function(y, maxseg, maxk) {
 ## Simple plot method
 ##--------------------------------------------------
 setMethod("plot", "segmentation", 
-  function(x, y, xlim, xlab="x", ylab="y", bpcol, ...) {
+  function(x, y, xlim, xlab="x", ylab="y", bpcol, pch=16, ...) {
     
   validObject(x)
 
@@ -69,8 +69,8 @@ setMethod("plot", "segmentation",
                    length(bpcol), as.integer(y-1))) 
   }
 
-  plot(plx, ply, xlab=xlab, ylab=ylab, ...)
-  abline(v=breakp[, "estimate"]-0.5, col=bpcol, lty=2) ## draw segment borders
+  plot(plx, ply, xlab=xlab, ylab=ylab, pch=pch, ...)
+  abline(v=breakp[, "estimate"]-0.5, col=bpcol, lty=2) ## draw segment boundaries
 
   if (x@hasConfint[y]) { ##  confidence intervals
     for(j in 1:2) {

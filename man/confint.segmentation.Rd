@@ -12,12 +12,12 @@
 }
 
 \arguments{
-  \item{object}{object of class \code{"segmentation"};
-    e.g. the result from \code{\link{findSegments}}.}
+  \item{object}{object of class \code{segmentation};
+    e.g. the result from \code{\link{segment}}.}
   \item{n}{numeric vector, selects the segmentation fits
     for which to compute confidence intervals for.
     Typically there are multiple such fits, one for each choice of total
-    number of segments, see \code{\link{findSegments}}.}
+    number of segments, see \code{\link{segment}}.}
   \item{...}{passed on to \code{\link{confint.breakpointsfull}}.}
 }
 
@@ -26,7 +26,7 @@
 }
 
 \value{
-  An object of class \code{"segmentation"}, namely a copy of the argument
+  An object of class \code{segmentation}, namely a copy of the argument
   \code{object}, with added slots for the confidence intervals.
 }
 
