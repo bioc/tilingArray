@@ -2,7 +2,8 @@
 \alias{confint.segmentation}
 \title{Confidence intervals for a segmentation fit}
 \description{
-  Wrapper for \code{\link{confint.breakpointsfull}} from the \code{strucchange} package for
+  Wrapper for \code{\link{confint.breakpointsfull}} from the
+  \code{strucchange} package for
   computing asymptotic confidence intervals for a segmentation fit.
 }
 
@@ -12,11 +13,11 @@
 
 \arguments{
   \item{object}{object of class \code{"segmentation"};
-    e.g. the result from \code\link{{segment}}.}
+    e.g. the result from \code{\link{findSegments}}.}
   \item{n}{numeric vector, selects the segmentation fits
     for which to compute confidence intervals for.
     Typically there are multiple such fits, one for each choice of total
-    number of segments, see \code\link{{segment}}.}
+    number of segments, see \code{\link{findSegments}}.}
   \item{...}{passed on to \code{\link{confint.breakpointsfull}}.}
 }
 
