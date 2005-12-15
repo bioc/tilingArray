@@ -8,3 +8,4 @@ export("segment",
 
 exportClasses("segmentation")
 exportMethods("plot", "show", "confint")
+

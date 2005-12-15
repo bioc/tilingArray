@@ -34,6 +34,10 @@ findSegments(x, maxcp, maxk, verbose=TRUE)
   the paper cited below for details.
 }
 
+\note{This function is depracated and replaced by function
+  \code{segment}, but still included for backward compability. 
+}
+
 \author{W. Huber \email{huber@ebi.ac.uk}, Joern Toedling
   \email{toedling@ebi.ac.uk}}
 
@@ -45,8 +49,9 @@ findSegments(x, maxcp, maxk, verbose=TRUE)
   ISSN 0249-6399.
   The code of this function is based on the Matlab
   implementation presented at  
-  \verb+http://www.inapg.fr/ens_rech/mathinfo/recherche/mathematique/outil.html+,
+  \url{http://www.inapg.fr/ens_rech/mathinfo/recherche/mathematique/outil.html},
   but it has evolved.}
+
 
 \examples{
  x = rep( sin((0:4)/2*pi), each=3) + rnorm(3*5, sd=0.1)
