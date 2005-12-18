@@ -8,9 +8,7 @@
                       probeAnno, gff,
                       colors, featColScheme=1,
                       isDirectHybe=FALSE, scoreShow = "pt", 
-                      haveNames=TRUE, haveLegend=TRUE, main="", 
-                      pointSize=unit(0.6, "mm"))}
-
+                      haveLegend=TRUE,... )}
 \arguments{
   \item{chr}{integer of length 1 with the number of the chromosome for
     which to make the plot.}
@@ -57,10 +55,11 @@
    from a direct RNA hybridization that used no reverse transcription.} 
   \item{scoreShow}{character: name of a column in \code{segScore} that
     is to be used for the coloring of the segments.}
-  \item{haveNames}{logical; should their names be added to the feature symbols?}
+  %\item{haveNames}{logical; should their names be added to the feature symbols?}
   \item{haveLegend}{logical: should the plot contain a legend?} 
-  \item{main}{character: plot title.}
-  \item{pointSize}{unit object: point size used for the probe intensities scatterplot.}
+  %\item{main}{character: plot title.}
+  %\item{pointSize}{unit object: point size used for the probe intensities scatterplot.}
+  \item{...}{further arguments passed on to \code{plot.default}}
 }
 
 \details{

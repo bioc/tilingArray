@@ -1,14 +1,16 @@
 \name{confint.segmentation}
+\docType{methods}
+\alias{confint, segmentation-class}
 \alias{confint.segmentation}
 \title{Confidence intervals for a segmentation fit}
 \description{
-  Wrapper for \code{\link{confint.breakpointsfull}} from the
-  \code{strucchange} package for
+  Wrapper for \code{\link[strucchange]{confint.breakpointsfull}}
+  from the \code{strucchange} package for
   computing asymptotic confidence intervals for a segmentation fit.
 }
 
 \usage{
-\method{confint}{segmentation}(object, n, ...)
+\S4method{confint}{segmentation}(object, n, ...)
 }
 
 \arguments{
@@ -51,5 +53,5 @@
    segres$confInt
    plot(segres,5, pch=20)
 }
-\keyword{manip}
+\keyword{methods}
 

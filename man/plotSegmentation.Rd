@@ -7,7 +7,7 @@
   or let be determined by the function (see details).
 }
 \usage{
-  \method{plot}{segmentation}(x, nSegments = NULL, bcol = NULL, from=NULL, to=NULL, ...)
+  \method{plot}{segmentation}(x, nSegments, bcol = NULL, from=NULL, to=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
