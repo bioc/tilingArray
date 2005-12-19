@@ -1,6 +1,8 @@
 \name{confint.segmentation}
 \docType{methods}
 \alias{confint, segmentation-class}
+\alias{confint, segmentation}
+\alias{confint, segmentation-method}
 \alias{confint.segmentation}
 \title{Confidence intervals for a segmentation fit}
 \description{
@@ -10,21 +12,29 @@
 }
 
 \usage{
-\S4method{confint}{segmentation}(object, n, ...)
+\S4method{confint}{segmentation}(object, parm, level=0.95,
+  het.reg=FALSE, het.err=FALSE, ...)
 }
 
 \arguments{
   \item{object}{object of class \code{segmentation};
     e.g. the result from \code{\link{segment}}.}
-  \item{n}{numeric vector, selects the segmentation fits
+  \item{parm}{numeric vector, selects the segmentation fits
     for which to compute confidence intervals for.
     Typically there are multiple such fits, one for each choice of total
     number of segments, see \code{\link{segment}}.}
-  \item{...}{passed on to \code{\link{confint.breakpointsfull}}.}
+  \item{level}{confidence level for intervals}
+  \item{het.reg}{logical. Should heterogenous regressors be assumed? If
+    set to FALSE the distribution of the regressors is assumed to be
+    homogenous over the segments}
+  \item{het.err}{logical. Should heterogenous errors be assumed? If set
+    to FALSE the distribution of the errors is assumed to be homogenous
+    over the segments.}
+  \item{...}{passed on to \code{\link[strucchange]{confint.breakpointsfull}}.}
 }
 
 \details{
-  See \code{\link{confint.breakpointsfull}}
+  See \code{\link[strucchange]{confint.breakpointsfull}}
 }
 
 \value{
@@ -45,13 +55,11 @@
    x <- c(rnorm(10,0,1),rnorm(10,3,1),rnorm(10,0.5,0.5),
           rnorm(10,1.5,1),rnorm(10,5,1))
 
-   segres <-  findSegments(x, maxcp=10, maxk=15)
-   segres <- confint.segmentation(segres,nSegments=c(3,4,5,6))
+   segres <- segment(x, maxseg=10, maxk=15)
+   segres <- confint(segres,nSegments=c(3,4,5,6))
 
    # see that the step between segments 3 and 4 is less certain than
    #  the other ones:
-   segres$confInt
-   plot(segres,5, pch=20)
+   show(segres)
 }
 \keyword{methods}
-

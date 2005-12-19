@@ -22,6 +22,7 @@ findSegments = function(x, maxcp, maxk, verbose=TRUE)
   res = .Call("findsegments", G, maxcp, verbose, PACKAGE="tilingArray")
 
   res$dat         <- x
+  res@y           <- x
   res$residuals   <- NULL
   res$chosenSegNo <- NULL
   res$confInt     <- NULL
