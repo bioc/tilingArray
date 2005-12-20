@@ -4,19 +4,21 @@
 \keyword{hplot}
 \description{Plot the results of segmentation along a chromosomal region}
 
-\usage{plotAlongChrom(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg, 
-                      probeAnno, gff,
-                      colors, featColScheme=1,
-                      isDirectHybe=FALSE, scoreShow = "pt", 
-                      haveLegend=TRUE,... )}
+\usage{
+plotAlongChrom(segObj, y, probeAnno, gff,
+    nrBasesPerSeg,
+    isDirectHybe=FALSE, 
+    what = c("dots"), ## "heatmap"
+    chr, coord, highlight, ylim, 
+    colors, 
+    doLegend=TRUE,
+    featureColorScheme=1,
+    featureExclude=c("chromosome","gene","nucleotide_match", "insertion", "intron"),
+    featureNoLabel=c("CDS", "uORF"),
+    main, ...)
+}
+
 \arguments{
-  \item{chr}{integer of length 1 with the number of the chromosome for
-    which to make the plot.}
-  \item{coord}{integer of length 2 with start and end coordinates of the
-    plot.}
-  \item{highlight}{optional, list with two elements: a single numeric value
-    \code{coord} and a character \code{strand}. If present, this
-    position is marked by a vertical red bar on the coordinate axis.}
   \item{segObj}{environment containing three types of data
     \itemize{
       \item microarray intensities in along-chromosome order,
@@ -30,8 +32,16 @@
     This is currently simply an environment that is expected to contain
     certain objects with certain names. In future version, this is
     may be replaced by a proper S4 object.}
-  \item{y}{numeric vector of intensities from an array,
-    see Paragraph \emph{Intensities} in the \emph{Details} section.}
+  \item{y}{a numeric vector or matrix containing the signal to be
+    plotted. 
+    See also Paragraph \emph{Intensities} in the \emph{Details} section.}
+  \item{chr}{integer of length 1 with the number of the chromosome for
+    which to make the plot.}
+  \item{coord}{integer of length 2 with start and end coordinates of the
+    plot.}
+  \item{highlight}{optional, list with two elements: a single numeric value
+    \code{coord} and a character \code{strand}. If present, this
+    position is marked by a vertical red bar on the coordinate axis.}
   \item{ylim}{numeric vector of length two with y-axis limits.}
   \item{nrBasesPerSeg}{numeric scalar. If \code{segObj} does not 
      contain a \code{segScore} data.frame, then this parameter allows to 
@@ -67,8 +77,14 @@
   ways of providing the intensities to be plotted to this function.
   \enumerate{
     \item Via the parameters \code{y} and \code{probeAnno}. Then,
-    \code{y} is a vector of intensities, and \code{probeAnno} is an
-    environment that contains integer vectors with start positions along
+    \code{y} is a vector or matrix of intensities.
+    If it is a matrix, its rows correspond to probes on the array, and
+    its columns to different conditions, time points, etc. 
+    \code{probeAnno} is an
+    environment that contains integer vectors of the same length as
+    \code{y} (if it is a vector)
+
+    with start positions along
     the chromosomes and indices in \code{y} of the probes. For example,
     the start positions and indices of probes for the + strand of
     chromosome 1 would be described by environment elements

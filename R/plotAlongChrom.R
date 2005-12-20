@@ -114,7 +114,8 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
     ) ## switch
   
     ## plot the features
-    plotFeatures(gff=gff, xlim=coord, vpr=which(names(VP)==sprintf("gff%s", strand)), strand=strand,
+    plotFeatures(gff=gff, chr=chr, xlim=coord, strand=strand,
+                 vpr=which(names(VP)==sprintf("gff%s", strand)), 
                  featureColorScheme=featureColorScheme,
                  featureExclude=featureExclude, featureNoLabel=featureNoLabel)
   
@@ -267,7 +268,7 @@ stopifnot(length(x)==nrow(y), length(x)==length(uniq))
 ## ------------------------------------------------------------
 ## plot Features
 ## ------------------------------------------------------------
-plotFeatures = function(gff, xlim, vpr, strand, featureColorScheme, featureExclude, featureNoLabel) {
+plotFeatures = function(gff, chr, xlim, strand, vpr, featureColorScheme, featureExclude, featureNoLabel) {
 
   pushViewport(dataViewport(xData=xlim, yscale=c(-1.2,1.2),  extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=vpr))
@@ -284,6 +285,8 @@ plotFeatures = function(gff, xlim, vpr, strand, featureColorScheme, featureExclu
 
   feature  = as.character(gff[sel, "feature"])
 
+  browser()
+  
   ## split by feature type (e.g. CDS, ncRNA)
   featsp = split(seq(along=sel), feature)
 
