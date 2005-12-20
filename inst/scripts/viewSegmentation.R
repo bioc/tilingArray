@@ -6,10 +6,7 @@ options(error=recover, warn=0)
 library("tilingArray")
 
 source("setScriptsDir.R")
-
-
 source(functionsDir("plotAlongChrom.R"))
-source(scriptsDir("readSegments.R"))
 
 graphics.off()
 
@@ -29,7 +26,7 @@ switch(out,
 if(TRUE) {
   ## with segRes environment
   rnaTypes = rt = "seg-polyA-050909"
-  source("scriptsd/readSegments.R")
+  source(scriptsDir("readSegments.R"))
   plotAlongChrom(chr=1, coord = 1000*c(30, 130),
                 segObj = get(rt),
                 gff = gff, isDirect=FALSE)

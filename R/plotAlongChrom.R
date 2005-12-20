@@ -9,8 +9,9 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
                           doLegend=TRUE,
                           featureColorScheme=1,
                           featureExclude=c("chromosome","gene","nucleotide_match", "insertion", "intron"),
-                          featureNoLabel=c("CDS", "uORF"),
-                          main, ...) {
+                          featureNoLabel=c("uORF"),
+                          pointSize=unit(0.6, "mm"),
+                          main) {
 
   ## set up the viewports of the plot layout.
   VP = c("title"=1.2, "expr+"=5, "gff+"=1, "coord"=1, "gff-"=1, "expr-"=5, "legend"=0.4)
@@ -98,7 +99,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
         plotSegmentationDots(x=px, y=py, xlim=coord, ylim=ylim, uniq=dat$unique,
                              segScore=sgs, threshold=threshold, 
                              chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
-                             vpr=vpr, colors=colors, ...)
+                             vpr=vpr, colors=colors, pointSize=pointSize)
       },
       "heatmap" = {
         if(missing(ylim))
@@ -108,7 +109,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
         plotSegmentationHeatmap(x=px, y=py, xlim=coord, ylim=ylim, uniq=dat$unique,
                                 segScore=sgs, threshold=threshold, 
                                 chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
-                                vpr=vpr, colors=colors, ...)
+                                vpr=vpr, colors=colors)
       },
            stop(sprintf("Invalid value '%s' for argument 'what'", what))
     ) ## switch
@@ -159,7 +160,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
 ## plot Segmentation with Dots
 ## ------------------------------------------------------------
 plotSegmentationDots = function(x, y, xlim, ylim, uniq, segScore, threshold, 
-  chr, strand, vpr, colors, pointSize=unit(0.6, "mm"), probeLength=25) {
+  chr, strand, vpr, colors, pointSize) {
 
   if(is.matrix(y))
     y = rowMeans(y) ##  if >1 samples, take mean over samples
@@ -200,7 +201,6 @@ plotSegmentationDots = function(x, y, xlim, ylim, uniq, segScore, threshold,
     segend   = segScore[segSel, "end"]
     diffss =  segstart[-1] - segend[-length(segend)]
     meanss = (segstart[-1] + segend[-length(segend)])/2
-    stopifnot(all(diffss>=(-probeLength)))
     
     grid.segments(x0 = unit(meanss, "native"), x1 = unit(meanss, "native"),
                   y0 = unit(0.1, "npc"),       y1 = unit(0.9, "npc"),
@@ -215,7 +215,7 @@ plotSegmentationDots = function(x, y, xlim, ylim, uniq, segScore, threshold,
 ##  plotSegmentationHeatmap
 ##------------------------------------------------------------- 
 plotSegmentationHeatmap = function(x, y, xlim, ylim, ylab, uniq, segScore, 
-  chr, strand, vpr, colors, probeLength=25, ...) {
+  chr, strand, vpr, colors) {
 
 stopifnot(length(x)==nrow(y), length(x)==length(uniq))
   if(missing(xlim)) {
@@ -253,7 +253,6 @@ stopifnot(length(x)==nrow(y), length(x)==length(uniq))
     segend   = segScore[segSel, "end"]
     diffss =  segstart[-1] - segend[-length(segend)]
     meanss = (segstart[-1] + segend[-length(segend)])/2
-    stopifnot(all(diffss>=(-probeLength)))
     
     grid.segments(x0 = unit(meanss, "native"), x1 = unit(meanss, "native"),
                   y0 = unit(0.1, "npc"),       y1 = unit(0.9, "npc"),
@@ -285,8 +284,6 @@ plotFeatures = function(gff, chr, xlim, strand, vpr, featureColorScheme, feature
 
   feature  = as.character(gff[sel, "feature"])
 
-  browser()
-  
   ## split by feature type (e.g. CDS, ncRNA)
   featsp = split(seq(along=sel), feature)
 
