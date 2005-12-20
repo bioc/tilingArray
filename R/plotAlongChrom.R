@@ -1,12 +1,21 @@
+## Additional candidates for featureExclude: "ARS","repeat_region","repeat_family", "nc_primary_transcript"
+##                   ... for 
+plotAlongChrom = function(segObj, y, probeAnno, gff,
+                          nrBasesPerSeg,
+                          isDirectHybe=FALSE, 
+                          what = c("dots"), ## "heatmap"
+                          chr, coord, highlight, ylim, 
+                          colors, 
+                          doLegend=TRUE,
+                          featureColorScheme=1,
+                          featureExclude=c("chromosome","gene","nucleotide_match", "insertion", "intron"),
+                          featureNoLabel=c("CDS", "uORF"),
+                          main, ...) {
 
-plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg, 
-                      probeAnno, gff,
-                      colors, featColScheme=1,
-                      isDirectHybe=FALSE, scoreShow = "pt", 
-                      haveLegend=TRUE, ...)
-{
- 
-  VP = c(title=1.2, expr1=5, z1=0.4, gff1=1, coord=1, gff2=1, z2=0.4, expr2=5, legend=0.4)
+  ## set up the viewports of the plot layout.
+  VP = c("title"=1.2, "expr+"=5, "gff+"=1, "coord"=1, "gff-"=1, "expr-"=5, "legend"=0.4)
+  if(!doLegend)
+     VP = VP[-which(names(VP)=="legend")]
 
   defaultColors = c("+" = "#00441b", "-" = "#081d58", "duplicated" = "grey",
     "cp" = "#777777", "highlight" = "red", "threshold" = "grey")
@@ -17,11 +26,8 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
     defaultColors[mt] = colors 
   }
   colors = defaultColors
-    
-  ##if(!haveLegend)
-  ##  VP = VP[-which(names(VP)=="legend")]
-  ## do not draw p-value bars
-  VP = VP[-which(names(VP)%in%c("z1", "z2"))]
+
+  ## check that either y or segObj is present
   if(!missing(y)) {
     if(missing(probeAnno))
       stop("If 'y' is specified, 'probeAnno' must also be specified.")
@@ -36,6 +42,8 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
   pushViewport(viewport(layout=grid.layout(length(VP), 1, height=VP)))
   for(i in 1:2) {
     strand = c("+", "-")[i]
+
+    ## extract and treat  the data
     threshold = as.numeric(NA)
 
     if(!missing(y)) {
@@ -76,20 +84,40 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
     
     if(missing(coord))
       coord = c(1, lengthChr)
-
+    
     px = dat[["mid"]]
     py = dat[["y"]]
-    
-    if(missing(ylim))
-      ylim = quantile(py[px>=coord[1] & px<=coord[2]], c(0.01, 0.99), na.rm=TRUE)
+
+    ## plot the data
+    vpr=which(names(VP)==sprintf("expr%s", strand))
+    switch(what,
+      "dots" = {
+        if(missing(ylim))
+          ylim = quantile(py[px>=coord[1] & px<=coord[2]], c(0.01, 0.99), na.rm=TRUE)
    
-    plotSegmentation(x=px, y=py, xlim=coord, ylim=ylim, uniq=dat$unique,
-                     segScore=sgs, threshold=threshold, scoreShow=scoreShow,
-                     gff=gff, chr=chr,
-                     strand=ifelse(isDirectHybe, otherStrand(strand), strand),
-                     VP=VP, colors=colors, 
-                     featColScheme=featColScheme, ...)
-    
+        plotSegmentationDots(x=px, y=py, xlim=coord, ylim=ylim, uniq=dat$unique,
+                             segScore=sgs, threshold=threshold, 
+                             chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
+                             vpr=vpr, colors=colors, ...)
+      },
+      "heatmap" = {
+        if(missing(ylim))
+          ylim = c(0, ncol(y))
+        if(missing(ylab))
+          ylab = pData(y)$SampleID  
+        plotSegmentationHeatmap(x=px, y=py, xlim=coord, ylim=ylim, uniq=dat$unique,
+                                segScore=sgs, threshold=threshold, 
+                                chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
+                                vpr=vpr, colors=colors, ...)
+      },
+           stop(sprintf("Invalid value '%s' for argument 'what'", what))
+    ) ## switch
+  
+    ## plot the features
+    plotFeatures(gff=gff, xlim=coord, vpr=which(names(VP)==sprintf("gff%s", strand)), strand=strand,
+                 featureColorScheme=featureColorScheme,
+                 featureExclude=featureExclude, featureNoLabel=featureNoLabel)
+  
   }
 
   ## chromosomal coordinates
@@ -119,22 +147,21 @@ plotAlongChrom = function(chr, coord, highlight, segObj, y, ylim, nrBasesPerSeg,
   popViewport()
 
   ## legend
-  if(haveLegend)
-    plotAlongChromLegend(which(names(VP)=="legend"))
+  if(doLegend)
+    plotAlongChromLegend(which(names(VP)=="legend"),
+         featureColorScheme=featureColorScheme, featureExclude=featureExclude)
   
   popViewport(2)
 }
 
-## gff and chrSeqname into an environment or object?
+## ------------------------------------------------------------
+## plot Segmentation with Dots
+## ------------------------------------------------------------
+plotSegmentationDots = function(x, y, xlim, ylim, uniq, segScore, threshold, 
+  chr, strand, vpr, colors, pointSize=unit(0.6, "mm"), probeLength=25) {
 
-plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreShow,
-  gff, chr, strand, VP, colors, pointSize=unit(0.6, "mm"), haveNames=TRUE , probeLength=25, featColScheme,
-  noTypeLabel = c("CDS", "uORF"), ## "binding_site", "TF_binding_site"
-  exclude = c("chromosome","gene","nucleotide_match", "insertion", "intron") ## "ARS","repeat_region","repeat_family"
-) {
-  ## could this be done better?
   if(is.matrix(y))
-    y = rowMeans(y) #  if >1 samples? -> take mean over samples
+    y = rowMeans(y) ##  if >1 samples, take mean over samples
     
   stopifnot(length(x)==length(y), length(x)==length(uniq))
 
@@ -147,16 +174,12 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     uniq = uniq[sel]
   }
   
-  istrand = match(strand, c("+", "-"))
-  stopifnot(length(strand)==1, !is.na(istrand))
-
   if(!is.na(threshold)) {
     y = y-threshold
     ylim = ylim-threshold
   }
   
   ## the expression data. use two viewports for different clipping behavior
-  vpr = which(names(VP)==sprintf("expr%d", istrand))
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
     layout.pos.col=1, layout.pos.row=vpr))
   grid.yaxis()
@@ -185,42 +208,69 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
   grid.points(x[ord], y[ord], pch=20, size=pointSize, gp=gpar(col=colo))
   popViewport(2)
 
+} ## plotSegmentationDots
 
-  ## This code would plot a false color representation of some segment score
-  ## (e.g. "p-value")
-  if(FALSE) {
-    if(!is.null(segScore)) {
-    pushViewport(dataViewport(xData=xlim, yscale=c(0,2), extension=0, clip="on",
-       layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("z%d", istrand))))
+##------------------------------------------------------------- 
+##  plotSegmentationHeatmap
+##------------------------------------------------------------- 
+plotSegmentationHeatmap = function(x, y, xlim, ylim, ylab, uniq, segScore, 
+  chr, strand, vpr, colors, probeLength=25, ...) {
 
-    deckel = function(p, pmax=10) {
-      p = -log(p, 10)
-      p[p>pmax] = pmax
-      sqrt(p/pmax)
-    }
+stopifnot(length(x)==nrow(y), length(x)==length(uniq))
+  if(missing(xlim)) {
+    xlim=range(x)
+  } else {
+    sel = (x>=xlim[1])&(x<=xlim[2])
+    x = x[sel]
+    y = y[sel,, drop=FALSE ]
+    uniq = uniq[sel]
+ 
+  }
+ 
+  if(!is.na(threshold)) {
+    y = y-threshold
+    ylim = ylim-threshold
+  }
+  
+  ## the expression data. use two viewports for different clipping behavior
+  pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
+    layout.pos.col=1, layout.pos.row=vpr))
+  grid.yaxis(seq(0.5,ncol(y)-0.5), ylab, gp=gpar(cex=0.5))
+  
+  pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="on",
+    layout.pos.col=1, layout.pos.row=vpr))
+
+  ord  = c(which(uniq!=0), which(uniq==0))
+  colo = ifelse(uniq[ord]==0, colors[strand], colors["duplicated"])
+
+  if(!is.na(threshold))
+    grid.lines(y=unit(0, "native"), gp=gpar(col=colors["threshold"]))
+  
+  if(!is.null(segScore)) {
+    segSel   = which(segScore$chr==chr & segScore$strand==strand)
+    segstart = segScore[segSel, "start"]
+    segend   = segScore[segSel, "end"]
+    diffss =  segstart[-1] - segend[-length(segend)]
+    meanss = (segstart[-1] + segend[-length(segend)])/2
+    stopifnot(all(diffss>=(-probeLength)))
     
-    if(scoreShow %in% colnames(segScore)) {
-      colo  = rep("white", length(segSel))
-      val   = deckel(segScore[segSel, scoreShow])
-      isa   = !is.na(val)
-      tmp   = colorRamp(brewer.pal(9, "Blues")[-9])(val[isa]) / 256
-      colo[!is.na(val)] = rgb(tmp[,1], tmp[,2], tmp[,3])
-    } else {
-      colo = "#f0f0f0"
-    }
-    grid.rect(x = unit(segstart, "native"), 
-              y = unit(0.4, "npc"),
-              width  = unit(segend-segstart+1, "native"),
-              height = unit(0.8, "npc"),
-              just   = c("left", "center"),	
-             gp     = gpar(col="#a0a0a0", fill=colo))
-    popViewport(1)
+    grid.segments(x0 = unit(meanss, "native"), x1 = unit(meanss, "native"),
+                  y0 = unit(0.1, "npc"),       y1 = unit(0.9, "npc"),
+                  gp = gpar(col=colors["cp"]))
   }
-  }
+  ## grid.points(y[ord,], pch=20, size=pointSize, colRamp=colorRamp(c("red", "green")))
+  grid.image(x[ord], y[ord,], xlim=xlim, ythresh=ythresh, uniq=uniq)
+  popViewport(2)
+} ## end of plotSegmentationHeatmap
 
-  ## features
+
+## ------------------------------------------------------------
+## plot Features
+## ------------------------------------------------------------
+plotFeatures = function(gff, xlim, vpr, strand, featureColorScheme, featureExclude, featureNoLabel) {
+
   pushViewport(dataViewport(xData=xlim, yscale=c(-1.2,1.2),  extension=0, clip="on",
-    layout.pos.col=1, layout.pos.row=which(names(VP)==sprintf("gff%d", istrand))))
+    layout.pos.col=1, layout.pos.row=vpr))
 
   stopifnot(all(gff[,"start"] <= gff[, "end"]))
   sel = which(gff[, "chr"] == chr &
@@ -234,10 +284,13 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
 
   feature  = as.character(gff[sel, "feature"])
 
-  ## split!
-  featsp  = split(seq(along=sel), feature)
+  ## split by feature type (e.g. CDS, ncRNA)
+  featsp = split(seq(along=sel), feature)
 
-  ### gene ###
+  ## drop the ignorable ones
+  featsp = featsp[ ! (names(featsp) %in% featureExclude) ]
+  
+  ## gene: just a horizontal line
   whnames = integer(0)
   if("gene" %in% names(featsp)) {
     i = featsp[["gene"]]
@@ -247,10 +300,11 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     whnames = i
   }
 
-  featCols = featureColors(featColScheme, exclude)
+  ## colors for boxes
+  featCols = featureColors(featureColorScheme)
 
   ## check that we know how deal with all features
-  whm = names(featsp) %in% c(rownames(featCols), exclude) # change: 2005-08-25 J
+  whm = names(featsp) %in% rownames(featCols)
   if(!all(whm))
     stop("Don't know how to handle feature(s) '", paste(names(featsp)[!whm], collapse=", "), "'.", sep="")
 
@@ -258,16 +312,10 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
   ll       = listLen(sfeatsp)
 
   if(any(ll>0)) {
-    i      = unlist(sfeatsp)
-    # change, 05/09/10 J, do ordering  by specificity not by start base
-    # ord    = order(gff$start[sel[i]])
-    ord = 1:length(i)
-
-    gp     = gpar(col = rep(featCols$col,  ll)[ord],
-                 fill = rep(featCols$fill, ll)[ord])
-    i      = i[ord]
-    s      = sel[i]
-    
+    i  = unlist(sfeatsp)
+    gp = gpar(col = rep(featCols$col,  ll),
+                 fill = rep(featCols$fill, ll))
+    s  = sel[i]
     grid.rect(x     = gff$start[s],
               y     = 0,
               width = gff$end[s]-gff$start[s],
@@ -275,23 +323,26 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
               default.units = "native",
               just  = c("left", "center"),
               gp    = gp)
-    whnames = c(whnames, unlist(sfeatsp[!(names(sfeatsp) %in% noTypeLabel)]))
-    #if (length(grep("binding", names(sfeatsp)))>0) browser()
+    whnames = c(whnames, unlist(sfeatsp[!(names(sfeatsp) %in% featureNoLabel)]))
+    ## additional potentially useful values for featureNoLabel: "binding_site", "TF_binding_site"
   }
 
-  if(haveNames && (length(whnames)>0)) {
+  ## labels
+  if( !all(tolower(featureNoLabel)=="all") && (length(whnames)>0)) {
+
+    ## this is a bit of a hack to abbreviate the labels of "binding site" features:
     bindingRegexpr = "binding.?site.*$"
     isBindingSite = (regexpr(bindingRegexpr, featName[whnames]) > 0)
     if(any(isBindingSite)) {
       ## replace long labels
       featName[whnames] = gsub(bindingRegexpr, "bs", featName[whnames])
     }
+
     ## remove duplicated names that are not binding sites
     whnames = whnames[isBindingSite | !duplicated(featName[whnames])]
 
     txtcex = 0.6
     txtdy  = 0.7
-    nNames  <- length(whnames) 
     s      = sel[whnames]
     txtx   = (gff$start[s]+gff$end[s])/2
     txty   = numeric(length(s))
@@ -299,7 +350,6 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     whnames = whnames[ord]
     s      = s[ord]
     txtx   = txtx[ord]
-
     
     strw   = convertWidth(stringWidth(featName[whnames]), "native", valueOnly=TRUE)*txtcex
     rightB = txtx[1] + 0.5*strw[1]
@@ -310,8 +360,8 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
     # textends   <-  txtx + 0.5*strw
 
     # adjust text labels to be still readable in feature-dense areas:
-    if(nNames>1) {
-      for(k in 2:nNames) {
+    if(length(whnames) >1) {
+      for(k in 2:length(whnames)) {
         leftB = txtx[k] - 0.5*strw[k]
         if(leftB > rightB) { # all texts not overlapping next to each other?
           rightB = txtx[k] + 0.5*strw[k]
@@ -347,16 +397,10 @@ plotSegmentation = function(x, y, xlim, ylim, uniq, segScore, threshold, scoreSh
                     y1 = c(1, -1)[istrand]*0.95,
                     default.units = "native",
                     gp = gpar(col="black"))
-    ## cat(paste(featName[i], gff$start[s], gff$end[s], sep="\t", collapse="\n"), "\n\n")
   } ## if
-  
-
-  ##notDealtWith = setdiff(names(featsp), c(rownames(featCols), "gene", "intron"))
-  ##if(length(notDealtWith)>0)
-  ##  cat("Not displayed:", paste(notDealtWith, collapse=", "), "\n")
-   
   popViewport()
-}
+
+} ## plotFeatures
 
 ##------------------------------------------------------------
 ##
@@ -376,10 +420,9 @@ alongChromTicks = function(x){
 ##------------------------------------------------------------
 ## legend
 ##------------------------------------------------------------
-plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
-    exclude=c("chromosome","gene","nucleotide_match","insertion","intron")
-    #"repeat_region","repeat_family","ARS","intron","nc_primary_transcript") # change Aug 30,2005 J
-  ) {
+plotAlongChromLegend = function(vpr, nr=2, 
+    featureColorScheme, featureExclude){
+  
   formatRow = function(featColsOneRow, row) {
     ## print(featColsOneRow)
     strWid   = convertWidth(stringWidth(rownames(featColsOneRow)), "npc", valueOnly=TRUE)
@@ -402,10 +445,10 @@ plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
   }
   
 
-  featCols = featureColors(1,exclude)
+  featCols = featureColors(featureColorScheme)
+  featCols = featCols[ !(rownames(featCols) %in% featureExclude), ]
 
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=vpr, yscale=c(0.5, nr+0.5)))
-  ## grid.lines(c(0,1), c(1,1), default.units = "npc", gp=gpar(col="black",lty=2))
 
   i = 1:nrow(featCols)
   for(r in 1:nr)
@@ -413,7 +456,7 @@ plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
   
   popViewport()
   
-}#plotAlongChromLegend
+} ## plotAlongChromLegend
 
 ##------------------------------------------------------------
 ## featureColors
@@ -422,7 +465,7 @@ plotAlongChromLegend = function(vpr=1, nr=2, # was nr=3
 ## important ones (e.g. tRNA is more specific than ncRNA)
 ## to test, say tilingArray:::plotAlongChromLegend()
 ##------------------------------------------------------------
-featureColors = function(scheme=1, exclude=c()){
+featureColors = function(scheme=1){
   
   defaultColors = c(
     "chromosome"  = NA,
@@ -452,11 +495,6 @@ featureColors = function(scheme=1, exclude=c()){
   darkenborder = as.logical(c(rep(1,3),0,rep(1, 17),0,0))
   stopifnot(length(darkenborder)==length(defaultColors))
   
-  # kick out unwanted Features, no need to return a color defintion for them
-  keep = !(names(defaultColors) %in% exclude)
-  defaultColors    <- defaultColors[keep]
-  darkenborder     <- darkenborder[keep]
-  
   fill = switch(scheme,
     default  = defaultColors,
     unicolor = ifelse(is.na(defaultColors), NA,  "#addfff"),  ## light blue
@@ -479,5 +517,3 @@ featureColors = function(scheme=1, exclude=c()){
   rownames(res)=names(defaultColors) 
   return(res)
 }
-
-

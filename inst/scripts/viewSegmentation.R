@@ -1,19 +1,38 @@
+##
+## This script presents an example for calling the plotAlongChrom function
+##
+
 options(error=recover, warn=0)
 library("tilingArray")
 
-#### Generic plot
-graphics.off();
-## X11(width=15, height=8); grid.newpage()
-pdf(file="test-utr.pdf", width=15, height=8)
+source("setScriptsDir.R")
 
-if(!TRUE) {
+
+source(functionsDir("plotAlongChrom.R"))
+source(scriptsDir("readSegments.R"))
+
+graphics.off()
+
+out = c("x11", "pdf")[1]
+switch(out,
+       x11 = {
+         X11(width=15, height=8)
+         grid.newpage()
+       },
+       pdf = {
+         pdf(file="viewSeg.pdf", width=15, height=8)
+       },
+       stop("Sapperlot"))
+
+
+
+if(TRUE) {
   ## with segRes environment
-  source("scripts/readSegments.R")
-  rt = "polyA"
-  plotAlongChrom(which(gff$seqname[w]==chrSeqname), coord = c(gff$start[w]-1e4, gff$end[w]+1e4),
-                nrBasesPerSeg=1500, segRes = get(rt),
-                ## segScore = get("segScore", e), 
-                gff = gff, highlight= list(coord=c(142621, 143365),strand="+"))
+  rnaTypes = rt = "seg-polyA-050909"
+  source("scriptsd/readSegments.R")
+  plotAlongChrom(chr=1, coord = 1000*c(30, 130),
+                segObj = get(rt),
+                gff = gff, isDirect=FALSE)
 } else {
   ## if(!exists("a"))load("a.rda")
   if(!exists("probeAnno"))load("probeAnno.rda")
@@ -45,4 +64,5 @@ if(!TRUE) {
   
 }
 
-dev.off()
+if(out %in% "pdf")
+  dev.off()
