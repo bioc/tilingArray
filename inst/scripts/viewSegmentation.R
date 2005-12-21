@@ -7,6 +7,9 @@ library("tilingArray")
 
 source("setScriptsDir.R")
 source(functionsDir("plotAlongChrom.R"))
+source(functionsDir("grid.image.R"))
+options(error=recover)
+## debug(plotAlongChrom)
 
 graphics.off()
 
@@ -22,15 +25,19 @@ switch(out,
        stop("Sapperlot"))
 
 
+what = c("dotsSeg", "dotsUnseg", "heatmap")[3]
 
-if(TRUE) {
-  ## with segRes environment
+## dots plot with segmentation
+if(what=="dotsSeg") {
   rnaTypes = rt = "seg-polyA-050909"
   source(scriptsDir("readSegments.R"))
   plotAlongChrom(chr=1, coord = 1000*c(30, 130),
                 segObj = get(rt),
-                gff = gff, isDirect=FALSE)
-} else {
+                gff = gff)
+}
+
+## dots plot without segmentation, just normalized intensities
+if(what=="dotsUnseg"){
   ## if(!exists("a"))load("a.rda")
   if(!exists("probeAnno"))load("probeAnno.rda")
 
@@ -53,13 +60,27 @@ if(TRUE) {
       pushViewport(viewport(layout.pos.col=i, layout.pos.row=j))
       plotAlongChrom(2, coord = c(start[i], end[i])*1e3,
                   y = zz[,j], probeAnno = probeAnno,
-                  isDirectHybe = FALSE, 
                   gff = gff)
       popViewport()
     }
   popViewport()
   
 }
+
+## heatmap plot
+if(what=="heatmap"){
+  if(!exists("xn")) {
+    load("/ebi/research/huber/Projects/tilingCycle/xn.rda")
+    ex = exprs(xn)
+    colnames(ex) = xn$SampleID
+  }
+  plotAlongChrom(y = ex, probeAnno = probeAnno, gff=gff,
+                 what = "heatmap",
+                 chr= 2, coord = c(110, 120)*1e3)
+                 
+}
+
+
 
 if(out %in% "pdf")
   dev.off()

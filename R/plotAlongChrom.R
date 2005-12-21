@@ -52,7 +52,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
       sta   = get(paste(chr, strand, "start", sep="."), envir=probeAnno)
       end   = get(paste(chr, strand, "end",   sep="."), envir=probeAnno)
       dat = list(mid = (sta+end)/2,
-                 y   = y[index],
+                 y   = y[index,, drop=FALSE],
                  unique = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
       stopifnot(is.numeric(dat$unique))
       lengthChr = end[length(end)]
@@ -102,11 +102,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
                              vpr=vpr, colors=colors, pointSize=pointSize)
       },
       "heatmap" = {
-        if(missing(ylim))
-          ylim = c(0, ncol(y))
-        if(missing(ylab))
-          ylab = pData(y)$SampleID  
-        plotSegmentationHeatmap(x=px, y=py, xlim=coord, ylim=ylim, uniq=dat$unique,
+        plotSegmentationHeatmap(x=px, y=py, xlim=coord, uniq=dat$unique,
                                 segScore=sgs, threshold=threshold, 
                                 chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
                                 vpr=vpr, colors=colors)
@@ -214,10 +210,10 @@ plotSegmentationDots = function(x, y, xlim, ylim, uniq, segScore, threshold,
 ##------------------------------------------------------------- 
 ##  plotSegmentationHeatmap
 ##------------------------------------------------------------- 
-plotSegmentationHeatmap = function(x, y, xlim, ylim, ylab, uniq, segScore, 
-  chr, strand, vpr, colors) {
+plotSegmentationHeatmap = function(x, y, xlim, uniq, segScore, 
+  threshold, chr, strand, vpr, colors) {
 
-stopifnot(length(x)==nrow(y), length(x)==length(uniq))
+  stopifnot(length(x)==nrow(y), length(x)==length(uniq))
   if(missing(xlim)) {
     xlim=range(x)
   } else {
@@ -225,17 +221,13 @@ stopifnot(length(x)==nrow(y), length(x)==length(uniq))
     x = x[sel]
     y = y[sel,, drop=FALSE ]
     uniq = uniq[sel]
- 
   }
- 
-  if(!is.na(threshold)) {
-    y = y-threshold
-    ylim = ylim-threshold
-  }
-  
-  ## the expression data. use two viewports for different clipping behavior
+
+  ## Use two viewports for different clipping behavior
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
     layout.pos.col=1, layout.pos.row=vpr))
+
+  ylab = colnames(y)
   grid.yaxis(seq(0.5,ncol(y)-0.5), ylab, gp=gpar(cex=0.5))
   
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="on",
@@ -244,9 +236,9 @@ stopifnot(length(x)==nrow(y), length(x)==length(uniq))
   ord  = c(which(uniq!=0), which(uniq==0))
   colo = ifelse(uniq[ord]==0, colors[strand], colors["duplicated"])
 
-  if(!is.na(threshold))
-    grid.lines(y=unit(0, "native"), gp=gpar(col=colors["threshold"]))
-  
+  grid.image(x, y, xlim=xlim, uniq=uniq)
+
+  ## segment boundaries
   if(!is.null(segScore)) {
     segSel   = which(segScore$chr==chr & segScore$strand==strand)
     segstart = segScore[segSel, "start"]
@@ -258,8 +250,8 @@ stopifnot(length(x)==nrow(y), length(x)==length(uniq))
                   y0 = unit(0.1, "npc"),       y1 = unit(0.9, "npc"),
                   gp = gpar(col=colors["cp"]))
   }
-  ## grid.points(y[ord,], pch=20, size=pointSize, colRamp=colorRamp(c("red", "green")))
-  grid.image(x[ord], y[ord,], xlim=xlim, ythresh=ythresh, uniq=uniq)
+
+
   popViewport(2)
 } ## end of plotSegmentationHeatmap
 
