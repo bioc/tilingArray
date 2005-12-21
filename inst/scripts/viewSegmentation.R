@@ -13,15 +13,14 @@ options(error=recover)
 
 graphics.off()
 
-out = c("x11", "pdf")[1]
+out = c("x11", "pdf", "png")[3]
 switch(out,
        x11 = {
          X11(width=15, height=8)
          grid.newpage()
        },
-       pdf = {
-         pdf(file="viewSeg.pdf", width=15, height=8)
-       },
+       pdf = pdf(file="viewSeg.pdf", width=12, height=7),
+       png = png(file="viewSeg.png", width=1024, height=768),
        stop("Sapperlot"))
 
 
@@ -73,14 +72,34 @@ if(what=="heatmap"){
     load("/ebi/research/huber/Projects/tilingCycle/xn.rda")
     ex = exprs(xn)
     colnames(ex) = xn$SampleID
+    time = as.numeric(colnames(ex))
+    stopifnot(!any(is.na(time)))
+    ex = ex[, order(time)]
   }
+  if(!exists("probeAnno"))
+    load("probeAnno.rda")
+
+  smoothRank = function(y) {
+    stopifnot(nrow(y)>=5)
+    idx = 3:(nrow(y)-2)
+    res = matrix(as.numeric(NA), nrow=nrow(y), ncol=ncol(y))
+    res[idx, ] = y[idx,] + y[idx+1,] + y[idx+2,] + y[idx-1,] + y[idx-2,]
+    return(rank(res) / length(res))
+  }
+  
+  justRank = function(y) {
+    return(rank(y) / length(y))
+  }
+  
+  
   plotAlongChrom(y = ex, probeAnno = probeAnno, gff=gff,
                  what = "heatmap",
-                 chr= 2, coord = c(110, 120)*1e3)
+                 transformation = smoothRank,
+                 chr= 11, coord = c(470, 485)*1e3)
                  
 }
 
 
 
-if(out %in% "pdf")
+if(out %in% c("pdf", "png"))
   dev.off()

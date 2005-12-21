@@ -11,10 +11,10 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
                           featureExclude=c("chromosome","gene","nucleotide_match", "insertion", "intron"),
                           featureNoLabel=c("uORF"),
                           pointSize=unit(0.6, "mm"),
-                          main) {
+                          main, ...) {
 
   ## set up the viewports of the plot layout.
-  VP = c("title"=1.2, "expr+"=5, "gff+"=1, "coord"=1, "gff-"=1, "expr-"=5, "legend"=0.4)
+  VP = c("title"=0.8, "expr+"=5, "gff+"=1, "coord"=1, "gff-"=1, "expr-"=5, "legend"=0.4)
   if(!doLegend)
      VP = VP[-which(names(VP)=="legend")]
 
@@ -99,13 +99,13 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
         plotSegmentationDots(x=px, y=py, xlim=coord, ylim=ylim, uniq=dat$unique,
                              segScore=sgs, threshold=threshold, 
                              chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
-                             vpr=vpr, colors=colors, pointSize=pointSize)
+                             vpr=vpr, colors=colors, pointSize=pointSize, ...)
       },
       "heatmap" = {
         plotSegmentationHeatmap(x=px, y=py, xlim=coord, uniq=dat$unique,
                                 segScore=sgs, threshold=threshold, 
                                 chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
-                                vpr=vpr, colors=colors)
+                                vpr=vpr, colors=colors, ...)
       },
            stop(sprintf("Invalid value '%s' for argument 'what'", what))
     ) ## switch
@@ -211,7 +211,7 @@ plotSegmentationDots = function(x, y, xlim, ylim, uniq, segScore, threshold,
 ##  plotSegmentationHeatmap
 ##------------------------------------------------------------- 
 plotSegmentationHeatmap = function(x, y, xlim, uniq, segScore, 
-  threshold, chr, strand, vpr, colors) {
+  threshold, chr, strand, vpr, colors, transformation=function(z) z) {
 
   stopifnot(length(x)==nrow(y), length(x)==length(uniq))
   if(missing(xlim)) {
@@ -223,20 +223,26 @@ plotSegmentationHeatmap = function(x, y, xlim, uniq, segScore,
     uniq = uniq[sel]
   }
 
+  ord = order(x)
+  x = x[ord]   ## sort by x-coordinates to simplify smoothing
+  y = y[ord,, drop=FALSE]
+  
   ## Use two viewports for different clipping behavior
+  ylim = c(-1, 2+ncol(y))
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
     layout.pos.col=1, layout.pos.row=vpr))
 
   ylab = colnames(y)
-  grid.yaxis(seq(0.5,ncol(y)-0.5), ylab, gp=gpar(cex=0.5))
-  
+  grid.yaxis( (1:ncol(y)), ylab, gp=gpar(cex=0.5))
+
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=vpr))
 
   ord  = c(which(uniq!=0), which(uniq==0))
   colo = ifelse(uniq[ord]==0, colors[strand], colors["duplicated"])
 
-  grid.image(x, y, xlim=xlim, uniq=uniq)
+  grid.image(x, 1:ncol(y), z=matrix(transformation(y), ncol=ncol(y), nrow=nrow(y)),
+             xlim=xlim, uniq=uniq)
 
   ## segment boundaries
   if(!is.null(segScore)) {
