@@ -91,8 +91,8 @@ seg = segment(x, maxseg=10, maxk=15)
 seg = confint(seg, nSegments=c(3,4,5,6))
 
 if(interactive())
-  plot(seg)
+  plot(seg, 5)
 
-show(segres)
+show(seg)
 }
 

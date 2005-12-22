@@ -1,14 +1,18 @@
 useDynLib(tilingArray)
 
-export("normalizeByReference", "segment",
+export("normalizeByReference", "segment", "costMatrix", 
        "findSegments", ## this is for backward compatibility, should be deprecated
-       "sampleStep", "scoreSegments", "costMatrix", 
+       "sampleStep", "scoreSegments", 
        "isWithinInterval", "posMin", "otherStrand",
        "qualityReport", "plotAlongChrom")
 
-S3method("residuals", "breakpointsPretend")
-S3method("breakpoints", "breakpointsPretend")
 
-exportClasses("segmentation")
-exportMethods("plot", "show", "confint")
+S3method(residuals, breakpointsPretend)
+S3method(breakpoints, breakpointsPretend)
+
+export("residuals.breakpointsPretend",
+       "breakpoints.breakpointsPretend")
+       
+exportClasses(segmentation)
+exportMethods(plot, show, confint)
 
