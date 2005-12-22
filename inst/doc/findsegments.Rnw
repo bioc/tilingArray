@@ -1,4 +1,4 @@
-%\VignetteIndexEntry{How to use the findSegments function to fit a piecewise constant curve}
+%\VignetteIndexEntry{How to use the segment function to fit a piecewise constant curve}
 %\VignetteDepends{Biobase}
 %\VignetteKeywords{Expression Analysis}
 %\VignettePackage{tilingArray}
@@ -24,7 +24,7 @@
 \begin{document}
 
 %------------------------------------------------------------
-\title{How to use the findSegments function to fit a piecewise constant curve}
+\title{How to use the segment function to fit a piecewise constant curve}
 %------------------------------------------------------------
 \author{Wolfgang Huber}
 \maketitle
@@ -59,7 +59,7 @@ genData = function(lenx, nrcp, stddev=0.1) {
     s = (.5+runif(1))*sign(rnorm(1))+s
     x[sel] <- rnorm(length(sel), mean=s, sd=stddev)
   }
-  return(list(x=x, cp=cp[-1]))
+  return(list(x=x, cp=cp[2:(length(cp)-1)]))
 }
 @ 
 <<plotData,fig=TRUE,include=FALSE>>=
@@ -75,28 +75,29 @@ A simulated data example with \Sexpr{nrcp} change points, shown with red
 vertical lines}
 %
 The result is shown in Figure~\ref{findsegments-plotData}.
-We can use the function \Rfunction{findSegments} to reconstruct the
+We can use the function \Rfunction{segment} to reconstruct the
 changepoints from the \Robject{x} data alone.
 %
 <<loadlib, results=hide>>=
-library(tilingArray)
+library("tilingArray")
 @ 
 <<findSegments>>=
-library(tilingArray)
+library("tilingArray")
+maxseg = 12
 maxk = 500
-maxcp   = 12
-seg  = findSegments(gd$x, maxk=maxk, maxcp=maxcp)
+seg  = segment(gd$x, maxk=maxk, maxseg=maxseg)
 seg
+seg@breakpoints[nrcp+(-1:1)]
 gd$cp
 @ 
 %
-We see that the \Sexpr{nrcp}-th row of the matrix \Robject{seg\$th} 
+We see that the \Sexpr{nrcp}-th element of the list \Robject{seg\@breakpoints} 
 exactly reconstructs the change points \Robject{gd\$cp} that were 
 used in the simulation.
 
-The parameters \Robject{maxcp} and \Robject{maxk} are the maximum number of
+The parameters \Robject{maxseg} and \Robject{maxk} are the maximum number of
 segments and the maximum length per segment. The algorithm finds for each
-value of $k$ from \Robject{1} to \Robject{maxcp} the best segmentation under
+value of $k$ from \Robject{1} to \Robject{maxseg} the best segmentation under
 the restriction that no individual segment be longer than \Robject{maxk}.  In
 the original paper of Picard et al.~\cite{Picard} and in their software,
 \Robject{maxk} is implicitely set to the number of data points
@@ -104,30 +105,24 @@ the original paper of Picard et al.~\cite{Picard} and in their software,
 algorithm's complexity. The complexity of Picard's software is
 \Robject{length(x)*length(x)} in memory and
 \Robject{length(x)*length(x)*maxcp} in time,
-the complexity of the \Rfunction{findSegments} function is 
+the complexity of the \Rfunction{segment} function is 
 \Robject{length(x)*maxk} in memory and
 \Robject{length(x)*maxk*maxcp} in time. As I am
-envisaging applications with \Robject{length(x)} $\approx 10^5$ and
+applying it to data with \Robject{length(x)} $\approx 10^5$ and
 \Robject{maxk} $\approx 250$, the difference can be substantial.
-
-%--------------------------------------------------
-\section{How to choose the number of segments?}
-%--------------------------------------------------
-Need to assess goodness of fit (contained in \Robject{gd\$J}) together with 
-model complexity (i.\,e.\, the number of change points). Details will follow $\ldots$
 
 %--------------------------------------------------
 \section{Some more testing}
 %--------------------------------------------------
 Here is a little for-loop that generates data using random parameters 
-and checks whether \Rfunction{findSegments} can reconstruct them. 
-The purpose of this is for checking the validity of the code. 
+and checks whether \Rfunction{segment} can reconstruct them. 
+%
 <<testing>>=
 set.seed(4711)
 for(i in 1:20){
   gd  = genData(lenx, nrcp)
-  seg = findSegments(gd$x, maxk=maxk, maxcp=maxcp)
-  stopifnot(seg$th[nrcp, 1:nrcp] == gd$cp)
+  seg = segment(gd$x, maxk=maxk, maxseg=maxseg)
+  stopifnot(seg@breakpoints[[nrcp]][, "estimate"] == gd$cp)
 }
 @ 
 

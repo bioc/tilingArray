@@ -1,6 +1,6 @@
 \name{findSegments}
 \alias{findSegments}
-\alias{segment}
+
 \title{Fit a piecewise constant curve to a sequence of numbers  --
   OBSOLETE, please use function segment instead.}
 \description{

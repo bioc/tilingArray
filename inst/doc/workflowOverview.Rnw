@@ -45,6 +45,12 @@ array data: RNA hybridizations and finding new transcripts}
 %--------------------------------------------------
 \section{Introduction}
 %--------------------------------------------------
+The package is currently under rapid development. Some desirable
+functionalities are still missing, others are poorly documented. 
+If you want an easy-to-use package, please come back at a later time.
+If you want to use this package, please do not expect a perfect and
+finished user interface. Many parts are still quite rough. 
+
 The data processing tasks in the following typically require a lot of CPU time
 (in the order of hours or days) and memory (several Gigabytes). Many of tasks
 will therefore usually be performed in scripts rather than in interactive

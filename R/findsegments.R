@@ -12,16 +12,14 @@ findSegments = function(x, maxcp, maxk, verbose=TRUE)
     stop(sprintf("maxcp=%d must not be larger than nrow(x)=%d", maxcp, n))
   if(maxk>n)
     stop(sprintf("maxk=%d must not be larger than length(x)=%d", maxk, n))
-  if(verbose>=2)
-    cat(sprintf("findsegments: calculating Gmean, n=%d, maxk=%d.\n",
+  if(verbose)
+    cat(sprintf("findsegments: Calculation of cost matrix Gmean, n=%d, maxk=%d.\n",
                 n, as.integer(maxk)))
-  if (verbose) cat("Computing cost matrix.\n")
   G = costMatrix(x, maxk)
   if (verbose) cat("Segmentation by dynamic programming.\n")
   res = .Call("findsegments", G, maxcp, verbose, PACKAGE="tilingArray")
 
   res$dat         <- x
-  res@y           <- x
   res$residuals   <- NULL
   res$chosenSegNo <- NULL
   res$confInt     <- NULL

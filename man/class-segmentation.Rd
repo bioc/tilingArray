@@ -1,8 +1,10 @@
-\name{segmentation-class}
+\name{segmentation}
 \docType{class}
-\alias{segmentation}
-\alias{class:segmentation}
-
+\alias{segmentation-class}
+\alias{confint}
+\alias{confint,segmentation-method}
+\alias{plot,segmentation-method}
+\alias{show,segmentation-method}
 
 \concept{confint}
 \concept{plot}
@@ -22,12 +24,9 @@
 
 \section{Slots}{
   \describe{
-    \item{\code{y}:}{A matrix with the data. Rows correspond to the
-      \code{x}-variable, columns to replicate measurements at the same
-      value of \code{x}. Breakpoints are fitted along the \code{x}-axis.
-      For example \code{x} can be genomic coordinates or time.} 
+    \item{\code{y}:}{A matrix with the data, see \code{link{segment}}.} 
     \item{\code{breakpoints}:}{List of segmentations. The element
-      \code{breakpoints[[j]]} corresponds to a segmentation into
+      \code{breakpoints[[j]]} corresponds to a segmentation fit of
       \code{j} segments, i.e. with \code{j-1} breakpoints. It is a
       matrix with \code{(j-1)} rows and 1 or 3 columns. It always
       contains a columns named \code{estimate} with the point estimates.
