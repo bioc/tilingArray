@@ -16,7 +16,7 @@ plotAlongChrom(segObj, y, probeAnno, gff,
     featureExclude=c("chromosome","gene","nucleotide_match", "insertion", "intron"),
     featureNoLabel=c("uORF"),
     pointSize=unit(0.6, "mm"),
-    main)
+    main, ...)
 }
 
 \arguments{
@@ -73,6 +73,9 @@ plotAlongChrom(segObj, y, probeAnno, gff,
     gff) that should not be labeled with their names (if they are plotted).}
   \item{pointSize}{unit object: point size used for the probe intensities scatterplot.}
   \item{main}{character: plot title.}
+  \item{...}{further arguments that can be passed on to the
+    the functions that implement the \code{what} option (see above),
+    \code{plotSegmentationDots} and \code{plotSegmentationHeatmap}.}
 }
 
 \details{
