@@ -1,3 +1,10 @@
+##
+## methods associated with object of class "segmentation"
+##   please see also file confint.segmentation.R
+##
+## (C) W. Huber 2005
+##
+
 ##--------------------------------------------------
 ## Create a segmentation object
 ##--------------------------------------------------
@@ -90,7 +97,7 @@ setMethod("show", "segmentation",
     ans = c(
       sprintf("Object of class 'segmentation':\n"),
       sprintf("Data matrix: %d x %d\n", nrow(object@y), ncol(object@y)),
-      sprintf("Change point estimates for S = 1:%d\n", length(object@breakpoints)))
+      sprintf("Change point estimates for number of segments S = 1:%d\n", length(object@breakpoints)))
     if(any(object@hasConfint)) {
       wh = which(object@hasConfint)
       ans = c(ans,
@@ -99,3 +106,4 @@ setMethod("show", "segmentation",
     }
     cat(ans, "\n")
   })
+

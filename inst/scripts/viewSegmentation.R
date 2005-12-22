@@ -13,7 +13,7 @@ options(error=recover)
 
 graphics.off()
 
-out = c("x11", "pdf", "png")[3]
+out = c("x11", "pdf", "png")[2]
 switch(out,
        x11 = {
          X11(width=15, height=8)

@@ -6,6 +6,9 @@ setMethod("confint", "segmentation",
   validObject(object)
   ## the list with breakpoints
   bpL = object@breakpoints
+
+  if(length(bpL)<2)
+    stop("length of breakpoints list must be >=2")
   
   ## Check arguments
   if(!missing(parm)) {
@@ -14,7 +17,7 @@ setMethod("confint", "segmentation",
          all(parm<=length(bpL))))
       stop(sprintf("'parm' must be numeric with values between 2 and %d", length(bpL)))
   } else {
-    parm = 1:length(bpL)
+    parm = 2:length(bpL)
   }
 
   ## transpose: this way the replicate data points (different columns of object@y)
@@ -33,7 +36,7 @@ setMethod("confint", "segmentation",
     breaks = (bpj-1) * nrow(toy)
 
     ## Residuals (this really ought to be calculated by the fit function,
-    ##  but it isn't)
+    ##  but currently it isn't)
     res = toy
     bp = c(0, breaks, length(toy))
     for(k in 2:length(bp)) {
@@ -67,12 +70,12 @@ setMethod("confint", "segmentation",
 })
 
 ## argument "breaks" is ignored, it is NULL anyway
-residuals.breakpointsPretend = function(x, breaks) {
+residuals.breakpointsPretend = function(object, breaks, ...) {
   stopifnot(is.null(breaks))
-  x$res
+  object$res
 }
 
-breakpoints.breakpointsPretend = function(x, breaks) {
+breakpoints.breakpointsPretend = function(obj, breaks, ...) {
   stopifnot(is.null(breaks))
-  list(breakpoints = x$breaks)
+  list(breakpoints =obj$breaks)
 }

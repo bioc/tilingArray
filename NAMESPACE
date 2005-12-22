@@ -6,6 +6,9 @@ export("segment",
        "isWithinInterval", "posMin", "otherStrand",
        "qualityReport", "plotAlongChrom")
 
+S3method("residuals", "breakpointsPretend")
+S3method("breakpoints", "breakpointsPretend")
+
 exportClasses("segmentation")
 exportMethods("plot", "show", "confint")
 

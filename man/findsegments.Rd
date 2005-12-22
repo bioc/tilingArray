@@ -1,8 +1,12 @@
 \name{findSegments}
 \alias{findSegments}
 \alias{segment}
-\title{Fit a piecewise constant curve to a sequence of numbers}
+\title{Fit a piecewise constant curve to a sequence of numbers  --
+  OBSOLETE, please use function segment instead.}
 \description{
+  This function is only here for backward compatibility - please use
+  \code{link{segment}}.
+  
   The function fits a piecewise constant curve to a sequence of numbers
   using a simple least squares cost function and the dynamic programming
   algorithm of Picard et al. (full citation see below).
