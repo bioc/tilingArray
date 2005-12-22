@@ -45,11 +45,16 @@ array data: RNA hybridizations and finding new transcripts}
 %--------------------------------------------------
 \section{Introduction}
 %--------------------------------------------------
-The package is currently under rapid development. Some desirable
-functionalities are still missing, others are poorly documented. 
+The package is currently under rapid development. It is provided
+\textit{as is}, with no pretense of it being finished. The data
+structures need to be simplified and rationalized, and a lot of
+documentation is missing. There are some very nice function in there,
+though.
+
 If you want an easy-to-use package, please come back at a later time.
-If you want to use this package, please do not expect a perfect and
-finished user interface. Many parts are still quite rough. 
+If you want to use this package now, please expect to spend some time
+figuring out things for yourself or buggering me for explanation
+and/or documentation improvements.
 
 The data processing tasks in the following typically require a lot of CPU time
 (in the order of hours or days) and memory (several Gigabytes). Many of tasks
@@ -86,25 +91,23 @@ a new object \Robject{x} and a new file \filename{x.Rdata}.
 
 
 %--------------------------------------------------
+\section{Normalization}
+%--------------------------------------------------
+The function \Rfunction{normalizeByReference.R}.
+
+%--------------------------------------------------
 \section{Segmentation}
 %--------------------------------------------------
-This is done by the script \Rscript{segment.R}.
+\subsection{Point estimates}
+Fast dynamic programming algorithm in the function
+\Rfunction{segment.R}.
+\subsection{Confidence intervals}
+The \Rfunction{confint} method for \Rclass{segmentation} objects,
 
 %--------------------------------------------------
-\section{Scoring the segments}
+\section{Visualization}
 %--------------------------------------------------
-This is done by the script \Rscript{scoreSegments.R}.
-
-%--------------------------------------------------
-\section{Categorizing the segments}
-%--------------------------------------------------
-This is done by the script \Rscript{tableSegments.R}.
-
-%--------------------------------------------------
-\section{UTR mapping}
-%--------------------------------------------------
-This is done by the script \Rscript{utrmap.R}.
-
+The \Rfunction{plotAlongChrom}.
 
 \end{document}
 

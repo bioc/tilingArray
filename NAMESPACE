@@ -1,6 +1,6 @@
 useDynLib(tilingArray)
 
-export("segment",
+export("normalizeByReference", "segment",
        "findSegments", ## this is for backward compatibility, should be deprecated
        "sampleStep", "scoreSegments", "costMatrix", 
        "isWithinInterval", "posMin", "otherStrand",

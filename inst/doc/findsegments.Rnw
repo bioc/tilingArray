@@ -31,7 +31,7 @@
 \tableofcontents
 
 %--------------------------------------------------
-\section{Introduction}
+\section{A simple example}
 %--------------------------------------------------
 
 The problem of segmenting a series of numbers into piecewise constant segments
@@ -39,10 +39,10 @@ occurs in multiple application areas. Two examples are
 \begin{itemize}
 \item arrayCGH data, where the segments correspond to regions of copy number
   gain, loss, or no change.
-\item tiling microarray data for transcriptomics, where the segments
+\item tiling microarray data for transcription profiling, where the segments
   correspond to transcripts. Here we assume that the probe effects (which lead
   to different fluorescence intensities even for the same mRNA abundance) have
-  been normalized away, so that all probes for one transcript
+  been normalized away, so that all probes for the same unique target sequence
   have the same fluorescence (in expectation).
 \end{itemize}
 
@@ -52,14 +52,15 @@ simulated data:
 <<defGenData>>=
 genData = function(lenx, nrcp, stddev=0.1) {
   x  = numeric(lenx)
-  cp = c(1, sort(sample(1:floor(lenx/15), nrcp-1) * 15), lenx+1)
+  cp = sort(sample(1:floor(lenx/15), nrcp-1) * 15)
+  cpb = c(1, cp, lenx+1)
   s  = 0
-  for (j in 2:length(cp)) {
-    sel = cp[j-1]:(cp[j]-1)
+  for (j in 2:length(cpb)) {
+    sel = cpb[j-1]:(cpb[j]-1)
     s = (.5+runif(1))*sign(rnorm(1))+s
-    x[sel] <- rnorm(length(sel), mean=s, sd=stddev)
+    x[sel] = rnorm(length(sel), mean=s, sd=stddev)
   }
-  return(list(x=x, cp=cp[2:(length(cp)-1)]))
+  return(list(x=x, cp=cp))
 }
 @ 
 <<plotData,fig=TRUE,include=FALSE>>=
@@ -71,16 +72,14 @@ abline(v=gd$cp, col="red")
 @ 
 %
 \myincfig{findsegments-plotData}{0.6\textwidth}{%
-A simulated data example with \Sexpr{nrcp} change points, shown with red
+A simulated data example with \Sexpr{nrcp} change points. 
+Their estimated locations are shown with red
 vertical lines}
 %
 The result is shown in Figure~\ref{findsegments-plotData}.
 We can use the function \Rfunction{segment} to reconstruct the
 changepoints from the \Robject{x} data alone.
 %
-<<loadlib, results=hide>>=
-library("tilingArray")
-@ 
 <<findSegments>>=
 library("tilingArray")
 maxseg = 12
