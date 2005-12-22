@@ -5,11 +5,11 @@
   OBSOLETE, please use function segment instead.}
 \description{
   This function is only here for backward compatibility - please use
-  \code{link{segment}}.
+  \code{\link{segment}}.
   
   The function fits a piecewise constant curve to a sequence of numbers
   using a simple least squares cost function and the dynamic programming
-  algorithm of Picard et al. (full citation see below).
+  algorithm described by Picard et al. (see reference).
 }
 \usage{
 findSegments(x, maxcp, maxk, verbose=TRUE)
