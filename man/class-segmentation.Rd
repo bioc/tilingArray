@@ -65,13 +65,15 @@
       The other parameters are directly passed on to
       \code{\link[strucchange]{confint.breakpointsfull}}.
     }
-    \item{plot}{The method \code{plot(x, y, xlim, xlab="x", ylab="y", bpcol, pch=16, ...)}
+    \item{plot}{The method \code{plot(x, y, xlim, xlab="x", ylab="y",
+	bpcol="black", bplty=1, pch=16, ...)}
       provides a simple visualization of the result of a
       segmentation. Parameters: \code{x} an object of class \code{segmentation},
       \code{y} an integer between \code{1} and
       \code{length(x@breakpoints)}, selecting which of the fits
-      contained in \code{x} to plot. The plot shows the numeric data along with segment borders and
-      if available confidence intervals.}
+      contained in \code{x} to plot, \code{bpcol} and \code{bplty} color
+      and line type of breakpoints. The plot shows the numeric data
+      along with breakpoints and if available their confidence intervals.}
     \item{show}{summary.}
   }
 }
