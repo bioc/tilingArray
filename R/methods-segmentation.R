@@ -70,12 +70,8 @@ setMethod("plot", "segmentation",
     ## bpcol=hex(polarLAB(70, 35, seq(0, 360, length=y)[-1]))
     ## bpcol=rainbow(y-1)
     bpcol = rep(brewer.pal(9, "Set1"), ceiling(nrow(breakp)/9))[1:nrow(breakp)]
-  } else {
-    if(length(bpcol)!=y-1)
-      stop(sprintf("length of 'bpcol' is %d but must be y-1=%d",
-                   length(bpcol), as.integer(y-1))) 
   }
-
+  
   plot(plx, ply, xlab=xlab, ylab=ylab, pch=pch, ...)
   abline(v=breakp[, "estimate"]-0.5, col=bpcol, lty=2) ## draw segment boundaries
 
