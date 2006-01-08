@@ -226,6 +226,7 @@ plotSegmentationHeatmap = function(x, y, xlim, uniq, segScore,
   ord = order(x)
   x = x[ord]   ## sort by x-coordinates to simplify smoothing
   y = y[ord,, drop=FALSE]
+  uniq = uniq[ord]
   
   ## Use two viewports for different clipping behavior
   ylim = c(-1, 2+ncol(y))
