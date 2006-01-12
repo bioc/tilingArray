@@ -5,8 +5,8 @@
 ##
 options(error=recover, warn=0)
 library("tilingArray")
-
 source("setScriptsDir.R")
+
 ## source(functionsDir("plotAlongChrom.R"))
 ## source(functionsDir("grid.image.R"))
 options(error=recover)
@@ -14,7 +14,7 @@ options(error=recover)
 graphics.off()
 
 
-what = c("dotsSeg", "dotsUnseg", "heatmap")[1]
+what = c("dotsSeg", "dotsUnseg", "heatmap")[3]
 name = sprintf("fig_tiling_%s", what)
 
 
@@ -24,7 +24,7 @@ name = sprintf("fig_tiling_%s", what)
              X11(width=15, height=8)
              grid.newpage()
            },
-           pdf = pdf(file=sprintf("%s.pdf", name), width=12, height=7),
+           pdf = pdf(file=sprintf("%s.pdf", name), width=8, height=4.7),
            png = png(file=sprintf("%s.png", name), width=1024, height=768),
            stop("Sapperlot"))
     
@@ -33,7 +33,8 @@ name = sprintf("fig_tiling_%s", what)
     if(what=="dotsSeg") {
       rnaTypes = rt = "seg-polyA-050909"
       source(scriptsDir("readSegments.R"))
-      plotAlongChrom(chr=1, coord = 1000*c(60, 90),
+      source(scriptsDir("calcThreshold.R"))
+      plotAlongChrom(chr=1, coord = 1000*c(75, 85),
                      segObj = get(rt),
                      gff = gff)
     }
