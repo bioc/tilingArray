@@ -14,7 +14,7 @@ options(error=recover)
 graphics.off()
 
 
-what = c("dotsSeg", "dotsUnseg", "heatmap")[3]
+what = c("dotsSeg", "dotsUnseg", "heatmap")[1]
 name = sprintf("fig_tiling_%s", what)
 
 
@@ -34,7 +34,7 @@ name = sprintf("fig_tiling_%s", what)
       rnaTypes = rt = "seg-polyA-050909"
       source(scriptsDir("readSegments.R"))
       source(scriptsDir("calcThreshold.R"))
-      plotAlongChrom(chr=1, coord = 1000*c(75, 85),
+      plotAlongChrom(chr=1, coord = 1000*c(76.2, 92.8),
                      segObj = get(rt),
                      gff = gff)
     }
