@@ -10,7 +10,7 @@
 }
 \usage{
 normalizeByReference(x, reference, whichBackground, nrStrata=20,
-  cutoffQuantile=0.05, plotFileNames)
+  cutoffQuantile=0.05, plotFileNames, verbose=FALSE)
 }
 \arguments{
   \item{x}{eSet.}
@@ -21,7 +21,10 @@ normalizeByReference(x, reference, whichBackground, nrStrata=20,
   \item{cutoffQuantile}{Numeric (length 1), the probes whose reference
     signal is below this quantile are thrown out.}
   \item{plotFileNames}{Character vector whose length is the same as the
-    number of arrays in \code{x}. Optional, if missing, no plots are produced.}
+    number of arrays in \code{x}. Optional, if missing, no plots are
+    produced.}
+  \item{verbose}{Logical of length 1, if \code{TRUE}, some messages about
+    progress are printed.}
 }
 \details{...}
 

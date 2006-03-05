@@ -1,5 +1,5 @@
 normalizeByReference = function(x, reference, whichBackground, nrStrata=10,
-  cutoffQuantile=0.05, plotFileNames) {
+  cutoffQuantile=0.05, plotFileNames, verbose=FALSE) {
 
   if(!is(x, "eSet"))
     stop("'x' must be an object of class 'eSet'")
@@ -58,7 +58,7 @@ normalizeByReference = function(x, reference, whichBackground, nrStrata=10,
   }
   
   ## apply the background and the scaling
-  cat("Applying background and scaling\n")
+  if(verbose) cat("Applying background and scaling\n")
   yn = matrix(NA, nrow=nrow(exprs(x)), ncol=d)
   ttrefsig = 2^refSig
   for(j in 1:d)
@@ -66,8 +66,8 @@ normalizeByReference = function(x, reference, whichBackground, nrStrata=10,
 
   ## call vsn, if there are >= 2 arrays
   if(d>=2) {
-    cat("Between array normalization and variance stabilizing transformation\n")
-    vsnres = vsn(yn, lts.quantile=0.95, subsample=2e5, niter=3) ## , verbose=FALSE
+    if(verbose) cat("Between array normalization and variance stabilizing transformation\n")
+    vsnres = vsn(yn, lts.quantile=0.95, subsample=2e5, verbose=verbose)
     yn = exprs(vsnres)/log(2)
     rm(vsnres)
   } else {

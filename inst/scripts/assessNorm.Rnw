@@ -182,17 +182,15 @@ e) In addition to d), drop the 5% weakest probes in the DNA hybridization.
 
 if(FALSE) {
 
-qsel = (sta>=0)
-qi   = ind[qsel]
-qx   = sta[qsel]
-xout = seq(min(qx), max(qx), by=8)
+  qsel = (sta>=0)
+  qi   = ind[qsel]
+  qx   = sta[qsel]
+  xout = seq(min(qx), max(qx), by=8)
 
-
-
-ass = matrix(NA, nrow=5, ncol=length(rnaTypes))
-colnames(ass)=rnaTypes
-
-for(rt in rnaTypes) {
+  ass = matrix(NA, nrow=5, ncol=length(rnaTypes))
+  colnames(ass)=rnaTypes
+  
+  for(rt in rnaTypes) {
     
     py = calcY(isel, fn, rt)
     par(mfrow=c(ncol(py), 1))
@@ -217,7 +215,7 @@ for(rt in rnaTypes) {
   for(i in 1:ncol(py)) {
     sl  = !is.na(py[,i])
     ap = approx(x=qx[sl], y=py[sl, i], xout=xout, ties=mean)
-
+    
     dd = calcdd(ap$y)
     
     sig = diff(quantile(ap$y, probs=c(0.01, 0.99)))
@@ -229,6 +227,6 @@ for(rt in rnaTypes) {
   }
   ## matplot(acr, type="l")
   
-} ## for
-}
+} 
+
 @ 
