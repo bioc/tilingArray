@@ -1,0 +1,234 @@
+%\VignetteIndexEntry{tilingArray - assess normalization}
+%\VignetteDepends{tilingArray}
+%\VignetteKeywords{Expression Analysis}
+%\VignettePackage{tilingArray}
+
+\documentclass[11pt]{article}
+\usepackage{geometry}\usepackage{color}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.75}
+\usepackage[%
+baseurl={http://www.bioconductor.org},%
+pdftitle={Assessing signal/noise ratio before and after normalization},%
+pdfauthor={Wolfgang Huber},%
+pdfsubject={tilingArray},%
+pdfkeywords={Bioconductor},%
+pagebackref,bookmarks,colorlinks,linkcolor=darkblue,citecolor=darkblue,%
+pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
+
+%------------------------------------------------------------
+% newcommand
+%------------------------------------------------------------
+\newcommand{\Robject}[1]{\texttt{#1}}
+\newcommand{\Rpackage}[1]{\textit{#1}}
+\newcommand{\Rclass}[1]{\textit{#1}}
+\newcommand{\Rfunction}[1]{{\small\texttt{#1}}}
+
+\newcommand{\myincfig}[3]{%
+  \begin{figure}[htbp]
+    \begin{center}
+      \includegraphics[width=#2]{#1}
+      \caption{\label{#1}#3}
+    \end{center}
+  \end{figure}
+}
+
+\begin{document}
+
+%------------------------------------------------------------
+\title{Assessing signal/noise ratio before and after normalization}
+%------------------------------------------------------------
+\author{Wolfgang Huber}
+\maketitle
+\tableofcontents
+
+
+\section{Introduction}
+The purpose of this document is to assess the performance of the
+probe-response normalization by the function
+\Rfunction{normalizeByReference} in the \Rpackage{tilingArray}
+package. We use the example data from the David et
+al.~\cite{david2006} paper, which is provided in the
+\Rpackage{davidTiling} package.
+%
+<<load, results=hide>>=
+library("tilingArray")
+library("davidTiling")
+if(!exists("davidTiling"))
+  data("davidTiling")
+@ 
+%
+It contains \Sexpr{nrow(pData(davidTiling))} arrays with
+\Sexpr{nrow(exprs(davidTiling))} each. Three of them hybridizations of
+genomic DNA, which will use a reference for the normalization, and
+five are RNA hybridizations.
+<<showDavidTilingData>>=
+dim(exprs(davidTiling))
+pData(davidTiling)
+@
+
+%----------------------------------------
+\section{PM and MM probes}
+First, we determine the indices of the PM and MM probes. 
+The array has 2560 rows and 2560 columns. If we count the 
+rows and columns from 0 to 2559, then the indices of the probes' intensities
+in the expression matrix \Robject{exprs(davidTiling)} are given
+by r*2560+c. The PM probes 
+lie in rows $1, 3, \ldots, 2557$, the MM probes in rows
+$2, 4, \ldots, 2558$:
+<<PMandMM>>=
+nc = 2560
+PMind = rep(seq(1, nc-3, by=2), each=nc)*2560 + (1:nc)
+MMind = PMind + nc
+@ 
+To verify this, let's look at the scatterplot of PM versus MM values
+for the first chip:
+%
+<<viewPMandMMscp,fig=TRUE,include=FALSE,width=5,height=5,eps=FALSE>>=
+x1 = log(exprs(davidTiling)[PMind, 1], 2)
+x2 = log(exprs(davidTiling)[MMind, 1], 2)
+smoothScatter(x1,x2,nrpoints=0,xlab="PM", ylab="MM")
+abline(a=0,b=1,col="red")
+@ 
+\myincfig{assessNorm-viewPMandMMscp}{0.5\textwidth}{%
+Scatterplot of M versus MM values
+for the first chip in the \Robject{davidTiling} data.}
+
+%----------------------------------------
+\section{Background probes}
+For the background estimation, we need to specify a set of
+``background'' probes, that is probes for which we expect no specific
+signal. The probe information in the \Rpackage{davidTiling} package is
+stored in the environment \Robject{probeAnno}
+<<backgroundProbes>>=
+if(!exists("probeAnno"))
+  data("probeAnno")
+isbg = (probeAnno$probeReverse$no_feature=="no" &
+        probeAnno$probeDirect$no_feature=="no")
+@
+
+%----------------------------------------
+\section{Normalization}
+<<normalizeByReference>>=
+isRNA = davidTiling$nucleicAcid %in% c("poly(A) RNA","total RNA")
+isDNA = davidTiling$nucleicAcid %in% "genomic DNA"
+stopifnot(sum(isRNA)==5, sum(isDNA)==3)
+xn = normalizeByReference(davidTiling[,isRNA], 
+   davidTiling[,isDNA], 
+   whichBackground=which(isbg),
+   plotFileNames=sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA))))
+@
+ 
+%----------------------------------------
+\section{Assessment}
+For comparison, we also obtain the data if we do not throw out the weakest probes.
+<<normalizeWithoutThrowout>>=
+xnAllprobes = normalizeByReference(davidTiling[,isRNA], 
+   davidTiling[,isDNA], 
+   whichBackground=which(isbg),
+   cutoffQuantile=0)
+@ 
+%
+
+<<setUpDifferentNormMethods>>=
+sta = probeAnno$"4.-.start"
+ind = probeAnno$"4.-.index"
+uni = probeAnno$"4.-.unique"
+
+dat = vector(mode="list", length=5)
+
+dat[[1]] = log2(exprs(davidTiling)[ind, which(isDNA)[1]])
+dat[[2]] = log2(exprs(davidTiling)[ind, which(isRNA)[1]])
+dat[[3]] = dat[[2]]-dat[[1]]
+dat[[4]] = exprs(xnAllprobes)[ind, 1]
+dat[[5]] = exprs(xn)[ind, 1]
+@ 
+
+<<selectRegionForPlot>>=
+## UFD2: Chr 4-, 118-122000
+sel = (sta>=115000 & sta<=125000)
+px = sta[sel]
+
+myColorRamp = function(x, rg=range(x)) {
+  cols = colorRamp(c("red", "yellow", "blue"))((x-rg[1])/(rg[2]-rg[1])) / 256
+  return(rgb(cols[,1], cols[,2], cols[,3]))
+}
+cols = myColorRamp(dat[[1]][sel])
+@ 
+
+<<alongChromPlot, fig=TRUE, include=FALSE, height=10, width=7>>=
+par(mfrow=c(length(dat), 1), mai=c(0.6, 0.6, 0.6, 0.01))
+for(i in 1:length(dat))
+  plot(px, dat[[i]][sel], pch=20, col=cols, xlab = "", ylab="signal", 
+    main=letters[i])
+@ 
+%
+\myincfig{assessNorm-alongChromPlot}{\textwidth}{% 
+Scatterplot of different types of signal ($y$-axis) along genomic
+coordinates ($x$-axis). Each dot corresponds to a microarray probe. 
+a) signal from one of the DNA hybridizations (logarithmic scale, base 2).  
+The $y$-coordinate of each dot is also encoded using
+a pseudo-color scheme. Dark red corresponds to probes that have a 
+very weak response, dark blue to those with the strongest response.
+The same coloring is also used in panels b)-f).
+b) unnormalized intensities from one of the poly(A) RNA bybridizations
+(logarithmic scale, base 2).  
+c) \textbf{fixme:} Divide RNA-signal by DNA-signal then take logarithm (base 2). 
+d) Background subtraction of the RNA-signal, divide by DNA-signal, then 
+variance stabilizing normalization (vsn, glog base 2). 
+e) In addition to d), drop the 5% weakest probes in the DNA hybridization. 
+}
+
+<<>>=
+
+if(FALSE) {
+
+qsel = (sta>=0)
+qi   = ind[qsel]
+qx   = sta[qsel]
+xout = seq(min(qx), max(qx), by=8)
+
+
+
+ass = matrix(NA, nrow=5, ncol=length(rnaTypes))
+colnames(ass)=rnaTypes
+
+for(rt in rnaTypes) {
+    
+    py = calcY(isel, fn, rt)
+    par(mfrow=c(ncol(py), 1))
+    for(i in 1:ncol(py)) {
+      sl  = !is.na(py[,i])
+      plot(xsel[sl], py[sl,i], col=cols[sl], pch=20, xlab="coordinates", ylab="signal",
+           main=colnames(py)[i])
+    }
+    if(!interact)
+      dev.off()
+  }
+  
+  ##
+  ## quantitative assessment:
+  ##
+  py   = calcY(qi, fn, rt)
+  max.lag = 100
+  wh  = 50
+  acr = matrix(NA, nrow=max.lag+1, ncol=ncol(py))
+  colnames(acr) = colnames(py)
+  
+  for(i in 1:ncol(py)) {
+    sl  = !is.na(py[,i])
+    ap = approx(x=qx[sl], y=py[sl, i], xout=xout, ties=mean)
+
+    dd = calcdd(ap$y)
+    
+    sig = diff(quantile(ap$y, probs=c(0.01, 0.99)))
+    noi = median(dd)
+    
+    ass[i, rt] = sig / noi
+    ## cat(rt, i, signif(c(sig, noi, ass[i, rt]), 3), "\n")
+    stopifnot(!is.na(ass[i, rt]))
+  }
+  ## matplot(acr, type="l")
+  
+} ## for
+}
+@ 

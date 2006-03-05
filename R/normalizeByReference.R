@@ -1,4 +1,4 @@
-normalizeByReference = function(x, reference, whichBackground, nrStrata=20,
+normalizeByReference = function(x, reference, whichBackground, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames) {
 
   if(!is(x, "eSet"))
@@ -12,8 +12,8 @@ normalizeByReference = function(x, reference, whichBackground, nrStrata=20,
   if(d<1)
     stop("There is nothing to normalize in 'x'.")
     
-  ## reference normalization:
-  refSig    = rowMeans(log(exprs(reference), 2))
+  ## reference signal
+  refSig = rowMeans(log(exprs(reference), 2))
 
   ## quantiles of the reference intensities, to group probes into
   ## strata for the background estimations
@@ -56,29 +56,30 @@ normalizeByReference = function(x, reference, whichBackground, nrStrata=20,
       dev.off()
     }
   }
-
   
   ## apply the background and the scaling
   cat("Applying background and scaling\n")
   yn = matrix(NA, nrow=nrow(exprs(x)), ncol=d)
   ttrefsig = 2^refSig
-  for(j in 1:d) {
-    ## yn[, j] = (exprs(x)[, j] - 2^predict(bgfun[[j]], newdata=refSig)) / ttrefsig
+  for(j in 1:d)
     yn[, j] = (exprs(x)[, j] - 2^bgfun[[j]](refSig)) / ttrefsig
-  }
-  
-  e = new.env()
+
+  ## call vsn, if there are >= 2 arrays
   if(d>=2) {
     cat("Between array normalization and variance stabilizing transformation\n")
-    save(yn, file="yn.rda")
-    browser()
     vsnres = vsn(yn, lts.quantile=0.95, subsample=2e5, niter=3) ## , verbose=FALSE
-    assign("exprs", exprs(vsnres)/log(2), e)
+    yn = exprs(vsnres)/log(2)
     rm(vsnres)
   } else {
     warning("'x' has only one column, cannot do between array normalization and variance stabilizing transformation")
-    assign("exprs", yn, e)
   }
   
+  ## throw out data from probes that have too small refSig, they are likely to
+  ## be dominated by noise / unspecific signal
+  throwOut = (refSig < quantile(refSig, probs=cutoffQuantile))
+  yn[throwOut, ] = NA
+
+  e = new.env()
+  assign("exprs", yn, e)
   new("eSet", assayData=e, phenoData=phenoData(x), sampleNames=sampleNames(x))
 }
