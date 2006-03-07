@@ -2,11 +2,11 @@
 \alias{normalizeByReference}
 
 \title{
-  Probe-response normalization of hybridization intensities from a short-oligo microarray
+  Probe-specific normalization of hybridization intensities from a short-oligo microarray
 }
 \description{
   Adjust the hybridization intensities from a short-oligo microarray
-  for probe-specific response effect by using a set of reference hybridizations.
+  for probe-specific response effect by using one or several reference hybridizations.
 }
 \usage{
 normalizeByReference(x, reference, pm, background, nrStrata=10,
@@ -34,7 +34,16 @@ normalizeByReference(x, reference, pm, background, nrStrata=10,
   \item{verbose}{Logical of length 1, if \code{TRUE}, some messages about
     progress are printed.}
 }
-\details{...}
+\details{The intensities in \code{x} are adjusted according to the
+  reference values. For example, the reference values could be obtained
+  by hybridizing a DNA sample to the array. The abundance of target is
+  thus the same for all PM probes, and the intensities that are actually
+  observed can be used for estimating the adjustment parameters. Since
+  this only makes sense for the PM probes, NA values be returned for all
+  other probes. The set of indices for background probes,
+  \code{background}, is used for the
+  estimation of the background correction.
+  }
 
 \value{
   An object of class \code{\link{eSet}}.

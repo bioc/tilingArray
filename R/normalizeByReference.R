@@ -38,7 +38,7 @@ normalizeByReference = function(x, reference, pm, background, nrStrata=10,
 
   ## quantiles of the reference intensities, to group probes into
   ## strata for the background estimations
-  quants    = quantile(refSigPm, probs=seq(0, 1, length=nrStrata+1))
+  quants    = quantile(refSig, probs=seq(0, 1, length=nrStrata+1))
   quants[1] = quants[1]-1
 
   ## reference signal for the background features
@@ -56,7 +56,7 @@ normalizeByReference = function(x, reference, pm, background, nrStrata=10,
 
   ## interpolate  
   for(j in 1:d) {
-    ybg[, j] = tapply(log(exprs(x)[background, j], 2), strata, shorth)
+    ybg[, j] = tapply(log(exprs(x)[background, j], 2), strata, shorth, tieLimit=0.1)
     bgfun[[j]] = approxfun(xbg, ybg[,j], rule=2)
   }
 
@@ -102,6 +102,6 @@ normalizeByReference = function(x, reference, pm, background, nrStrata=10,
   exprmat[pm, ] = yn
   
   e = new.env()
-  assign("exprs", yn, e)
+  assign("exprs", exprmat, e)
   new("eSet", assayData=e, phenoData=phenoData(x), sampleNames=sampleNames(x))
 }
