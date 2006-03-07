@@ -9,13 +9,21 @@
   for probe-specific response effect by using a set of reference hybridizations.
 }
 \usage{
-normalizeByReference(x, reference, whichBackground, nrStrata=20,
+normalizeByReference(x, reference, pm, background, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames, verbose=FALSE)
 }
 \arguments{
-  \item{x}{eSet.}
-  \item{reference}{eSet.}
-  \item{whichBackground}{Integer vector, indexing a set of rows in \code{reference}.}
+  \item{x}{eSet containing the data to be normalized.}
+  \item{reference}{eSet with the same number of features as \code{x},
+    containing the reference signal.}
+  \item{pm}{indices specifying the perfect match features in
+    \code{reference}.
+    This can be either an integer vector with values between 1 and
+    \code{nrow(exprs(reference))} or a logical vector.}
+  \item{background}{indices specifying a set of background features in
+    \code{x}.
+    This can be either an integer vector with values between 1 and
+    \code{nrow(exprs(x))} or a logical vector.}
   \item{nrStrata}{Integer (length 1), number of strata for estimating of
     additive background function.}
   \item{cutoffQuantile}{Numeric (length 1), the probes whose reference

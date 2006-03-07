@@ -1,12 +1,12 @@
 Package: tilingArray
-Version: 1.4.9
-Date: 05 Mar 2006
+Version: 1.8.0
+Date: 06 Mar 2006
 Title: Analysis of high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Joern Toedling
 Maintainer: W. Huber <huber@ebi.ac.uk>
 Depends: R (>= 2.1.0), Biobase (>= 1.4.1), RColorBrewer (>= 0.2-2),
         grid (>= 2.0.0), colorspace (>= 0.9), strucchange (>= 1.2-10),
-        vsn (>= 1.9.0), genefilter (>= 1.8.0), locfit (>= 1.1-11), 
+        vsn (>= 1.9.0), genefilter (>= 1.8.0), 
         geneplotter (>= 1.8.0)
 Suggests:
 Description: The package provides a function for DNA reference normalization

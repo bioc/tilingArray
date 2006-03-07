@@ -1,4 +1,4 @@
-normalizeByReference = function(x, reference, whichBackground, nrStrata=10,
+normalizeByReference = function(x, reference, pm, background, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames, verbose=FALSE) {
 
   if(!is(x, "eSet"))
@@ -11,23 +11,44 @@ normalizeByReference = function(x, reference, whichBackground, nrStrata=10,
     stop("'x' and 'reference' must have 'exprs' elements in their 'assayData' slot with the same number of rows.")
   if(d<1)
     stop("There is nothing to normalize in 'x'.")
-    
-  ## reference signal
-  refSig = rowMeans(log(exprs(reference), 2))
+
+  checkindex = function(v, nm) {
+    if(is.logical(v)) {
+      if(length(v)!=n)
+        stop(sprintf("%d must be logical vector of length %d with no NA.", nm, n))
+      v = which(v)
+    } else {
+      if(!(is.integer(v)&&(length(v)>1)&&(min(v)>=1)&&(max(v)<=n)))
+        stop(sprintf("'%s' must be an integer vector with values between 1 and %d.", nm, n))
+    }
+    if(any(is.na(v)))
+      stop(sprintf("'%s' must not contain NA.", nm))
+    return(v)
+  }
+  
+  pm = checkindex(pm, "pm")
+  background = checkindex(background, "background")
+
+  mtb = match(background, pm)
+  if(any(is.na(mtb)))
+    stop("'background' must be a subset of 'pm'.")
+  
+  ## reference signal for the pm features
+  refSig = rowMeans(log2(exprs(reference)[pm,]))
 
   ## quantiles of the reference intensities, to group probes into
   ## strata for the background estimations
-  quants    = quantile(refSig, probs=seq(0, 1, length=nrStrata+1))
+  quants    = quantile(refSigPm, probs=seq(0, 1, length=nrStrata+1))
   quants[1] = quants[1]-1
 
-  ## reference signal just for the "background" probes
-  refSigWhBg = refSig[whichBackground]
+  ## reference signal for the background features
+  refSigBg = refSig[mtb]
 
-  ## strata is now a factor with 'nrStrata' levels and of same length as 'whichBackground'
-  strata     = cut(refSigWhBg, quants)
+  ## strata is now a factor with 'nrStrata' levels and of same length as 'background'
+  strata     = cut(refSigBg, quants)
 
   if(any(table(strata) < 5e3))
-    warning("'some strata of background probes contain fewer than 5000 probes, are you sure this is allright?")
+    warning("'some strata of background contain fewer than 5000 features, are you sure this is alright?")
   
   xbg = (quants[-1]+quants[-length(quants)])/2  ## midpoint between quantiles
   ybg = matrix(as.numeric(NA), nrow=nrStrata, ncol=d)
@@ -35,23 +56,21 @@ normalizeByReference = function(x, reference, whichBackground, nrStrata=10,
 
   ## interpolate  
   for(j in 1:d) {
-    ybg[, j] = tapply(log(exprs(x)[whichBackground, j], 2), strata, shorth)
-    ## bgfun[[j]]  = locfit.raw(xbg, ybg[,j])
+    ybg[, j] = tapply(log(exprs(x)[background, j], 2), strata, shorth)
     bgfun[[j]] = approxfun(xbg, ybg[,j], rule=2)
   }
 
-  ## diagnostic plot (also for the paper)
+  ## diagnostic plot of bgfun:
   if(!missing(plotFileNames)) {
     if(length(plotFileNames)!=d)
       stop("Please supply as many elements of 'plotFileNames' as there are arrays in 'x'")
-    rgx = range(refSigWhBg)
+    rgx = range(refSigBg)
     px  = seq(rgx[1], rgx[2], length=120)
     for(j in 1:d) {
       pdf(file=plotFileNames[j], width=8, height=6)
-      smoothScatter(refSigWhBg, log(exprs(x)[whichBackground, j],2),
+      smoothScatter(refSigBg, log(exprs(x)[background, j],2),
             xlab = "Reference intensity",
             ylab = "Background intensity", nrpoints=0)
-      ## lines(px, predict(bgfun[[j]], newdata=px), col="darkred")
       lines(px, bgfun[[j]](px), col="darkred")
       dev.off()
     }
@@ -59,10 +78,10 @@ normalizeByReference = function(x, reference, whichBackground, nrStrata=10,
   
   ## apply the background and the scaling
   if(verbose) cat("Applying background and scaling\n")
-  yn = matrix(NA, nrow=nrow(exprs(x)), ncol=d)
+  yn = matrix(as.numeric(NA), nrow=length(pm), ncol=d)
   ttrefsig = 2^refSig
   for(j in 1:d)
-    yn[, j] = (exprs(x)[, j] - 2^bgfun[[j]](refSig)) / ttrefsig
+    yn[, j] = (exprs(x)[pm, j] - 2^bgfun[[j]](refSig)) / ttrefsig
 
   ## call vsn, if there are >= 2 arrays
   if(d>=2) {
@@ -79,6 +98,9 @@ normalizeByReference = function(x, reference, whichBackground, nrStrata=10,
   throwOut = (refSig < quantile(refSig, probs=cutoffQuantile))
   yn[throwOut, ] = NA
 
+  exprmat = matrix(as.numeric(NA), nrow=n, ncol=d)
+  exprmat[pm, ] = yn
+  
   e = new.env()
   assign("exprs", yn, e)
   new("eSet", assayData=e, phenoData=phenoData(x), sampleNames=sampleNames(x))
