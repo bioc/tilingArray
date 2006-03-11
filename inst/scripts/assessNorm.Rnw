@@ -69,6 +69,9 @@ cache <- function(name, expr) {
   get(name)
 }
 @
+<<errorReporting, echo=FALSE>>=
+options(error=recover, warn=2)
+@ 
 %
 It contains \Sexpr{nrow(pData(davidTiling))} arrays with
 \Sexpr{nrow(exprs(davidTiling))} features each. Three of them were hybridized to
@@ -130,10 +133,11 @@ isbg = (probeAnno$probeReverse$no_feature=="no" &
 isRNA = davidTiling$nucleicAcid %in% c("poly(A) RNA","total RNA")
 isDNA = davidTiling$nucleicAcid %in% "genomic DNA"
 stopifnot(sum(isRNA)==5, sum(isDNA)==3)
-xn = cache("xn",
-  normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-                       pm=PMind, background=isbg,
-                       plotFileNames=sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA)))))
+if(!exists("xn"))
+  xn = cache("xn",
+    normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
+                         pm=PMind, background=isbg,
+                         plotFileNames=sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA)))))
 @
  
 %----------------------------------------
@@ -143,9 +147,10 @@ For comparison, we also compare to the situation in which
 we do not throw out the weakest features, by setting 
 \Robject{cutoffQuantile=0}.
 <<normalizeWithoutThrowout>>=
-xnAllfeatures = cache("xnAllfeatures",
-  normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-                       pm=PMind, background=isbg, cutoffQuantile=0))
+if(!exists("xnAllfeatures"))
+  xnAllfeatures = cache("xnAllfeatures",
+    normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
+                         pm=PMind, background=isbg, cutoffQuantile=0))
 @ 
 %
 
@@ -155,11 +160,12 @@ z = exprs(davidTiling)[PMind, isRNA] - exprs(davidTiling)[MMind, isRNA] + 16
 z[z<=0] = NA
 
 xMM = matrix(as.numeric(NA), nrow=nc*nc, ncol=sum(isRNA))
-xMM[PMind] = log2(z)
+xMM[PMind, ] = log2(z)
 @ 
 
 %----------------------------------------
 \section{Assessment}
+\subsection{Visually}
 
 We would like to visualize the data along genomic coordinates. We
 select the features that map to the longest chromosome, which is
@@ -168,44 +174,49 @@ coordinate of their match, \Robject{ind} their indices in the array
 \Robject{exprs(davidTiling)}, and \Robject{uni} the degeneracy of their
 hit.
 <<stainduni>>=
-sta = probeAnno$"4.-.start"
-ind = probeAnno$"4.-.index"
-uni = probeAnno$"4.-.unique"
+sta = probeAnno$"9.-.start"
+end = probeAnno$"9.-.end"
+ind = probeAnno$"9.-.index"
 @ 
 %
 We construct a list of vectors, each containing different versions of
 the intensity data, in order that corresponds to \Robject{sta} and
 \Robject{ind} from above.
 <<setUpDifferentNormMethods>>=
-dat = vector(mode="list", length=5)
-dat[[1]] = log2(exprs(davidTiling)[ind, which(isRNA)[1]])
-dat[[2]] = xMM[ind, 1]
-dat[[3]] = log2(exprs(davidTiling)[ind, which(isDNA)[1]])
-dat[[4]] = dat[[2]]-dat[[1]]
-dat[[5]] = exprs(xnAllfeatures)[ind, 1]
-dat[[6]] = exprs(xn)[ind, 1]
-for(j in 4:length(dat))
-  dat[[j]] = dat[[j]] - quantile(dat[[j]], 0.05, na.rm=TRUE)
+variousNormalizations = function(idx) {
+  dat = vector(mode="list", length=5)
+  dat[[1]] = log2(exprs(davidTiling)[idx, which(isDNA)[1]])
+  dat[[2]] = log2(exprs(davidTiling)[idx, which(isRNA)[1]])
+  dat[[3]] = xMM[idx, 1]
+  dat[[4]] = dat[[2]]-dat[[1]]
+  dat[[5]] = exprs(xnAllfeatures)[idx, 1]
+  dat[[6]] = exprs(xn)[idx, 1]
+  for(j in 4:length(dat))
+    dat[[j]] = dat[[j]] - quantile(dat[[j]], 0.05, na.rm=TRUE)
+  return(dat)
+}
+dat = variousNormalizations(ind)
 @ 
 %
-We select a 10kB region to fit on a plot,
+We select a 9kB region around the highly expressed gene TFP1
+to fit on a plot, and set the $y$-axis limits:
 <<selectRegionForPlot>>=
-## UFD2: Chr 4-, 118-122000
-sel = (sta>=115000 & sta<=125000)
-px = sta[sel]
+sel = (sta>=216600 & end<=227000)
+ysc = sapply(dat, function(py) quantile(py, probs=c(0, 0.99), na.rm=TRUE))
+ysc[, 4] = ysc[, 5] = ysc[, 6]
 @ 
 %
 Now we are ready to plot:
-<<alongChromPlot, fig=TRUE, include=FALSE, height=10, width=7>>=
-ysc = sapply(dat, function(py) quantile(py, probs=c(0, 0.99), na.rm=TRUE))
-ysc[, 4] = ysc[, 5] = ysc[, 6]
-
-source("/home/huber/madman/Rpacks/tilingArray/R/comparisonPlot.R")
-comparisonPlot(x, lapply(dat, "[", sel), yscale=ysc)
-
+<<alongChromPlot, fig=TRUE, include=FALSE, height=10, width=8>>=
+source("/homes/huber/madman/Rpacks/tilingArray/R/comparisonPlot.R")
+anno = data.frame(start=c(217860, 221078),
+                  end  =c(220697, 222487),
+                  name =I(c("RPN2", "SER33")))
+ticks = c(217, 223, 224, 225, 226)
+comparisonPlot((sta+end)[sel]/2, lapply(dat, "[", sel), yscale=ysc, anno=anno, ticks=ticks)
 @ 
 %
-\myincfig{assessNorm-alongChromPlot}{\textwidth}{% 
+\myincfig{assessNorm-alongChromPlot}{0.8\textwidth}{% 
 Scatterplot of different types of signal ($y$-axis) along genomic
 coordinates ($x$-axis). Each dot corresponds to a microarray feature. 
 a) signal from one of the DNA hybridizations (logarithmic scale, base 2).  
@@ -215,61 +226,63 @@ very weak response, dark blue to those with the strongest response.
 The same coloring is also used in panels b)-f).
 b) unnormalized intensities from one of the poly(A) RNA bybridizations
 (logarithmic scale, base 2).  
-c) \textbf{fixme:} Divide RNA-signal by DNA-signal then take logarithm (base 2). 
-d) Background subtraction of the RNA-signal, divide by DNA-signal, then 
+c) $\log_2(\mbox{PM}-\mbox{MM}+16)$
+d) Divide RNA-signal by DNA-signal then take logarithm (base 2). 
+e) Background subtraction of the RNA-signal, divide by DNA-signal, then 
 variance stabilizing normalization (vsn, glog base 2). 
-e) In addition to d), drop the 5\% weakest features in the DNA hybridization. 
+f) In addition to d), drop the 5\% weakest features in the DNA hybridization. 
 }
 
-<<echo=FALSE, eval=FALSE>>=
+%----------------------------------------
+\subsection{Quantitatively}
+<<defineControls>>=
 
-  qsel = (sta>=0)
-  qi   = ind[qsel]
-  qx   = sta[qsel]
-  xout = seq(min(qx), max(qx), by=8)
+positiveCtrls = cbind(c(217860,220697), ## RPN2
+                      c(221078,222487)) ## SER33 	.
+negativeCtrls = cbind(c(216800, 217700),
+                      c(222800, 227000)) ## SPO22
 
-  ass = matrix(NA, nrow=5, ncol=length(rnaTypes))
-  colnames(ass)=rnaTypes
-  
-  for(rt in rnaTypes) {
-    
-    py = calcY(isel, fn, rt)
-    par(mfrow=c(ncol(py), 1))
-    for(i in 1:ncol(py)) {
-      sl  = !is.na(py[,i])
-      plot(xsel[sl], py[sl,i], col=cols[sl], pch=20, xlab="coordinates", ylab="signal",
-           main=colnames(py)[i])
-    }
-    if(!interact)
-      dev.off()
+## controls on chromosome 4 + :
+# sta = probeAnno$"4.+.start"
+# end = probeAnno$"4.+.end"
+# ind = probeAnno$"4.+.index"
+# positiveCtrls = cbind(
+#     c( 22823,  25876),  ## LRG1
+#     c( 44066,  45907),  ## SSB1
+#     c( 78427,  79059),  ## SHR3
+#     c(116322, 116867)   ## ARF1
+#     )
+# negativeCtrls = cbind(
+#     c( 26000,  30500), ## LRG1 ... YDL237W
+#     c( 48000,  49800), ## SSB1 ... 
+#     c(115989, 116133),  
+#     c(121429, 121973),
+#     c(114261, 114581) 
+#     )
+@ 
+%
+This function uses "sta", "end", "positiveCtrls", "negativeCtrls",  (lexical scoping)
+<<defineWithinAndBetween>>=
+withinAndBetween = function(x) {
+  meanAndSd = function(region) {
+    d = x[(sta>=region[1]) & (end<=region[2])]
+    c(mean(d, na.rm=TRUE), diff(quantile(d, c(0.05, 0.95), na.rm=TRUE)))
   }
-  
-  ##
-  ## quantitative assessment:
-  ##
-  py   = calcY(qi, fn, rt)
-  max.lag = 100
-  wh  = 50
-  acr = matrix(NA, nrow=max.lag+1, ncol=ncol(py))
-  colnames(acr) = colnames(py)
-  
-  for(i in 1:ncol(py)) {
-    sl  = !is.na(py[,i])
-    ap = approx(x=qx[sl], y=py[sl, i], xout=xout, ties=mean)
-    
-    dd = calcdd(ap$y)
-    
-    sig = diff(quantile(ap$y, probs=c(0.01, 0.99)))
-    noi = median(dd)
-    
-    ass[i, rt] = sig / noi
-    ## cat(rt, i, signif(c(sig, noi, ass[i, rt]), 3), "\n")
-    stopifnot(!is.na(ass[i, rt]))
-  }
-  ## matplot(acr, type="l")
-  
+  p = apply(positiveCtrls, 2, meanAndSd)
+  n = apply(negativeCtrls, 2, meanAndSd)
+  cat("p\n"); print(p)
+  cat("n\n"); print(n)
+  signal = mean(p[1,])-mean(n[1,])
+  noise  = mean(c(p[2,],n[2,]))
+  return(c("s/n"=signal/noise,s=signal,n=noise))
+}
+@ 
+<<applyWithinAndBetween, print=TRUE>>=
+sn = sapply(dat, withinAndBetween)
 
 @ 
+
+
 \begin{thebibliography}{10}
 
 \bibitem{David2006}
