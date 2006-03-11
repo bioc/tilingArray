@@ -47,7 +47,7 @@ The purpose of this document is to assess the performance of the
 probe-response normalization by the function
 \Rfunction{normalizeByReference} in the \Rpackage{tilingArray}
 package. We use the example data from the David et
-al.~\cite{david2006} paper, which is provided in the
+al.~\cite{David2006} paper, which is provided in the
 \Rpackage{davidTiling} package.
 %
 <<load, results=hide>>=
@@ -55,8 +55,20 @@ library("tilingArray")
 library("davidTiling")
 if(!exists("davidTiling"))
   data("davidTiling")
-rownames(pData(davidTiling)) =  sampleNames(davidTiling)
 @ 
+%
+<<caching, results=hide, echo=FALSE>>=
+cache <- function(name, expr) {
+  cachefile <- paste("tmp-", name, ".RData", sep="")
+  if(file.exists(cachefile)) {
+    load(cachefile)
+  } else {
+    assign(name, expr)
+    save(list=name, file=cachefile, compress=TRUE)
+  }
+  get(name)
+}
+@
 %
 It contains \Sexpr{nrow(pData(davidTiling))} arrays with
 \Sexpr{nrow(exprs(davidTiling))} features each. Three of them were hybridized to
@@ -64,7 +76,7 @@ genomic DNA, which will use a reference for the normalization, and
 five to RNA.
 <<showDavidTilingData>>=
 dim(exprs(davidTiling))
-pData(davidTiling)
+sampleNames(davidTiling)
 @
 
 %----------------------------------------
@@ -82,7 +94,7 @@ PMind = rep(seq(as.integer(1), nc-as.integer(3), by=as.integer(2)), each=nc)*nc 
 MMind = PMind + nc
 @ 
 To verify this, let's look at the scatterplot of PM versus MM values
-for the first chip:
+for the first chip, shown in Figure~\ref{assessNorm-viewPMandMMscp}:
 %
 <<viewPMandMMscp,fig=TRUE,include=FALSE,width=5,height=5,eps=FALSE>>=
 x1 = log(exprs(davidTiling)[PMind, 1], 2)
@@ -118,19 +130,36 @@ isbg = (probeAnno$probeReverse$no_feature=="no" &
 isRNA = davidTiling$nucleicAcid %in% c("poly(A) RNA","total RNA")
 isDNA = davidTiling$nucleicAcid %in% "genomic DNA"
 stopifnot(sum(isRNA)==5, sum(isDNA)==3)
-xn = normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-   pm=PMind, background=isbg,
-   plotFileNames=sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA))))
+xn = cache("xn",
+  normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
+                       pm=PMind, background=isbg,
+                       plotFileNames=sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA)))))
 @
  
 %----------------------------------------
-\section{Assessment}
-For comparison, we also obtain the data if we do not throw out the weakest features.
+\section{Alternative normalization methods}
+\subsection{Without dropping the worst 5\% probes}
+For comparison, we also compare to the situation in which 
+we do not throw out the weakest features, by setting 
+\Robject{cutoffQuantile=0}.
 <<normalizeWithoutThrowout>>=
-xnAllfeatures = normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-   pm=PMind, background=isbg, cutoffQuantile=0)
+xnAllfeatures = cache("xnAllfeatures",
+  normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
+                       pm=PMind, background=isbg, cutoffQuantile=0))
 @ 
 %
+
+\subsection{PM-MM}
+<<PMMM>>=
+z = exprs(davidTiling)[PMind, isRNA] - exprs(davidTiling)[MMind, isRNA] + 16
+z[z<=0] = NA
+
+xMM = matrix(as.numeric(NA), nrow=nc*nc, ncol=sum(isRNA))
+xMM[PMind] = log2(z)
+@ 
+
+%----------------------------------------
+\section{Assessment}
 
 We would like to visualize the data along genomic coordinates. We
 select the features that map to the longest chromosome, which is
@@ -149,11 +178,14 @@ the intensity data, in order that corresponds to \Robject{sta} and
 \Robject{ind} from above.
 <<setUpDifferentNormMethods>>=
 dat = vector(mode="list", length=5)
-dat[[1]] = log2(exprs(davidTiling)[ind, which(isDNA)[1]])
-dat[[2]] = log2(exprs(davidTiling)[ind, which(isRNA)[1]])
-dat[[3]] = dat[[2]]-dat[[1]]
-dat[[4]] = exprs(xnAllfeatures)[ind, 1]
-dat[[5]] = exprs(xn)[ind, 1]
+dat[[1]] = log2(exprs(davidTiling)[ind, which(isRNA)[1]])
+dat[[2]] = xMM[ind, 1]
+dat[[3]] = log2(exprs(davidTiling)[ind, which(isDNA)[1]])
+dat[[4]] = dat[[2]]-dat[[1]]
+dat[[5]] = exprs(xnAllfeatures)[ind, 1]
+dat[[6]] = exprs(xn)[ind, 1]
+for(j in 4:length(dat))
+  dat[[j]] = dat[[j]] - quantile(dat[[j]], 0.05, na.rm=TRUE)
 @ 
 %
 We select a 10kB region to fit on a plot,
@@ -163,21 +195,14 @@ sel = (sta>=115000 & sta<=125000)
 px = sta[sel]
 @ 
 %
-and define a color map.
-<<colorRamp>>=
-myColorRamp = function(x, rg=range(x)) {
-  cols = colorRamp(c("red", "yellow", "blue"))((x-rg[1])/(rg[2]-rg[1])) / 256
-  return(rgb(cols[,1], cols[,2], cols[,3]))
-}
-cols = myColorRamp(dat[[1]][sel])
-@ 
-%
 Now we are ready to plot:
 <<alongChromPlot, fig=TRUE, include=FALSE, height=10, width=7>>=
-par(mfrow=c(length(dat), 1), mai=c(0.4, 0.6, 0.4, 0.01))
-for(i in 1:length(dat))
-  plot(px, dat[[i]][sel], pch=20, col=cols, xlab = "", ylab="signal", 
-    main=letters[i])
+ysc = sapply(dat, function(py) quantile(py, probs=c(0, 0.99), na.rm=TRUE))
+ysc[, 4] = ysc[, 5] = ysc[, 6]
+
+source("/home/huber/madman/Rpacks/tilingArray/R/comparisonPlot.R")
+comparisonPlot(x, lapply(dat, "[", sel), yscale=ysc)
+
 @ 
 %
 \myincfig{assessNorm-alongChromPlot}{\textwidth}{% 
@@ -196,9 +221,7 @@ variance stabilizing normalization (vsn, glog base 2).
 e) In addition to d), drop the 5\% weakest features in the DNA hybridization. 
 }
 
-<<>>=
-
-if(FALSE) {
+<<echo=FALSE, eval=FALSE>>=
 
   qsel = (sta>=0)
   qi   = ind[qsel]
@@ -245,7 +268,17 @@ if(FALSE) {
   }
   ## matplot(acr, type="l")
   
-} 
 
 @ 
+\begin{thebibliography}{10}
+
+\bibitem{David2006}
+Lior David, Wolfgang Huber, Marina Granovskaia, Joern Toedling, Curtis J. Palm, Lee Bofkin, Ted Jones,
+Ronald W. Davis, and Lars M. Steinmetz
+\newblock A high-resolution map of transcription in the
+yeast genome.
+\newblock \textit{PNAS}, 2006.
+
+\end{thebibliography}
+
 \end{document}
