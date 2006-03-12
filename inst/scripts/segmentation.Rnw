@@ -139,13 +139,23 @@ in the regions of duplicated sequence.
 
 %--------------------------------------------------
 \subsection{Call the segmentation algorithm}
+The segmentation algorithm needs two parameters, 
+\Robject{maxseg}, the maximum number of segments
+that the algorithm is going to consider, and \Robject{maxk}, the
+maximum length per segment (in data points) of individual segments.
+The algorithm will calculate all optimal segmentations with $1, 2,
+\ldots, \mbox{maxseg}$ segments. The choice that we make here corresponds
+to an \emph{average} length per segment of 1500 bases.
+Our choice of the parameter \Robject{maxk} corresponds to a maximum 
+segment length of about $7.5 \times 3,000 = 22,500$ bases.
 <<maxseg, print=TRUE>>=
 maxseg = round(sprb$end[nrow(sprb)]/1500)
 @ 
+%
 <<segment>>=
 seg = cache("seg", {
   y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
-  seg = segment(y, maxseg=maxseg, maxk=20000)
+  seg = segment(y, maxseg=maxseg, maxk=3000)
 })
 @ 
 
