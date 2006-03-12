@@ -1,3 +1,4 @@
+
 %\VignetteIndexEntry{Workflow for processing tiling array data}
 %\VignetteDepends{Biobase}
 %\VignetteKeywords{Expression Analysis}
@@ -53,7 +54,7 @@ though.
 
 If you want an easy-to-use package, please come back at a later time.
 If you want to use this package now, please expect to spend some time
-figuring out things for yourself or buggering me for explanation
+figuring out things for yourself or bugging me for explanation
 and/or documentation improvements.
 
 The data processing tasks in the following typically require a lot of CPU time

@@ -80,8 +80,10 @@ The result is shown in Figure~\ref{findsegments-plotData}.
 We can use the function \Rfunction{segment} to reconstruct the
 changepoints from the \Robject{x} data alone.
 %
-<<findSegments>>=
+<<loadlib, results=hide>>=
 library("tilingArray")
+@ 
+<<findSegments>>=
 maxseg = 12
 maxk = 500
 seg  = segment(gd$x, maxk=maxk, maxseg=maxseg)

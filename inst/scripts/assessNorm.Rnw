@@ -1,6 +1,6 @@
 %\VignetteIndexEntry{tilingArray - assess normalization}
 %\VignetteDepends{tilingArray}
-%\VignetteKeywords{Expression Analysis}
+%\VignetteKeywords{normalization}
 %\VignettePackage{tilingArray}
 
 \documentclass[11pt]{article}
@@ -57,18 +57,6 @@ if(!exists("davidTiling"))
   data("davidTiling")
 @ 
 %
-<<caching, results=hide, echo=FALSE>>=
-cache <- function(name, expr) {
-  cachefile <- paste("tmp-", name, ".RData", sep="")
-  if(file.exists(cachefile)) {
-    load(cachefile)
-  } else {
-    assign(name, expr)
-    save(list=name, file=cachefile, compress=TRUE)
-  }
-  get(name)
-}
-@
 <<errorReporting, echo=FALSE>>=
 options(error=recover, warn=2)
 @ 

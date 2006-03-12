@@ -90,7 +90,7 @@
 x = unlist(lapply(c(0,3,0.5,1.5,5), function(m) rnorm(10, mean=m)))
 
 seg = segment(x, maxseg=10, maxk=15)
-seg = confint(seg, nSegments=c(3,4,5,6))
+seg = confint(seg, parm=c(3,4,5))
 
 if(interactive())
   plot(seg, 5)
