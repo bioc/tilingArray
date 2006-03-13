@@ -1,5 +1,5 @@
 plotAlongChrom = function(segObj, y, probeAnno, gff,
-                          nrBasesPerSeg,
+                          nrSegments,
                           isDirectHybe=FALSE, 
                           what = c("dots"), ## "heatmap"
                           chr, coord, highlight, ylim, 
@@ -50,6 +50,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
     ## 2.) segObj is an environment
     ## 3.) segObj is object of S4 class "segmentation"
     if(!missing(y)) {
+      stopifnot(is.matrix(y))
       index = get(paste(chr, strand, "index", sep="."), envir=probeAnno)
       sta   = get(paste(chr, strand, "start", sep="."), envir=probeAnno)
       end   = get(paste(chr, strand, "end",   sep="."), envir=probeAnno)
@@ -64,8 +65,12 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
         ## new: S4 class
         dat$x = segObj@x
         dat$y = segObj@y
-        dat$flag = 123456
-        browser()
+        dat$flag = segObj@flag
+        bp = segObj@breakpoints[[nrSegments]]
+        dat$estimate = bp[, "estimate"]
+        if("upper" %in% colnames(bp)) dat$upper = bp[, "upper"]
+        if("lower" %in% colnames(bp)) dat$lower = bp[, "lower"]
+
       } else {
         ## old: environment
         dat = get(paste(chr, strand, "dat", sep="."), segObj)
@@ -78,16 +83,15 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
           threshold = get("theThreshold", segObj)
         
         if("segScore" %in% ls(segObj)) {
-          if(!missing(nrBasesPerSeg))
-            stop("Please do not specify 'nrBasesPerSeg' when 'segObj' contains 'segScore'")
+          if(!missing(nrSegments))
+            stop("Please do not specify 'nrSegments' when 'segObj' contains 'segScore'")
           sgs = get("segScore", segObj)
-          
+          sgs = sgs[ sgs$chr==chr & sgs$strand==strand, c("start", "end") ]
         } else {
-          if(missing(nrBasesPerSeg))
-            stop("Please specify 'nrBasesPerSeg' ('segScore' was not found in 'segObj')")
+          if(missing(nrSegments))
+            stop("Please specify 'nrSegments' ('segScore' was not found in 'segObj')")
           seg = get(paste(chr, strand, "seg", sep="."), segObj)
-          cp  = round( lengthChr / nrBasesPerSeg)
-          th  = c(1, seg$th[cp, 1:cp])
+          th  = c(1, seg$th[nrSegments+1, 1:(nrSegments+1)])
           sgs = list(start  = dat$start[dat$ss][th[-length(th)]],
                      end    = dat$end[dat$ss][th[-1]]-1)
         }

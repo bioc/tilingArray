@@ -13,7 +13,7 @@ options(error=recover)
 
 graphics.off()
 
-what = c("dotsSeg", "dotsUnseg", "heatmap")[1]
+what = c("dotsSeg", "dotsUnseg", "heatmap")[2]
 name = sprintf("fig_test_%s", what)
 ## name = sprintf("fig_tiling_%s", what)
 
@@ -44,11 +44,11 @@ for(dev in c("png", "pdf")) {
     if(!exists("probeAnno"))load("probeAnno.rda")
     
     if(!exists("xn1")) {
-      load("seg-polyA-050525/xn.rda")
+      load("seg-polyA-050909/xn.rda")
       xn1=xn
     }
     if(!exists("xn2")) {
-      load("seg-tot-050525/xn.rda")
+      load("seg-tot-050909/xn.rda")
       xn2=xn
     }
     
@@ -60,8 +60,8 @@ for(dev in c("png", "pdf")) {
     for(i in 1:2)
       for(j in 1:2) {
         pushViewport(viewport(layout.pos.col=i, layout.pos.row=j))
-        plotAlongChrom(2, coord = c(start[i], end[i])*1e3,
-                       y = zz[,j], probeAnno = probeAnno,
+        plotAlongChrom(chr=2, coord = c(start[i], end[i])*1e3,
+                       y = zz[,j,drop=FALSE], probeAnno = probeAnno,
                        gff = gff)
         popViewport()
       }
@@ -93,7 +93,6 @@ for(dev in c("png", "pdf")) {
     justRank = function(y) {
       return(rank(y) / length(y))
     }
-    
     
     plotAlongChrom(y = ex, probeAnno = probeAnno, gff=gff,
                    what = "heatmap",
