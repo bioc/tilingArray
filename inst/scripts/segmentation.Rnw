@@ -56,11 +56,6 @@ if(!exists("davidTiling"))
 if(!exists("probeAnno"))
   data("probeAnno")
 @ 
-<<sourceStuff>>=
-## source("setScriptsDir.R")
-## source(functionsDir("plotAlongChrom.R"))
-@ 
-
 
 %--------------------------------------------------
 \section{Normalization}
@@ -99,7 +94,7 @@ data matrix.  Sort them by midpoint.
 
 <<prbs>>=
 chrstrd = "1.+"
-what = c("start", "end", "index")
+what = c("start", "end", "index", "unique")
 prbs = do.call("data.frame",
   mget(paste(chrstrd, what, sep="."), probeAnno))
 colnames(prbs) = what
@@ -162,9 +157,21 @@ maxseg = round(sprb$end[nrow(sprb)]/1500)
 <<segment>>=
 seg = cache("seg", {
   y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
-  seg = segment(y, x=sprb$mid, maxseg=maxseg, maxk=3000)
+  seg = segment(y, maxseg=maxseg, maxk=3000)
+  seg@x = sprb$mid
+  seg@flag = sprb$unique
 })
 @ 
+%
+We also add additional information to the object that wasn't used for
+the actual segmentation, but will be useful for the visualization:
+\code{seg@x}, the $x$-coordinates of the probes, and \code{seg@flag},
+uniqueness status of the probes (0 iff the probe has exactly one match
+in the genome).
+
+Having to access the \code{x} and \code{flag} slots directly, in the
+code above, is of course a bit unelegant; accessor functions will be
+written in subsequent versions of the package.
 
 %--------------------------------------------------
 \subsection{Calculate confidence intervals}

@@ -89,9 +89,8 @@
 \examples{
 ## generate random data with 5 segments:
 y = unlist(lapply(c(0,3,0.5,1.5,5), function(m) rnorm(10, mean=m)))
-x = sort(sample(1e6, length(y)))
 
-seg = segment(y, x, maxseg=10, maxk=15)
+seg = segment(y, maxseg=10, maxk=15)
 seg = confint(seg, parm=c(3,4,5))
 
 if(interactive())

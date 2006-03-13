@@ -45,63 +45,82 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
     ## extract and treat  the data
     threshold = as.numeric(NA)
 
+    ## three mutually exclusive cases:
+    ## 1.) y and probeAnno
+    ## 2.) segObj is an environment
+    ## 3.) segObj is object of S4 class "segmentation"
     if(!missing(y)) {
       index = get(paste(chr, strand, "index", sep="."), envir=probeAnno)
       sta   = get(paste(chr, strand, "start", sep="."), envir=probeAnno)
       end   = get(paste(chr, strand, "end",   sep="."), envir=probeAnno)
-      dat = list(mid = (sta+end)/2,
-                 y   = y[index,, drop=FALSE],
-                 unique = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
-      stopifnot(is.numeric(dat$unique))
+      dat = list(x = (sta+end)/2,
+                 y = y[index,, drop=FALSE],
+                 flag = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
+      stopifnot(is.numeric(dat$flag))
       lengthChr = end[length(end)]
-      sgs = NULL     
-    } else {
-      dat = get(paste(chr, strand, "dat", sep="."), segObj)
-      dat$mid   = (dat[["start"]] + dat[["end"]])/2
-      lengthChr = dat[["end"]][length(dat[["end"]])]
       
-      if("theThreshold" %in% ls(segObj))
-        threshold = get("theThreshold", segObj)
-
-      if("segScore" %in% ls(segObj)) {
-        sgs = get("segScore", segObj)
-        if(!missing(nrBasesPerSeg))
-          stop("Please do not specify 'nrBasesPerSeg' when 'segObj' contains 'segScore'")
+    } else {
+      if(inherits(segObj, "segmentation")){
+        ## new: S4 class
+        dat$x = segObj@x
+        dat$y = segObj@y
+        dat$flag = 123456
+        browser()
       } else {
-        if(missing(nrBasesPerSeg))
-          stop("Please specify 'nrBasesPerSeg' ('segScore' was not found in 'segObj')")
-        seg = get(paste(chr, strand, "seg", sep="."), segObj)
-        cp  = round( lengthChr / nrBasesPerSeg)
-        th  = c(1, seg$th[cp, 1:cp])
-        sgs = data.frame(
-          chr    = I(rep(chr, cp)),
-          strand = I(rep(strand, cp)),
-          start  = dat[["start"]][dat[["ss"]]][th[-length(th)]],
-          end    = dat[["end"]][dat[["ss"]]][th[-1]]-1)
-      }
-    } 
+        ## old: environment
+        dat = get(paste(chr, strand, "dat", sep="."), segObj)
+        stopifnot(all(c("start", "end", "unique", "ss") %in% names(dat)))
+        dat$x = (dat$start + dat$end)/2
+        dat$flag = dat$unique
+        lengthChr = dat$end[length(dat$end)]
+        
+        if("theThreshold" %in% ls(segObj))
+          threshold = get("theThreshold", segObj)
+        
+        if("segScore" %in% ls(segObj)) {
+          if(!missing(nrBasesPerSeg))
+            stop("Please do not specify 'nrBasesPerSeg' when 'segObj' contains 'segScore'")
+          sgs = get("segScore", segObj)
+          
+        } else {
+          if(missing(nrBasesPerSeg))
+            stop("Please specify 'nrBasesPerSeg' ('segScore' was not found in 'segObj')")
+          seg = get(paste(chr, strand, "seg", sep="."), segObj)
+          cp  = round( lengthChr / nrBasesPerSeg)
+          th  = c(1, seg$th[cp, 1:cp])
+          sgs = list(start  = dat$start[dat$ss][th[-length(th)]],
+                     end    = dat$end[dat$ss][th[-1]]-1)
+        }
+        dat$estimate = (sgs$start[-1] + sgs$end[-length(sgs$end)]) / 2
+      } 
+    }
+    ## At this point, no matter what the input to the function was,
+    ##    we have the list 'dat' with elements
+    ## x: x coordinate
+    ## y: y coordinate
+    ## flag
+    ## estimate (optional)
+    ## lower (optional)
+    ## upper (optional)
     
     if(missing(coord))
       coord = c(1, lengthChr)
     
-    px = dat[["mid"]]
-    py = dat[["y"]]
-
     ## plot the data
     vpr=which(names(VP)==sprintf("expr%s", strand))
     switch(what,
       "dots" = {
         if(missing(ylim))
-          ylim = quantile(py[px>=coord[1] & px<=coord[2]], c(0.01, 0.99), na.rm=TRUE)
+          ylim = quantile(dat$y[dat$x>=coord[1] & dat$x<=coord[2]], c(0.01, 0.99), na.rm=TRUE)
    
-        plotSegmentationDots(x=px, y=py, xlim=coord, ylim=ylim, uniq=dat$unique,
-                             segScore=sgs, threshold=threshold, 
+        plotSegmentationDots(dat, xlim=coord, ylim=ylim, 
+                             threshold=threshold, 
                              chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
                              vpr=vpr, colors=colors, pointSize=pointSize, ...)
       },
       "heatmap" = {
-        plotSegmentationHeatmap(x=px, y=py, xlim=coord, uniq=dat$unique,
-                                segScore=sgs, threshold=threshold, 
+        plotSegmentationHeatmap(dat, xlim=coord, 
+                                threshold=threshold, 
                                 chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
                                 vpr=vpr, colors=colors, ...)
       },
@@ -153,25 +172,24 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
 ## ------------------------------------------------------------
 ## plot Segmentation with Dots
 ## ------------------------------------------------------------
-plotSegmentationDots = function(x, y, xlim, ylim, uniq, segScore, threshold, 
+plotSegmentationDots = function(dat, xlim, ylim, threshold, 
   chr, strand, vpr, colors, pointSize) {
 
-  if(is.matrix(y))
-    y = rowMeans(y) ##  if >1 samples, take mean over samples
-    
-  stopifnot(length(x)==length(y), length(x)==length(uniq))
-
+  if(is.matrix(dat$y))
+    dat$y = rowMeans(dat$y) ##  if >1 samples, take mean over samples
+  stopifnot(length(dat$y)==length(dat$x), length(dat$flag)==length(dat$x))
+  
   if(missing(xlim)) {
-    xlim=range(x)
+    xlim=range(dat$x, na.rm=TRUE)
   } else {
-    sel = (x>=xlim[1])&(x<=xlim[2])
-    x = x[sel]
-    y = y[sel]
-    uniq = uniq[sel]
+    sel = (dat$x>=xlim[1])&(dat$x<=xlim[2])
+    dat$x = dat$x[sel]
+    dat$y = dat$y[sel]
+    dat$flag = dat$flag[sel]
   }
   
   if(!is.na(threshold)) {
-    y = y-threshold
+    dat$y = dat$y-threshold
     ylim = ylim-threshold
   }
   
@@ -183,24 +201,22 @@ plotSegmentationDots = function(x, y, xlim, ylim, uniq, segScore, threshold,
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=vpr))
 
-  ord  = c(which(uniq!=0), which(uniq==0))
-  colo = ifelse(uniq[ord]==0, colors[strand], colors["duplicated"])
+  ord  = c(which(dat$flag!=0), which(dat$flag==0))
+  colo = ifelse(dat$flag[ord]==0, colors[strand], colors["duplicated"])
 
   if(!is.na(threshold))
     grid.lines(y=unit(0, "native"), gp=gpar(col=colors["threshold"]))
-  
-  if(!is.null(segScore)) {
-    segSel   = which(segScore$chr==chr & segScore$strand==strand)
-    segstart = segScore[segSel, "start"]
-    segend   = segScore[segSel, "end"]
-    diffss =  segstart[-1] - segend[-length(segend)]
-    meanss = (segstart[-1] + segend[-length(segend)])/2
-    
-    grid.segments(x0 = unit(meanss, "native"), x1 = unit(meanss, "native"),
-                  y0 = unit(0.1, "npc"),       y1 = unit(0.9, "npc"),
+
+  ## segment boundaries
+  if(!is.null(dat$estimate)) {
+    grid.segments(x0 = unit(dat$estimate, "native"),
+                  x1 = unit(dat$estimate, "native"),
+                  y0 = unit(0.1, "npc"),
+                  y1 = unit(0.9, "npc"),
                   gp = gpar(col=colors["cp"]))
   }
-  grid.points(x[ord], y[ord], pch=20, size=pointSize, gp=gpar(col=colo))
+  
+  grid.points(dat$x[ord], dat$y[ord], pch=20, size=pointSize, gp=gpar(col=colo))
   popViewport(2)
 
 } ## plotSegmentationDots
@@ -208,54 +224,48 @@ plotSegmentationDots = function(x, y, xlim, ylim, uniq, segScore, threshold,
 ##------------------------------------------------------------- 
 ##  plotSegmentationHeatmap
 ##------------------------------------------------------------- 
-plotSegmentationHeatmap = function(x, y, xlim, uniq, segScore, 
-  threshold, chr, strand, vpr, colors, transformation=function(z) z) {
+plotSegmentationHeatmap = function(dat, xlim, threshold,
+  chr, strand, vpr, colors, transformation=function(z) z) {
 
-  stopifnot(length(x)==nrow(y), length(x)==length(uniq))
   if(missing(xlim)) {
-    xlim=range(x)
+    xlim=range(dat$x, na.rm=TRUE)
   } else {
-    sel = (x>=xlim[1])&(x<=xlim[2])
-    x = x[sel]
-    y = y[sel,, drop=FALSE ]
-    uniq = uniq[sel]
+    sel = (dat$x>=xlim[1])&(dat$x<=xlim[2])
+    dat$x = dat$x[sel]
+    dat$y = dat$y[sel,, drop=FALSE ]
+    dat$flag = dat$flag[sel]
   }
 
-  ord = order(x)
-  x = x[ord]   ## sort by x-coordinates to simplify smoothing
-  y = y[ord,, drop=FALSE]
-  uniq = uniq[ord]
+  ord = order(dat$x)
+  dat$x = dat$x[ord]   ## sort by x-coordinates to simplify smoothing
+  dat$y = dat$y[ord,, drop=FALSE]
+  dat$flag = dat$flag[ord]
   
   ## Use two viewports for different clipping behavior
-  ylim = c(-1, 2+ncol(y))
+  ylim = c(-1, 2+ncol(dat$y))
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
     layout.pos.col=1, layout.pos.row=vpr))
 
-  ylab = colnames(y)
-  grid.yaxis( (1:ncol(y)), ylab, gp=gpar(cex=0.5))
+  ylab = colnames(dat$y)
+  grid.yaxis( (1:ncol(dat$y)), ylab, gp=gpar(cex=0.5))
 
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=vpr))
 
-  ord  = c(which(uniq!=0), which(uniq==0))
-  colo = ifelse(uniq[ord]==0, colors[strand], colors["duplicated"])
+  ord  = c(which(dat$flag!=0), which(dat$flag==0))
+  colo = ifelse(dat$flag[ord]==0, colors[strand], colors["duplicated"])
 
-  grid.image(x, 1:ncol(y), z=matrix(transformation(y), ncol=ncol(y), nrow=nrow(y)),
-             xlim=xlim, uniq=uniq)
+  grid.image(dat$x, 1:ncol(dat$y), z=matrix(transformation(dat$y), ncol=ncol(dat$y), nrow=nrow(dat$y)),
+             xlim=xlim, uniq=dat$flag)
 
   ## segment boundaries
-  if(!is.null(segScore)) {
-    segSel   = which(segScore$chr==chr & segScore$strand==strand)
-    segstart = segScore[segSel, "start"]
-    segend   = segScore[segSel, "end"]
-    diffss =  segstart[-1] - segend[-length(segend)]
-    meanss = (segstart[-1] + segend[-length(segend)])/2
-    
-    grid.segments(x0 = unit(meanss, "native"), x1 = unit(meanss, "native"),
-                  y0 = unit(0.1, "npc"),       y1 = unit(0.9, "npc"),
+  if(!is.null(dat$estimate)) {
+    grid.segments(x0 = unit(dat$estimate, "native"),
+                  x1 = unit(dat$estimate, "native"),
+                  y0 = unit(0.1, "npc"),
+                  y1 = unit(0.9, "npc"),
                   gp = gpar(col=colors["cp"]))
   }
-
 
   popViewport(2)
 } ## end of plotSegmentationHeatmap

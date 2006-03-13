@@ -22,27 +22,27 @@ plotAlongChrom(segObj, y, probeAnno, gff,
 \arguments{
   \item{segObj}{Either an environment or an object of S4 class
     \code{segmentation}.
-    See details.}
+    See \emph{Details}.}
   \item{y}{a numeric vector or matrix containing the signal to be
-    plotted (please see paragraph \emph{Intensities} in the
-    \emph{Details} section).}
-  \item{probeAnno}{environment with probe annotations, see vignette.}
+    plotted. See \emph{Details}.}
+  \item{probeAnno}{environment with probe annotations. See
+    \emph{Details}, and package
+    \code{davidTiling} for an example.}
   \item{gff}{data frame with genome annotation from the GFF file.}
   \item{nrBasesPerSeg}{numeric scalar. If \code{segObj} does not 
      contain a \code{segScore} data.frame, then this parameter allows to 
      choose the parameter which controls the number of segments in the 
      segmentation (called \emph{S} in the paper). In particular, this 
-     parameter specifies the average length of segments, measured in bases, 
-     thus one value can be used for all chromosomes.}
+     parameter specifies the average length of segments.}
   \item{isDirectHybe}{logical scalar: if TRUE, the mapping of probes to genomic 
    strands is reversed with respect to the default. This is appropriate for data 
    from a direct RNA hybridization that used no reverse transcription.} 
   \item{what}{character scalar, choice of signal visualization, can be
     either \code{dots} or \code{heatmap}}  
   \item{chr}{integer of length 1 with the number of the chromosome for
-    which to make the plot.}
-  \item{coord}{integer of length 2 with start and end coordinates of the
-    plot.}
+    which to produce the plot.}
+  \item{coord}{integer of length 2 with start and end coordinates (in
+    bases) for which to produce the plot.}
   \item{highlight}{optional, list with two elements: a single numeric value
     \code{coord} and a character \code{strand}. If present, this
     position is marked by a vertical red bar on the coordinate axis.}
@@ -59,8 +59,8 @@ plotAlongChrom(segObj, y, probeAnno, gff,
    Currently the values 1 and 2 are supported.}
   \item{featureExclude}{character vector, names of feature types (in
     gff) that should not be plotted.
-    Additional possible candidates include: "ARS", "repeat_region",
-    "repeat_family", "nc_primary_transcript".
+    Additional possible candidates include: "ARS", "repeat\_region",
+    "repeat\_family", "nc\_primary\_transcript".
   }
   \item{featureNoLabel}{character vector, names of feature types (in
     gff) that should not be labeled with their names (if they are plotted).}
@@ -73,9 +73,8 @@ plotAlongChrom(segObj, y, probeAnno, gff,
 
 \details{
   \emph{Intensities}: There are two alternative, mutually exclusive
-  ways of providing the intensities to be plotted to this function.
+  ways of providing the intensities that are to be plotted to this function.
   \enumerate{
-    \item Via the parameter \code{segObj}, see below.
     \item Via the parameters \code{y} and \code{probeAnno}. In this case,
     \code{y} is a matrix of intensities, whose rows correspond to probes
     on the array, and its columns to different conditions, time points, etc.
@@ -90,19 +89,21 @@ plotAlongChrom(segObj, y, probeAnno, gff,
     For example,
     the start positions and indices of probes for the + strand of
     chromosome 1 would be described by environment elements
-    \code{"1.+.start"} and \code{"1.+.index"}, respectively.
+    \code{"1.+.start"} and \code{"1.+.index"}.
     
+    \item Via the parameter \code{segObj}.
   }
 
   \emph{segObj}: This can be either an object of S4 class
   \code{segmentation} or an environment that by convention contains a
   certain set of objects.
-  Future work on this function and other functionalities of the package
+  Future work on this package
   will focus on the S4 class \code{segmentation}. The \code{environment}
   option is provided for backward compatibility.
   
   \emph{Explanation of the environment}: the intended workflow is as follows:
-  Use the script \code{segment.R} to generate a segmentation.
+  Use the script \code{segment.R} (in the \code{inst/scripts} directory of this
+  package) to generate segmentations.
   This can be run in parallel on several processors, separately for each
   chromosome and strand. The results of this are stored in files of the
   name \code{1.+.rda}, \code{1.-.rda}, \code{2.+.rda}, and so forth,
@@ -112,7 +113,7 @@ plotAlongChrom(segObj, y, probeAnno, gff,
   It contains three types of data:
   \itemize{
     \item microarray intensities in along-chromosome order.
-    \item a segmentation object (output of findSegments).
+    \item the segmentation objects (output of findSegments).
     \item a dataframe named \code{segScore} with segment scores; it can
     be missing iff \code{nrBasesPerSeg} is present,
     \item a numeric scalar names \code{theThreshold}, which is used to 

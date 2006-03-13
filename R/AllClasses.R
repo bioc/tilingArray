@@ -13,9 +13,11 @@ validSegmentation = function(object) {
        (length(object@breakpoints)==length(object@hasConfint))))
     return(FALSE)
      
-  ## check that nrow(y)==length(x)
+  ## check that nrow(y)==length(x)==length(flag)
   n = nrow(object@y)
   if(!(length(object@x)%in%c(0,n)))
+    return(FALSE)
+  if(!(length(object@flag)%in%c(0,n)))
     return(FALSE)
   
   isGood = TRUE
@@ -35,7 +37,8 @@ validSegmentation = function(object) {
 setClass("segmentation",
    representation(
       y = "matrix",
-      x = "numeric",             
+      x = "numeric",
+      flag = "integer",
       breakpoints = "list",
       negloglik = "numeric",
       hasConfint = "logical"
@@ -43,6 +46,7 @@ setClass("segmentation",
    prototype = list(
       y = matrix(0, nrow=0, ncol=0),
       x = numeric(0),
+      flag = integer(0),
       breakpoints = list(),
       negloglik = numeric(0),
       hasConfint = logical(0)

@@ -8,7 +8,7 @@
 ##--------------------------------------------------
 ## Create a segmentation object
 ##--------------------------------------------------
-segment = function(y, x=numeric(0), maxseg, maxk) {
+segment = function(y, maxseg, maxk) {
   
   if(!is.matrix(y))
     y = matrix(y, ncol=1)
@@ -32,7 +32,7 @@ segment = function(y, x=numeric(0), maxseg, maxk) {
   
   new("segmentation",
     y = y,
-    x = x,
+    x = numeric(0), flag=integer(0),
     breakpoints = bp,
     negloglik = fs$J,
     hasConfint = rep(FALSE, length(bp)))

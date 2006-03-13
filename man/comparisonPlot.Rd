@@ -10,7 +10,7 @@
   paper and in the Huber et al. () paper.
 }
 \usage{
-comparisonPlot(x, y, xscale=range(x), yscale)
+comparisonPlot(x, y, xscale=range(x), yscale, anno, ticks)
 }
 \arguments{
   \item{x}{numeric vector.}
@@ -18,6 +18,9 @@ comparisonPlot(x, y, xscale=range(x), yscale)
   \item{xscale}{numeric vector of length 2.}
   \item{yscale}{matrix with 2 rows and columns corresponding to the
     elements of \code{x}.}
+  \item{anno}{dataframe with columns \code{start}, \code{end}, and
+    \code{name}, each row corresponds to one gene CDS to be plotted at the bottom.}
+  \item{ticks}{numeric vector, where to plot the ticks.}
 }
 \details{}
 
