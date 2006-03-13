@@ -22,6 +22,7 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 \newcommand{\Rpackage}[1]{\textit{#1}}
 \newcommand{\Rclass}[1]{\textit{#1}}
 \newcommand{\Rfunction}[1]{{\small\texttt{#1}}}
+\newcommand{\mbs}[1]{{\mbox{\scriptsize #1}}}
 
 \newcommand{\myincfig}[3]{%
   \begin{figure}[htbp]
@@ -53,12 +54,12 @@ al.~\cite{David2006} paper, which is provided in the
 <<load, results=hide>>=
 library("tilingArray")
 library("davidTiling")
-if(!exists("davidTiling"))
-  data("davidTiling")
+## if(!exists("davidTiling"))
+data("davidTiling")
 @ 
 %
 <<errorReporting, echo=FALSE>>=
-options(error=recover, warn=2)
+options(error=recover, warn=2, digits=3)
 @ 
 %
 It contains \Sexpr{nrow(pData(davidTiling))} arrays with
@@ -77,7 +78,7 @@ The array has 2560 rows and 2560 columns. If we count the
 rows and columns from 0 to 2559, then the indices of the features' intensities
 in the expression matrix \Robject{exprs(davidTiling)} are given
 by r*2560+c. The PM features 
-lie in rows $1, 3, \ldots, 2557$, the MM features in rows
+lie in rows $1, 3, \ldots, 2557$, their corresponding MM features in rows
 $2, 4, \ldots, 2558$:
 <<PMandMM>>=
 nc = as.integer(2560)
@@ -106,8 +107,8 @@ stored in the environment \Robject{probeAnno}. The following code selects
 all probe that do not map to a genomic feature (such as ORF, ncRNA) on 
 either strand.
 <<backgroundFeatures>>=
-if(!exists("probeAnno"))
-  data("probeAnno")
+## if(!exists("probeAnno"))
+data("probeAnno")
 ispm = rep(FALSE, nc*nc)
 ispm[PMind] = TRUE
 isbg = (probeAnno$probeReverse$no_feature=="no" &
@@ -121,8 +122,8 @@ isbg = (probeAnno$probeReverse$no_feature=="no" &
 isRNA = davidTiling$nucleicAcid %in% c("poly(A) RNA","total RNA")
 isDNA = davidTiling$nucleicAcid %in% "genomic DNA"
 stopifnot(sum(isRNA)==5, sum(isDNA)==3)
-if(!exists("xn"))
-  xn = cache("xn",
+## if(!exists("xn2"))
+  xn2 = cache("xn2",
     normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
                          pm=PMind, background=isbg,
                          plotFileNames=sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA)))))
@@ -135,8 +136,8 @@ For comparison, we also compare to the situation in which
 we do not throw out the weakest features, by setting 
 \Robject{cutoffQuantile=0}.
 <<normalizeWithoutThrowout>>=
-if(!exists("xnAllfeatures"))
-  xnAllfeatures = cache("xnAllfeatures",
+## if(!exists("xn1"))
+  xn1 = cache("xn1",
     normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
                          pm=PMind, background=isbg, cutoffQuantile=0))
 @ 
@@ -157,9 +158,9 @@ xMM[PMind, ] = log2(z)
 
 We would like to visualize the data along genomic coordinates. We
 select the features that map to the longest chromosome, which is
-chromosome 4. The integer vector \Robject{sta} contains the start
-coordinate of their match, \Robject{ind} their indices in the array
-\Robject{exprs(davidTiling)}, and \Robject{uni} the degeneracy of their
+chromosome 4. The integer vectors \Robject{sta} and \Robject{end} contain the start
+and end coordinate of their match, \Robject{ind} their indices in the array
+\Robject{exprs(davidTiling)}.
 hit.
 <<stainduni>>=
 sta = probeAnno$"9.-.start"
@@ -171,22 +172,18 @@ We construct a list of vectors, each containing different versions of
 the intensity data, in order that corresponds to \Robject{sta} and
 \Robject{ind} from above.
 <<setUpDifferentNormMethods>>=
-variousNormalizations = function(idx) {
-  dat = vector(mode="list", length=5)
-  dat[[1]] = log2(exprs(davidTiling)[idx, which(isDNA)[1]])
-  dat[[2]] = log2(exprs(davidTiling)[idx, which(isRNA)[1]])
-  dat[[3]] = xMM[idx, 1]
-  dat[[4]] = dat[[2]]-dat[[1]]
-  dat[[5]] = exprs(xnAllfeatures)[idx, 1]
-  dat[[6]] = exprs(xn)[idx, 1]
-  for(j in 4:length(dat))
-    dat[[j]] = dat[[j]] - quantile(dat[[j]], 0.05, na.rm=TRUE)
-  return(dat)
-}
-dat = variousNormalizations(ind)
+dat = vector(mode="list", length=5)
+dat[[1]] = log2(exprs(davidTiling)[ind, which(isDNA)[1]])
+dat[[2]] = log2(exprs(davidTiling)[ind, which(isRNA)[1]])
+dat[[3]] = xMM[ind, 1]
+dat[[4]] = dat[[2]]-dat[[1]]
+dat[[5]] = exprs(xn1)[ind, 1]
+dat[[6]] = exprs(xn2)[ind, 1]
+for(j in 4:length(dat))
+  dat[[j]] = dat[[j]] - quantile(dat[[j]], 0.05, na.rm=TRUE)
 @ 
 %
-We select a 9kB region around the highly expressed gene TFP1
+We select a 10kB region around the highly expressed genes RPN2 and SER33
 to fit on a plot, and set the $y$-axis limits:
 <<selectRegionForPlot>>=
 sel = (sta>=216600 & end<=227000)
@@ -195,8 +192,7 @@ ysc[, 4] = ysc[, 5] = ysc[, 6]
 @ 
 %
 Now we are ready to plot:
-<<alongChromPlot, fig=TRUE, include=FALSE, height=10, width=8>>=
-source("/homes/huber/madman/Rpacks/tilingArray/R/comparisonPlot.R")
+<<alongChromPlot, fig=TRUE, include=FALSE, height=10, width=8,eps=FALSE>>=
 anno = data.frame(start=c(217860, 221078),
                   end  =c(220697, 222487),
                   name =I(c("RPN2", "SER33")))
@@ -249,19 +245,30 @@ negativeCtrls = cbind(c(216800, 217700),
 #     )
 @ 
 %
-This function uses "sta", "end", "positiveCtrls", "negativeCtrls",  (lexical scoping)
+This function calculates number that quantify \emph{signal} and
+\emph{noise}.  Noise is calculated as the weighted average of the
+differences between 95\% and 5\% quantiles of the data within each of
+the control regions.  Divide by
+$Q_{0.95}^{\mbs{Norm}}-Q_{0.05}^{\mbs{Norm}}\approx 3.28$ so that it
+corresponds to the standard deviation if the distribution were Normal.
+%
 <<defineWithinAndBetween>>=
+fac = 2*qnorm(0.95)
+
 withinAndBetween = function(x) {
   meanAndSd = function(region) {
     d = x[(sta>=region[1]) & (end<=region[2])]
-    c(mean(d, na.rm=TRUE), diff(quantile(d, c(0.05, 0.95), na.rm=TRUE)))
+    c(mean(d, na.rm=TRUE), 
+      diff(quantile(d, c(0.05, 0.95), na.rm=TRUE))/fac, 
+      sum(!is.na(d)))
   }
   p = apply(positiveCtrls, 2, meanAndSd)
   n = apply(negativeCtrls, 2, meanAndSd)
-  cat("p\n"); print(p)
-  cat("n\n"); print(n)
-  signal = mean(p[1,])-mean(n[1,])
-  noise  = mean(c(p[2,],n[2,]))
+  wtav = function(q, i)
+    sum(q[i,]*q[3,])/sum(q[3,])
+  ## cat("p\n"); print(p); cat("n\n"); print(n)
+  signal = sum(p[1,]*p[3,])/sum(p[3,]) - sum(n[1,]*n[3,])/sum(n[3,])
+  noise  = (sum(p[2,]*p[3,])+sum(n[2,]*n[3,])) / (sum(p[3,])+sum(n[3,]))
   return(c("s/n"=signal/noise,s=signal,n=noise))
 }
 @ 

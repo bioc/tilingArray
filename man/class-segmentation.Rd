@@ -24,7 +24,8 @@
 
 \section{Slots}{
   \describe{
-    \item{\code{y}:}{A matrix with the data, see \code{\link{segment}}.} 
+    \item{\code{y}:}{A matrix with the data (the dependent variable(s)), see \code{\link{segment}}.} 
+    \item{\code{x}:}{A numeric vector with the regressor variable, see \code{\link{segment}}.} 
     \item{\code{breakpoints}:}{List of segmentations. The element
       \code{breakpoints[[j]]} corresponds to a segmentation fit of
       \code{j} segments, i.e. with \code{j-1} breakpoints. It is a
@@ -87,9 +88,10 @@
 
 \examples{
 ## generate random data with 5 segments:
-x = unlist(lapply(c(0,3,0.5,1.5,5), function(m) rnorm(10, mean=m)))
+y = unlist(lapply(c(0,3,0.5,1.5,5), function(m) rnorm(10, mean=m)))
+x = sort(sample(1e6, length(y)))
 
-seg = segment(x, maxseg=10, maxk=15)
+seg = segment(y, x, maxseg=10, maxk=15)
 seg = confint(seg, parm=c(3,4,5))
 
 if(interactive())

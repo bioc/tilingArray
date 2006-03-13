@@ -11,7 +11,6 @@ comparisonPlot = function(x, y, xscale=range(x), yscale, anno, ticks) {
   for(i in 1:n) { 
     pushViewport(viewport(layout=grid.layout(2, 2, height=c(.95, 0.05), width=c(0.1, 0.9)),
                             layout.pos.col=1, layout.pos.row=i, clip="off"))
-    ## if(i<n) grid.lines(x=c(0,1), y=c(0,0), default.units="npc")
     if(i%%2==1) grid.rect(x=0.5, y=0.5, width=1, height=1, default.units="npc",
             gp=gpar(col="#f0f0f0", fill="#f0f0f0"))
     pushViewport(viewport(layout.pos.col=1, layout.pos.row=1, clip="off"))

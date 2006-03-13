@@ -7,11 +7,17 @@
 ## Validity method
 ##--------------------------------------------------
 validSegmentation = function(object) {
+
+  ## check that slots 'breakpoints', 'negloglik', 'hasConfint' all have the same length
   if(!((length(object@breakpoints)==length(object@negloglik)) &&
        (length(object@breakpoints)==length(object@hasConfint))))
     return(FALSE)
      
+  ## check that nrow(y)==length(x)
   n = nrow(object@y)
+  if(!is.null(object@x) && (length(object@x)!=n))
+    return(FALSE)
+  
   isGood = TRUE
   for(i in seq(along=object@breakpoints)) {
     b = object@breakpoints[[i]]
@@ -27,15 +33,17 @@ validSegmentation = function(object) {
 ##--------------------------------------------------
 setClass("segmentation",
    representation(
-      y  = "matrix",
+      y = "matrix",
+      x = "numeric",             
       breakpoints = "list",
       negloglik = "numeric",
       hasConfint = "logical"
    ),
    prototype = list(
-      y  = matrix(as.numeric(NA), nrow=0, ncol=0),
+      y = matrix(0, nrow=0, ncol=0),
+      x = numeric(0),
       breakpoints = list(),
       negloglik = numeric(0),
       hasConfint = logical(0)
    ),
-   validity = validSegmentation) ## defined in methods-segmentation.R
+   validity = validSegmentation) ## see above

@@ -8,7 +8,7 @@
 ##--------------------------------------------------
 ## Create a segmentation object
 ##--------------------------------------------------
-segment = function(y, maxseg, maxk) {
+segment = function(y, x=NULL, maxseg, maxk) {
   
   if(!is.matrix(y))
     y = matrix(y, ncol=1)
@@ -32,6 +32,7 @@ segment = function(y, maxseg, maxk) {
   
   new("segmentation",
     y = y,
+    x = x,
     breakpoints = bp,
     negloglik = fs$J,
     hasConfint = rep(FALSE, length(bp)))
@@ -60,7 +61,7 @@ setMethod("plot", "segmentation",
   
   ## for handling large segmentation objects:
   if(!missing(xlim)) {
-    stopifnot(is,numeric(xlim), length(xlim)==2)
+    stopifnot(is.numeric(xlim), length(xlim)==2)
     ply = ply[xlim[1]:xlim[2], ]
     plx = plx[xlim[1]:xlim[2], ]
     breakp = breakp[ (breakp[, "estimate"]>=xlim[1]) & (breakp[, "estimate"]<=xlim[2]), ]

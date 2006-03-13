@@ -65,7 +65,8 @@ if(!exists("probeAnno"))
 %--------------------------------------------------
 \section{Normalization}
 %--------------------------------------------------
-
+Please see the vignette \textit{Assessing signal/noise ratio before
+and after normalization} (\texttt{assessNorm.Rnw}) for explanation.
 <<normalization>>=
 xn = cache("xn", {
   nc = as.integer(2560)
@@ -92,7 +93,7 @@ pData(xn)[, 2, drop=FALSE]
 %--------------------------------------------------
 
 \subsection{Selecting the probes in along-chromosome order}
-Extract for all probes that map to chromosome 1, "+" strand their
+Extract for all probes that map to the "+" strand of chromosome 1  their
 start and end coordinate, and their index in the exprs(davidTiling)
 data matrix.  Sort them by midpoint.
 
@@ -106,7 +107,13 @@ prbs$mid = (prbs$start+prbs$end)/2
 prbs = prbs[order(prbs$mid), ]
 @ 
 
-%
+We throw out the missing (\Robject{NA}) values:
+<<throwOutNA>>=
+numna = rowSums(is.na(exprs(xn)[ prbs$ind, ]))
+stopifnot(all(numna %in% c(0, ncol(xn))))
+prbs = prbs[numna==0,]
+@ 
+
 %--------------------------------------------------
 \subsubsection{Avoid oversampling}
 <<sampleStep>>=
@@ -128,8 +135,8 @@ that region is repeated multiple times in the genome, and due to the
 chip design, there are also a lot of probes (more than necessary) for that region.
 (b): histogram of differences between probe midpoints (\Robject{prbs\$mid}).
 The intention of the chip design was to have a regular spacing of 8 bases.
-In same cases, the spacing is now wider, probably due to updates in the 
-genome assembly or sequence between when the chip was designed and 
+In some cases, the spacing is wider, probably due to updates in the 
+genome sequence between when the chip was designed and 
 when probes were re-aligned. In  many cases, it is tighter with multiple 
 probes for the same target sequence, or only 1 or 2 bases offset. This occurs 
 in the regions of duplicated sequence.
