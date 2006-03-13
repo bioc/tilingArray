@@ -15,10 +15,11 @@ validSegmentation = function(object) {
      
   ## check that nrow(y)==length(x)
   n = nrow(object@y)
-  if(!is.null(object@x) && (length(object@x)!=n))
+  if(!(length(object@x)%in%c(0,n)))
     return(FALSE)
   
   isGood = TRUE
+  ## check the elements of the breakpoints slot (which is a list)
   for(i in seq(along=object@breakpoints)) {
     b = object@breakpoints[[i]]
     if(!((nrow(b)==i-1) && (ncol(b) %in% c(1,3)) &&

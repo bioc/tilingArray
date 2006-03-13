@@ -1,5 +1,3 @@
-## Additional candidates for featureExclude: "ARS","repeat_region","repeat_family", "nc_primary_transcript"
-##                   ... for 
 plotAlongChrom = function(segObj, y, probeAnno, gff,
                           nrBasesPerSeg,
                           isDirectHybe=FALSE, 

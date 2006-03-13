@@ -20,19 +20,9 @@ plotAlongChrom(segObj, y, probeAnno, gff,
 }
 
 \arguments{
-  \item{segObj}{environment containing three types of data
-    \itemize{
-      \item microarray intensities in along-chromosome order (please see paragraph
-      \emph{Intensities} in the \emph{Details} section),
-      \item a segmentation object (output of findSegments),
-      \item a data.frame named \code{segScore} with segment scores; can
-        be missing iff \code{nrBasesPerSeg} is present,
-      \item a numeric scalar names \code{theThreshold}, which is used to 
-        draw a horizontal "threshold" line in the plot.
-    }
-    This is currently simply an environment that is expected to contain
-    certain objects with certain names. In future version, this is
-    may be replaced by a proper S4 object.}
+  \item{segObj}{Either an environment or an object of S4 class
+    \code{segmentation}.
+    See details.}
   \item{y}{a numeric vector or matrix containing the signal to be
     plotted (please see paragraph \emph{Intensities} in the
     \emph{Details} section).}
@@ -68,7 +58,10 @@ plotAlongChrom(segObj, y, probeAnno, gff,
    boxes representing genomic features such as coding sequences, ncRNAs etc. 
    Currently the values 1 and 2 are supported.}
   \item{featureExclude}{character vector, names of feature types (in
-    gff) that should not be plotted.}
+    gff) that should not be plotted.
+    Additional possible candidates include: "ARS", "repeat_region",
+    "repeat_family", "nc_primary_transcript".
+  }
   \item{featureNoLabel}{character vector, names of feature types (in
     gff) that should not be labeled with their names (if they are plotted).}
   \item{pointSize}{unit object: point size used for the probe intensities scatterplot.}
@@ -82,6 +75,7 @@ plotAlongChrom(segObj, y, probeAnno, gff,
   \emph{Intensities}: There are two alternative, mutually exclusive
   ways of providing the intensities to be plotted to this function.
   \enumerate{
+    \item Via the parameter \code{segObj}, see below.
     \item Via the parameters \code{y} and \code{probeAnno}. In this case,
     \code{y} is a matrix of intensities, whose rows correspond to probes
     on the array, and its columns to different conditions, time points, etc.
@@ -97,30 +91,39 @@ plotAlongChrom(segObj, y, probeAnno, gff,
     the start positions and indices of probes for the + strand of
     chromosome 1 would be described by environment elements
     \code{"1.+.start"} and \code{"1.+.index"}, respectively.
-    \item Via the parameter \code{segRes}. In that case,
-    the intended workflow for using this function is as follows:
-    First, use the script \code{segment.R} to generate a segmentation.
-    This can be run in parallel on several processors, separately for each
-    chromosome and strand. The results of this are stored in files of the
-    name \code{1.+.rda}, \code{1.-.rda}, \code{2.+.rda}, and so forth,
-    typically within a dedicated directory.
-    Then, the script \code{readSegments.R} can be used to collect
-    \code{R} objects in these
-    \code{.rda} files into the environment \code{segRes}, with which it calls 
-    this function. \bold{FIXME: This needs to be rationalized into a
-      more sane S4 object structure}.
+    
+  }
 
-    Furthermore, the script \code{scoreSegments.R} can be used to
-    calculate scores for each segment, which can be passed to this
-    function using the \code{segRes} argument.
+  \emph{segObj}: This can be either an object of S4 class
+  \code{segmentation} or an environment that by convention contains a
+  certain set of objects.
+  Future work on this function and other functionalities of the package
+  will focus on the S4 class \code{segmentation}. The \code{environment}
+  option is provided for backward compatibility.
+  
+  \emph{Explanation of the environment}: the intended workflow is as follows:
+  Use the script \code{segment.R} to generate a segmentation.
+  This can be run in parallel on several processors, separately for each
+  chromosome and strand. The results of this are stored in files of the
+  name \code{1.+.rda}, \code{1.-.rda}, \code{2.+.rda}, and so forth,
+  typically within a dedicated directory.
+  Then use the script \code{readSegments.R} to collect the
+  \code{R} objects in these \code{.rda} files into the environment.
+  It contains three types of data:
+  \itemize{
+    \item microarray intensities in along-chromosome order.
+    \item a segmentation object (output of findSegments).
+    \item a dataframe named \code{segScore} with segment scores; it can
+    be missing iff \code{nrBasesPerSeg} is present,
+    \item a numeric scalar names \code{theThreshold}, which is used to 
+    draw a horizontal "threshold" line in the plot.
   }
 } 
   
 
 \author{Wolfgang Huber <huber@ebi.ac.uk>}
 \examples{
-  ## see viewSegmentation.R script in the inst/scripts directory
-  ## for an example. FIXME: have an example here, using example data
-  ## from the davidTiling package
+  ## 1. see viewSegmentation.R script in the inst/scripts directory
+  ## 2. (newer): segmentation.Rnw
  }
 

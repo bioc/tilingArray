@@ -1,6 +1,6 @@
 Package: tilingArray
-Version: 1.8.1
-Date: 11 Mar 2006
+Version: 1.8.2
+Date: 12 Mar 2006
 Title: Analysis of high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Joern Toedling
 Maintainer: W. Huber <huber@ebi.ac.uk>

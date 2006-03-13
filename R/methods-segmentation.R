@@ -8,7 +8,7 @@
 ##--------------------------------------------------
 ## Create a segmentation object
 ##--------------------------------------------------
-segment = function(y, x=NULL, maxseg, maxk) {
+segment = function(y, x=numeric(0), maxseg, maxk) {
   
   if(!is.matrix(y))
     y = matrix(y, ncol=1)
@@ -52,9 +52,19 @@ setMethod("plot", "segmentation",
     stop(sprintf("'y' must be an integer of length 1 with values between 1 and %d.",
                  length(x@breakpoints)))
 
-  breakp = x@breakpoints[[y]]
   ply = x@y
-  plx = row(ply)
+  if(ncol(ply)>1) {
+    note("slot 'y' has more than one column, calculating 'rowMeans'")
+    ply = matrix(rowMeans(ply), ncol=1)
+  }
+  
+  plx = if(length(x@x)==0) row(ply) else x@x
+
+  ## extract the y-th set of breakpoints, and transform from index counts to actual
+  ##   regressor values (plx)
+  breakp = x@breakpoints[[y]]
+  for(i in 1:ncol(breakp))
+    breakp[,i] = plx[ breakp[,i] ]
 
   ## since y is the number of segments = 1 +  number of breakpoints
   stopifnot(nrow(breakp)==y-1)
@@ -62,9 +72,10 @@ setMethod("plot", "segmentation",
   ## for handling large segmentation objects:
   if(!missing(xlim)) {
     stopifnot(is.numeric(xlim), length(xlim)==2)
-    ply = ply[xlim[1]:xlim[2], ]
-    plx = plx[xlim[1]:xlim[2], ]
-    breakp = breakp[ (breakp[, "estimate"]>=xlim[1]) & (breakp[, "estimate"]<=xlim[2]), ]
+    sel = (plx>=xlim[1]) & (plx<=xlim[2])
+    ply = ply[sel, ]
+    plx = plx[sel]
+    breakp = breakp[ (breakp[, "estimate"]>=xlim[1]) & (breakp[, "estimate"]<=xlim[2]),, drop=FALSE ]
   }
   
   if(missing(bpcol)){
