@@ -7,10 +7,10 @@
 }
 \description{
   This function is used for Figure 5 in the David et al. (PNAS 2006)
-  paper and in the Huber et al. () paper.
+  paper and in the Huber et al. methods paper.
 }
 \usage{
-comparisonPlot(x, y, xscale=range(x), yscale, anno, ticks, pch=21, cex=1, bgcol="#efefef")
+comparisonPlot(x, y, xscale=range(x), yscale, anno, ticks, pch=20, cex=1, bgcol="#efefef")
 }
 \arguments{
   \item{x}{numeric vector.}

@@ -72,7 +72,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
       if(segmentationObjectName %in% ls(segObj)) {
         ## case 2: S4 class
         s = get(segmentationObjectName, segObj)
-        if(!inherit(s, "segmentation"))
+        if(!inherits(s, "segmentation"))
           stop(sprintf("'%s' must be of class'segmentation'.", segmentationObjectName))
         bp = s@breakpoints[[nrSegments]]
         dat = list(x=s@x, y=s@y, flag=s@flag, estimate = bp[, "estimate"])
@@ -80,15 +80,12 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
         if("lower" %in% colnames(bp)) dat$lower = bp[, "lower"]
 
       } else {
-        ## case 3: environment
+        ## case 3: list 'dat' and other stuff
         dat = get(paste(chr, strand, "dat", sep="."), segObj)
         stopifnot(all(c("start", "end", "unique", "ss") %in% names(dat)))
         dat$x = (dat$start + dat$end)/2
         dat$flag = dat$unique
         lengthChr = dat$end[length(dat$end)]
-        
-        if("theThreshold" %in% ls(segObj))
-          threshold = get("theThreshold", segObj)
         
         if("segScore" %in% ls(segObj)) {
           if(!missing(nrSegments))
@@ -104,6 +101,9 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
                      end    = dat$end[dat$ss][th[-1]]-1)
         }
         dat$estimate = (sgs$start[-1] + sgs$end[-length(sgs$end)]) / 2
+
+        if("theThreshold" %in% ls(segObj))
+          threshold = get("theThreshold", segObj)
       } 
     }
     ## At this point, no matter what the input to the function was,
@@ -114,6 +114,8 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
     ## estimate (optional)
     ## lower (optional)
     ## upper (optional)
+    ##
+    ## and possibly also a non-NA value for 'threshold'.
     
     if(missing(coord))
       coord = c(1, lengthChr)

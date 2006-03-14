@@ -167,17 +167,17 @@ segw = cache("segw", {
 %
 We also add additional information to the object that was not used for
 the actual segmentation, but will be useful for the visualization:
-into the slot \code{x}, the $x$-coordinates of the probes, 
-and into the slot \code{flag}, the uniqueness status of the probes 
+into the slot \Robject{x}, the $x$-coordinates of the probes, 
+and into the slot \Robject{flag}, the uniqueness status of the probes 
 (0 iff the probe has exactly one match in the genome).
 
-Having to access the \code{x} and \code{flag} slots directly, in the
+Having to access the \Robject{x} and \Robject{flag} slots directly, in the
 code above, is a bit unelegant; I will probably provide accessor
 functions in subsequent versions of the package.
 
 %--------------------------------------------------
 \subsection{Calculate confidence intervals}
-This is simply a call the \Rfunction{confint} method of the 
+This is simply a call to the \Rfunction{confint} method of the 
 \Rclass{segmentation} class.
 %
 <<confint>>=
@@ -187,7 +187,7 @@ segwi = cache("segw",
 @ 
 
 Now we are ready to have a look at the result via the \Rfunction{plot} method
-of the \Rclass{segmentation} class.
+of the \Rclass{segmentation} class. The plot is shown in Figure~\ref{segmentation-plotseg}.
 %
 <<plotseg, fig=TRUE, include=FALSE, width=8, height=4, eps=FALSE>>=
 plot(segwi, nseg, pch=".", xlim=c(0, 40000))
@@ -247,7 +247,7 @@ plotAlongChrom(segObj, nrSegments=nseg, chr=1, coord = 1000*c(76.2, 92.8),
                gff = gff)
 @ 
 %
-\myincfig{segmentation-alongChrom}{\textwidth}{% 
+\myincfig{segmentation-plotAlongChrom}{\textwidth}{% 
 Along-chromosome plot similar to the one shown in the paper~\cite{David2006}.}
 
 
