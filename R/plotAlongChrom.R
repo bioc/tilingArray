@@ -17,7 +17,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
      VP = VP[-which(names(VP)=="legend")]
 
   defaultColors = c("+" = "#00441b", "-" = "#081d58", "duplicated" = "grey",
-    "cp" = "#777777", "highlight" = "red", "threshold" = "grey")
+    "cp" = "#555555", "ci" = "#777777", "highlight" = "red", "threshold" = "grey")
   if(!missing(colors)) {
     mt = match(names(colors), names(defaultColors))
     if(any(is.na(mt)))
@@ -45,11 +45,15 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
     ## extract and treat  the data
     threshold = as.numeric(NA)
 
-    ## three mutually exclusive cases:
+    ## Three mutually exclusive cases:
     ## 1.) y and probeAnno
-    ## 2.) segObj is an environment
-    ## 3.) segObj is object of S4 class "segmentation"
+    ## 2.) segObj is an environment and contains objects of S4 class "segmentation"
+    ##    whose names are obtained by paste(chr, strand, sep=".")
+    ## 3.) segObj is an environment and contains lists
+    ##    whose names are obtained by paste(chr, strand, "dat", sep=".")
+    ##
     if(!missing(y)) {
+      ## case 1.
       stopifnot(is.matrix(y))
       index = get(paste(chr, strand, "index", sep="."), envir=probeAnno)
       sta   = get(paste(chr, strand, "start", sep="."), envir=probeAnno)
@@ -61,18 +65,22 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
       lengthChr = end[length(end)]
       
     } else {
-      if(inherits(segObj, "segmentation")){
-        ## new: S4 class
-        dat$x = segObj@x
-        dat$y = segObj@y
-        dat$flag = segObj@flag
-        bp = segObj@breakpoints[[nrSegments]]
-        dat$estimate = bp[, "estimate"]
+      if(!is.environment(segObj))
+        stop("'segObj' must be an environment.")
+      
+      segmentationObjectName = paste(chr, strand, sep=".")
+      if(segmentationObjectName %in% ls(segObj)) {
+        ## case 2: S4 class
+        s = get(segmentationObjectName, segObj)
+        if(!inherit(s, "segmentation"))
+          stop(sprintf("'%s' must be of class'segmentation'.", segmentationObjectName))
+        bp = s@breakpoints[[nrSegments]]
+        dat = list(x=s@x, y=s@y, flag=s@flag, estimate = bp[, "estimate"])
         if("upper" %in% colnames(bp)) dat$upper = bp[, "upper"]
         if("lower" %in% colnames(bp)) dat$lower = bp[, "lower"]
 
       } else {
-        ## old: environment
+        ## case 3: environment
         dat = get(paste(chr, strand, "dat", sep="."), segObj)
         stopifnot(all(c("start", "end", "unique", "ss") %in% names(dat)))
         dat$x = (dat$start + dat$end)/2
@@ -186,7 +194,8 @@ plotSegmentationDots = function(dat, xlim, ylim, threshold,
   if(missing(xlim)) {
     xlim=range(dat$x, na.rm=TRUE)
   } else {
-    sel = (dat$x>=xlim[1])&(dat$x<=xlim[2])
+    xorg  = dat$x
+    sel  = (dat$x>=xlim[1])&(dat$x<=xlim[2])
     dat$x = dat$x[sel]
     dat$y = dat$y[sel]
     dat$flag = dat$flag[sel]
@@ -212,13 +221,14 @@ plotSegmentationDots = function(dat, xlim, ylim, threshold,
     grid.lines(y=unit(0, "native"), gp=gpar(col=colors["threshold"]))
 
   ## segment boundaries
-  if(!is.null(dat$estimate)) {
-    grid.segments(x0 = unit(dat$estimate, "native"),
-                  x1 = unit(dat$estimate, "native"),
-                  y0 = unit(0.1, "npc"),
-                  y1 = unit(0.9, "npc"),
-                  gp = gpar(col=colors["cp"]))
-  }
+  mySeg = function(j, what)
+    grid.segments(x0 = unit(j, "native"), x1 = unit(j, "native"),
+                  y0 = unit(0.1, "npc"),  y1 = unit(0.9, "npc"),
+                  gp = gpar(col=colors[what], lty=c(cp=1, ci=2)[what]))
+    
+  if(!is.null(dat$estimate)) mySeg(xorg[dat$estimate], "cp")
+  if(!is.null(dat$upper))    mySeg(xorg[dat$upper], "ci")
+  if(!is.null(dat$lower))    mySeg(xorg[dat$lower], "ci")
   
   grid.points(dat$x[ord], dat$y[ord], pch=20, size=pointSize, gp=gpar(col=colo))
   popViewport(2)

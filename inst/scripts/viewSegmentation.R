@@ -13,9 +13,8 @@ options(error=recover)
 
 graphics.off()
 
-what = c("dotsSeg", "dotsUnseg", "heatmap")[2]
-name = sprintf("fig_test_%s", what)
-## name = sprintf("fig_tiling_%s", what)
+what = c("dotsSeg", "dotsUnseg", "heatmap")[3]
+name = sprintf("fig_tiling_%s", what)
 
 for(dev in c("png", "pdf")) {
   switch(dev,
@@ -71,7 +70,7 @@ for(dev in c("png", "pdf")) {
   
   ## heatmap plot
   if(what=="heatmap"){
-    if(!exists("xn")) {
+    if(!exists("ex")) {
       load("/ebi/research/huber/Projects/tilingCycle/xn.rda")
       ex = exprs(xn)
       colnames(ex) = xn$SampleID

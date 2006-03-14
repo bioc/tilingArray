@@ -95,8 +95,7 @@ data matrix.  Sort them by midpoint.
 <<prbs>>=
 chrstrd = "1.+"
 what = c("start", "end", "index", "unique")
-prbs = do.call("data.frame",
-  mget(paste(chrstrd, what, sep="."), probeAnno))
+prbs = do.call("data.frame", mget(paste(chrstrd, what, sep="."), probeAnno))
 colnames(prbs) = what
 prbs$mid = (prbs$start+prbs$end)/2
 prbs = prbs[order(prbs$mid), ]
@@ -141,63 +140,128 @@ in the regions of duplicated sequence.
 
 %--------------------------------------------------
 \subsection{Call the segmentation algorithm}
-The segmentation algorithm needs two parameters, 
-\Robject{maxseg}, the maximum number of segments
-that the algorithm is going to consider, and \Robject{maxk}, the
-maximum length per segment (in data points) of individual segments.
-The algorithm will calculate all optimal segmentations with $1, 2,
-\ldots, \mbox{maxseg}$ segments. The choice that we make here corresponds
-to an \emph{average} length per segment of 1500 bases.
-Our choice of the parameter \Robject{maxk} corresponds to a maximum 
-segment length of about $7.5 \times 3,000 = 22,500$ bases.
-<<maxseg, print=TRUE>>=
-maxseg = round(sprb$end[nrow(sprb)]/1500)
+The segmentation algorithm needs two parameters, \Robject{maxseg}, the
+maximum number of segments that the algorithm is going to consider,
+and \Robject{maxk}, the maximum length per segment of individual
+segments. The algorithm will calculate all optimal segmentations with
+$1, 2, \ldots, \mbox{maxseg}$ segments.  Note that \Robject{maxk} is
+measured in number of data points, not in genomic coordinates.  The
+choice that we make here corresponds to an \emph{average} length per
+segment of 1500 bases.  Our choice of the parameter \Robject{maxk}
+corresponds to a maximum segment length of about $7.5 \times 3,000 =
+22,500$ bases.
+%
+<<nseg, print=TRUE>>=
+nseg = round(sprb$end[nrow(sprb)]/1500)
 @ 
 %
 <<segment>>=
-seg = cache("seg", {
+segw = cache("segw", {
   y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
-  seg = segment(y, maxseg=maxseg, maxk=3000)
-  seg@x = sprb$mid
-  seg@flag = sprb$unique
+  segw = segment(y, maxseg=nseg, maxk=3000)
+  segw@x = sprb$mid
+  segw@flag = sprb$unique
+  segw
 })
 @ 
 %
-We also add additional information to the object that wasn't used for
+We also add additional information to the object that was not used for
 the actual segmentation, but will be useful for the visualization:
-\code{seg@x}, the $x$-coordinates of the probes, and \code{seg@flag},
-uniqueness status of the probes (0 iff the probe has exactly one match
-in the genome).
+into the slot \code{x}, the $x$-coordinates of the probes, 
+and into the slot \code{flag}, the uniqueness status of the probes 
+(0 iff the probe has exactly one match in the genome).
 
 Having to access the \code{x} and \code{flag} slots directly, in the
-code above, is of course a bit unelegant; accessor functions will be
-written in subsequent versions of the package.
+code above, is a bit unelegant; I will probably provide accessor
+functions in subsequent versions of the package.
 
 %--------------------------------------------------
 \subsection{Calculate confidence intervals}
-
+This is simply a call the \Rfunction{confint} method of the 
+\Rclass{segmentation} class.
+%
 <<confint>>=
-segc = cache("segc",
-  confint(seg, parm=maxseg)
+segwi = cache("segw",
+  confint(segw, parm=nseg)
 )
 @ 
 
+Now we are ready to have a look at the result via the \Rfunction{plot} method
+of the \Rclass{segmentation} class.
+%
 <<plotseg, fig=TRUE, include=FALSE, width=8, height=4, eps=FALSE>>=
-source("/homes/huber/madman/Rpacks/tilingArray/R/methods-segmentation.R")
-plot(segc, maxseg, pch=".", xlim=c(0, 40000))
+plot(segwi, nseg, pch=".", xlim=c(0, 40000))
 @ 
 \myincfig{segmentation-plotseg}{\textwidth}{% 
 Segmentation with confidence intervals.
 }
 
-<<plotAlongChrom, fig=TRUE, include=FALSE, width=8, height=7>>=
+%--------------------------------------------------
+\subsection{Using the \Rfunction{plotAlongChrom} function for more elaborate displays.}
+
+Since the data in the \Rpackage{davidTiling} package is
+strand-specific, we can do the segmentation for the ``-'' strand as
+well and produce the along-chromosome plot shown in
+Figure~\ref{segmentation-alongChrom}. We run the same computations as
+above (code not shown) to obtain the object \Robject{segci}.
+%
+<<segci, echo=FALSE, results=hide>>=
+myfun = function(chrstrd) {
+  what = c("start", "end", "index", "unique")
+  prbs = do.call("data.frame", mget(paste(chrstrd, what, sep="."), probeAnno))
+  colnames(prbs) = what
+  prbs$mid = (prbs$start+prbs$end)/2
+  prbs = prbs[order(prbs$mid), ]
+
+  numna = rowSums(is.na(exprs(xn)[ prbs$ind, ]))
+  stopifnot(all(numna %in% c(0, ncol(xn))))
+  prbs = prbs[numna==0,]
+
+  sprb = prbs[ sampleStep(prbs$mid, step=7), ]
+  nseg = round(sprb$end[nrow(sprb)]/1500)
+
+  y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
+  s = segment(y, maxseg=nseg, maxk=3000)
+  s@x = sprb$mid
+  s@flag = sprb$unique
+
+  confint(s, parm=nseg)
+}
+
+segci = cache("segci", myfun("1.+"))
+@
+
+The function \Rfunction{plotAlongChrom} accepts an environment as its
+first argument which is expected to contain objects of class
+\Rclass{segmentation} with names given by 
+\Robject{paste(chr, c("+", "-"), sep=".")}, where \Robject{chr} is the
+chromosome identifier.
+%
+<<plotAlongChrom, fig=TRUE, include=FALSE, width=8, height=4>>=
 data("gff")
-source("/homes/huber/madman/Rpacks/tilingArray/R/plotAlongChrom.R")
-plotAlongChrom(segc, chr=1, coord = 1000*c(76.2, 92.8),
+## source("/homes/huber/madman/Rpacks/tilingArray/R/plotAlongChrom.R")
+segObj = new.env(parent = baseenv())
+assign("1.+", segwi, segObj)
+assign("1.-", segci, segObj)
+plotAlongChrom(segObj, nrSegments=nseg, chr=1, coord = 1000*c(76.2, 92.8),
                gff = gff)
-
 @ 
+%
+\myincfig{segmentation-alongChrom}{\textwidth}{% 
+Along-chromosome plot similar to the one shown in the paper~\cite{David2006}.}
 
+
+
+\begin{thebibliography}{10}
+
+\bibitem{David2006}
+Lior David, Wolfgang Huber, Marina Granovskaia, Joern Toedling, Curtis J. Palm, Lee Bofkin, Ted Jones,
+Ronald W. Davis, and Lars M. Steinmetz
+\newblock A high-resolution map of transcription in the
+yeast genome.
+\newblock \textit{PNAS}, 2006.
+
+\end{thebibliography}
 \end{document}
 
 

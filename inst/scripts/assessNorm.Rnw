@@ -157,11 +157,11 @@ xMM[PMind, ] = log2(z)
 \subsection{Visually}
 
 We would like to visualize the data along genomic coordinates. We
-select the features that map to the longest chromosome, which is
-chromosome 4. The integer vectors \Robject{sta} and \Robject{end} contain the start
+select the features that map to the ``-'' strand of chromosome 9. 
+The integer vectors \Robject{sta} and \Robject{end} contain the start
 and end coordinate of their match, \Robject{ind} their indices in the array
 \Robject{exprs(davidTiling)}.
-hit.
+%
 <<stainduni>>=
 sta = probeAnno$"9.-.start"
 end = probeAnno$"9.-.end"
@@ -192,15 +192,22 @@ ysc[, 4] = ysc[, 5] = ysc[, 6]
 @ 
 %
 Now we are ready to plot:
-<<alongChromPlot, fig=TRUE, include=FALSE, height=10, width=8,eps=FALSE>>=
+<<alongChromPlot, fig=TRUE, include=FALSE, height=10, width=7>>=
 anno = data.frame(start=c(217860, 221078),
                   end  =c(220697, 222487),
                   name =I(c("RPN2", "SER33")))
 ticks = c(217, 223, 224, 225, 226)
-comparisonPlot((sta+end)[sel]/2, lapply(dat, "[", sel), yscale=ysc, anno=anno, ticks=ticks)
+comparisonPlot((sta+end)[sel]/2, lapply(dat, "[", sel), yscale=ysc, anno=anno, ticks=ticks, cex=0.2)
 @ 
 %
-\myincfig{assessNorm-alongChromPlot}{0.8\textwidth}{% 
+The result is shown in Figure~\ref{assessNorm-alongChromPlot}.
+Here's a bit of a hack: the plot symbols are too big if the plot is
+produced as above, and somehow the PDF and EPS drivers of R ignore the \Robject{cex} parameter. 
+However, one can open the EPS file and replace all
+occurences of the string ``3.00'' by ``1.00''.
+
+%
+\myincfig{assessNorm-alongChromPlot}{0.95\textwidth}{% 
 Scatterplot of different types of signal ($y$-axis) along genomic
 coordinates ($x$-axis). Each dot corresponds to a microarray feature. 
 a) signal from one of the DNA hybridizations (logarithmic scale, base 2).  

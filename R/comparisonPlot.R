@@ -1,4 +1,4 @@
-comparisonPlot = function(x, y, xscale=range(x), yscale, anno, ticks) {
+comparisonPlot = function(x, y, xscale=range(x), yscale, anno, ticks, pch=20, cex=1, bgcol="#efefef") {
   
   myColorRamp = function(d, rg=range(d)) {
     cols = colorRamp(c("red", "yellow", "blue"))((d-rg[1])/(rg[2]-rg[1])) / 256
@@ -12,7 +12,7 @@ comparisonPlot = function(x, y, xscale=range(x), yscale, anno, ticks) {
     pushViewport(viewport(layout=grid.layout(2, 2, height=c(.95, 0.05), width=c(0.1, 0.9)),
                             layout.pos.col=1, layout.pos.row=i, clip="off"))
     if(i%%2==1) grid.rect(x=0.5, y=0.5, width=1, height=1, default.units="npc",
-            gp=gpar(col="#f0f0f0", fill="#f0f0f0"))
+            gp=gpar(col=bgcol, fill=bgcol))
     pushViewport(viewport(layout.pos.col=1, layout.pos.row=1, clip="off"))
     grid.text(letters[i], x=0, y=0.5, default.units="npc", hjust=0, vjust=0.5,
        gp=gpar(fontface="bold", fontsize=16))
@@ -26,7 +26,7 @@ comparisonPlot = function(x, y, xscale=range(x), yscale, anno, ticks) {
     pushViewport(dataViewport(xscale=xscale, yscale=yscale[,i],
                               layout.pos.col=2, layout.pos.row=1, clip="on"))
 
-    grid.points(x, y[[i]], pch=".", gp=gpar(col=cols))
+    grid.points(x, y[[i]], pch=pch, gp=gpar(col=cols))
     popViewport(2)
   }
   pushViewport(viewport(layout=grid.layout(2, 2, height=c(.95, 0.05), width=c(0.1, 0.9)),
