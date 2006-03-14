@@ -19,6 +19,10 @@ validSegmentation = function(object) {
     return(FALSE)
   if(!(length(object@flag)%in%c(0,n)))
     return(FALSE)
+
+  if(!is.na(object@nrSegments))
+    if(object@nrSegments<1 && object@nrSegments>length(object@breakpoints))
+      return(FALSE)
   
   isGood = TRUE
   ## check the elements of the breakpoints slot (which is a list)
@@ -41,7 +45,8 @@ setClass("segmentation",
       flag = "integer",
       breakpoints = "list",
       negloglik = "numeric",
-      hasConfint = "logical"
+      hasConfint = "logical",
+      nrSegments = "integer"
    ),
    prototype = list(
       y = matrix(0, nrow=0, ncol=0),
@@ -49,6 +54,7 @@ setClass("segmentation",
       flag = integer(0),
       breakpoints = list(),
       negloglik = numeric(0),
-      hasConfint = logical(0)
+      hasConfint = logical(0),
+      nrSegments = as.integer(NA)
    ),
    validity = validSegmentation) ## see above

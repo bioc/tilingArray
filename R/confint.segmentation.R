@@ -12,6 +12,7 @@ setMethod("confint", "segmentation",
   
   ## Check arguments
   if(!missing(parm)) {
+    parm = as.integer(parm)
     if(!(is.numeric(parm) &&
          all(parm>1) &&
          all(parm<=length(bpL))))
@@ -66,6 +67,9 @@ setMethod("confint", "segmentation",
   } ## for j
   object@breakpoints = bpL
   object@hasConfint[parm] = TRUE
+  if(length(parm)==1)
+    object@nrSegments=parm
+  
   return(object)
 })
 

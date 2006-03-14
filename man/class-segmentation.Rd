@@ -25,7 +25,14 @@
 \section{Slots}{
   \describe{
     \item{\code{y}:}{A matrix with the data (the dependent variable(s)), see \code{\link{segment}}.} 
-    \item{\code{x}:}{A numeric vector with the regressor variable, see \code{\link{segment}}.} 
+    \item{\code{x}:}{A numeric vector with the regressor variable.
+      The length of this vector must be either the same as
+      \code{nrow(y)}, or 0. The latter case is equivalent to
+      \code{x=1:nrow(y)}.}
+    \item{\code{\flag}:}{An integer vector, whose length must be either the same as
+      \code{nrow(y)}, or 0. This can be used to \emph{flag} certain
+      probes for special treatment, for example by
+      \code{\link{plotAlongChrom}}.}
     \item{\code{breakpoints}:}{List of segmentations. The element
       \code{breakpoints[[j]]} corresponds to a segmentation fit of
       \code{j} segments, i.e. with \code{j-1} breakpoints. It is a
@@ -46,6 +53,11 @@
       \code{breakpoints}. TRUE if the confidence interval estimates
       are present, i.e. if the matrix \code{breakpoints[[j]]} has
       columns \code{lower} and \code{upper}.}
+    \item{\code{nrSegments}:}{A scalar integer, value must be either
+      \code{NA} or between \code{1} and \code{length(breakpoints)}.
+      Can be used to select one of the fits in \code{breakpoints} for
+      special treatment, for example by
+      \code{\link{plotAlongChrom}}.}
   }
 }
 
@@ -80,8 +92,7 @@
 }
 
 %\references{ ~put references to the literature/web site here ~ }
-\author{Wolfgang Huber \email{huber@ebi.ac.uk}, Joern Toedling
-  \email{toedling@ebi.ac.uk}}
+\author{Wolfgang Huber \email{huber@ebi.ac.uk}}
 
 \seealso{\code{\link{segment}}}
 \keyword{classes}

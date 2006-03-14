@@ -202,7 +202,7 @@ Segmentation with confidence intervals.
 Since the data in the \Rpackage{davidTiling} package is
 strand-specific, we can do the segmentation for the ``-'' strand as
 well and produce the along-chromosome plot shown in
-Figure~\ref{segmentation-alongChrom}. We run the same computations as
+Figure~\ref{segmentation-plotAlongChrom}. We run the same computations as
 above (code not shown) to obtain the object \Robject{segci}.
 %
 <<segci, echo=FALSE, results=hide>>=
@@ -228,7 +228,7 @@ myfun = function(chrstrd) {
   confint(s, parm=nseg)
 }
 
-segci = cache("segci", myfun("1.+"))
+segci = cache("segci", myfun("1.-"))
 @
 
 The function \Rfunction{plotAlongChrom} accepts an environment as its
@@ -239,12 +239,11 @@ chromosome identifier.
 %
 <<plotAlongChrom, fig=TRUE, include=FALSE, width=8, height=4>>=
 data("gff")
-## source("/homes/huber/madman/Rpacks/tilingArray/R/plotAlongChrom.R")
 segObj = new.env(parent = baseenv())
 assign("1.+", segwi, segObj)
 assign("1.-", segci, segObj)
-plotAlongChrom(segObj, nrSegments=nseg, chr=1, coord = 1000*c(76.2, 92.8),
-               gff = gff)
+plotAlongChrom(segObj, chr=1, coord = 1000*c(101.5, 115),
+               gff = gff, doLegend=FALSE)
 @ 
 %
 \myincfig{segmentation-plotAlongChrom}{\textwidth}{% 

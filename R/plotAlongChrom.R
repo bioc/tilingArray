@@ -1,5 +1,4 @@
 plotAlongChrom = function(segObj, y, probeAnno, gff,
-                          nrSegments,
                           isDirectHybe=FALSE, 
                           what = c("dots"), ## "heatmap"
                           chr, coord, highlight, ylim, 
@@ -74,7 +73,9 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
         s = get(segmentationObjectName, segObj)
         if(!inherits(s, "segmentation"))
           stop(sprintf("'%s' must be of class'segmentation'.", segmentationObjectName))
-        bp = s@breakpoints[[nrSegments]]
+        if(is.na(s@nrSegments))
+          stop(sprintf("Slot 'nrSegments' of '%s' must not be NA.", segmentationObjectName))
+        bp = s@breakpoints[[s@nrSegments]]
         dat = list(x=s@x, y=s@y, flag=s@flag, estimate = bp[, "estimate"])
         if("upper" %in% colnames(bp)) dat$upper = bp[, "upper"]
         if("lower" %in% colnames(bp)) dat$lower = bp[, "lower"]

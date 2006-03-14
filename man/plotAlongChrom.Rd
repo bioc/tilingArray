@@ -6,7 +6,6 @@
 
 \usage{
 plotAlongChrom(segObj, y, probeAnno, gff,
-    nrSegments,
     isDirectHybe=FALSE, 
     what = c("dots"), ## "heatmap"
     chr, coord, highlight, ylim, 
@@ -29,14 +28,6 @@ plotAlongChrom(segObj, y, probeAnno, gff,
     \emph{Details}, and package
     \code{davidTiling} for an example.}
   \item{gff}{data frame with genome annotation from the GFF file.}
-  \item{nrSegments}{integer scalar. \code{segObj} can contain
-    multiple fits, corresponding to different numbers of segments
-    (called \emph{S} in the paper).
-    One of these is chosen for display by this function through this
-    parameter. Alternatively, if \code{segObj} is an environment and
-    contains a data.frame \code{segScore}, then the number of
-    segments is implied by that and specification of
-    \code{nrSegments} is not necessary.}
   \item{isDirectHybe}{logical scalar: if TRUE, the mapping of probes to genomic 
    strands is reversed with respect to the default. This is appropriate for data 
    from a direct RNA hybridization that used no reverse transcription.} 
