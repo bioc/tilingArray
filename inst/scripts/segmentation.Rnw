@@ -181,7 +181,7 @@ This is simply a call to the \Rfunction{confint} method of the
 \Rclass{segmentation} class.
 %
 <<confint>>=
-segwi = cache("segw",
+segwi = cache("segwi",
   confint(segw, parm=nseg)
 )
 @ 
