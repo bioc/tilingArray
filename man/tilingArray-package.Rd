@@ -24,7 +24,7 @@
      strucchange package.
      Please see the vignette \emph{Segmentation demo} in the file
      inst/doc/segmentation.pdf (source file inst/scripts/segmentation.Rnw).
-   \item The function \code{\link{plotAlongChrom}}for generating pretty
+   \item The function \code{\link{plotAlongChrom}} for generating pretty
      plots of segmentations along with genomic features. Please also see
      the vignette \emph{Segmentation demo}.
    \item The function \code{\link{normalizeByReference}}
