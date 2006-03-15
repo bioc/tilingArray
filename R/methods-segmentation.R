@@ -112,6 +112,8 @@ setMethod("show", "segmentation",
       sprintf("Confidence intervals for %d fits from S = %d to %d\n",
               length(wh), wh[1], wh[length(wh)]))
     }
-    cat(ans, "\n")
+    ans = c(ans, 
+      sprintf("Selected S = %d\n", object@nrSegments))
+    cat(ans, "\n", sep="")
   })
 
