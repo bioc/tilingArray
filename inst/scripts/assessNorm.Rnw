@@ -64,7 +64,7 @@ options(error=recover, warn=2, digits=3)
 %
 It contains \Sexpr{nrow(pData(davidTiling))} arrays with
 \Sexpr{nrow(exprs(davidTiling))} features each. Three of them were hybridized to
-genomic DNA, which will use a reference for the normalization, and
+genomic DNA, which will use as a reference for the normalization, and
 five to RNA.
 <<showDavidTilingData>>=
 dim(exprs(davidTiling))
@@ -73,6 +73,12 @@ sampleNames(davidTiling)
 
 %----------------------------------------
 \section{PM and MM features}
+%----------------------------------------
+The design of the chip includes about 3 Mio \emph{perfect match
+probes}, about 3 Mio \emph{mismatch probes}, and a few thousand
+controls. The mismatch probes (MM) are paired with the perfect match
+(PM) probes: each PM/MMthey are
+
 First, we determine the indices of the PM and MM features. 
 The array has 2560 rows and 2560 columns. If we count the 
 rows and columns from 0 to 2559, then the indices of the features' intensities
