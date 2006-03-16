@@ -78,18 +78,19 @@ normalizeByReference = function(x, reference, pm, background, nrStrata=10,
   
   ## apply the background and the scaling
   if(verbose) cat("Applying background and scaling\n")
-  yn = matrix(as.numeric(NA), nrow=length(pm), ncol=d)
+  xn = matrix(as.numeric(NA), nrow=length(pm), ncol=d)
   ttrefsig = 2^refSig
   for(j in 1:d)
-    yn[, j] = (exprs(x)[pm, j] - 2^bgfun[[j]](refSig)) / ttrefsig
+    xn[, j] = (exprs(x)[pm, j] - 2^bgfun[[j]](refSig)) / ttrefsig
 
   ## call vsn, if there are >= 2 arrays
   if(d>=2) {
     if(verbose) cat("Between array normalization and variance stabilizing transformation\n")
-    vsnres = vsn(yn, lts.quantile=0.95, subsample=2e5, verbose=verbose)
+    vsnres = vsn(xn, lts.quantile=0.95, subsample=2e5, verbose=verbose)
     yn = exprs(vsnres)/log(2)
     rm(vsnres)
   } else {
+    yn = xn
     warning("'x' has only one column, cannot do between array normalization and variance stabilizing transformation")
   }
   

@@ -54,8 +54,8 @@ al.~\cite{David2006} paper, which is provided in the
 <<load, results=hide>>=
 library("tilingArray")
 library("davidTiling")
-## if(!exists("davidTiling"))
-data("davidTiling")
+if(!exists("davidTiling"))
+  data("davidTiling")
 @ 
 %
 <<errorReporting, echo=FALSE>>=
@@ -71,68 +71,70 @@ dim(exprs(davidTiling))
 sampleNames(davidTiling)
 @
 
-%----------------------------------------
-\section{PM and MM features}
-%----------------------------------------
+%--------------------------------------------------
+\section{Selection of PM and background features}
+%---------------------------------------------------
 The design of the chip includes about 3 Mio \emph{perfect match
 probes}, about 3 Mio \emph{mismatch probes}, and a few thousand
-controls. The mismatch probes (MM) are paired with the perfect match
-(PM) probes: each PM/MMthey are
-
-First, we determine the indices of the PM and MM features. 
-The array has 2560 rows and 2560 columns. If we count the 
-rows and columns from 0 to 2559, then the indices of the features' intensities
-in the expression matrix \Robject{exprs(davidTiling)} are given
-by r*2560+c. The PM features 
-lie in rows $1, 3, \ldots, 2557$, their corresponding MM features in rows
-$2, 4, \ldots, 2558$:
-<<PMandMM>>=
-nc = as.integer(2560)
-PMind = rep(seq(as.integer(1), nc-as.integer(3), by=as.integer(2)), each=nc)*nc + (1:nc)
-MMind = PMind + nc
-@ 
-To verify this, let's look at the scatterplot of PM versus MM values
-for the first chip, shown in Figure~\ref{assessNorm-viewPMandMMscp}:
+controls. The \Robject{probeAnno} object contains annotations for each
+probe. It was obtained by aligning the probe sequence to the genomic
+sequence of S. cerevisiae in August 2005. Please see its manual page
+and the script \texttt{makeProbeAnno.R} in the \Rpackage{davidTiling}
+for details.
 %
-<<viewPMandMMscp,fig=TRUE,include=FALSE,width=5,height=5,eps=FALSE>>=
-x1 = log(exprs(davidTiling)[PMind, 1], 2)
-x2 = log(exprs(davidTiling)[MMind, 1], 2)
-smoothScatter(x1,x2,nrpoints=0,xlab="PM", ylab="MM")
-abline(a=0,b=1,col="red")
+<<probeAnno>>=
+if(!exists("probeAnno"))
+  data("probeAnno")
 @ 
-\myincfig{assessNorm-viewPMandMMscp}{0.5\textwidth}{%
-Scatterplot of M versus MM values
-for the first chip in the \Robject{davidTiling} data.}
-
-%----------------------------------------
-\section{Background features}
-For the background estimation, we need to specify a set of
-``background'' features, that is features for which we expect no specific
-signal. The feature information in the \Rpackage{davidTiling} package is
-stored in the environment \Robject{probeAnno}. The following code selects 
-all probe that do not map to a genomic feature (such as ORF, ncRNA) on 
+%
+We define two logical vectors: \Robject{isPM} is \Robject{TRUE} if a
+probe has a perfect match anywhere in the genome, \Robject{isBG} is
+\Robject{TRUE} if that match is outside any annotated feature on 
 either strand.
-<<backgroundFeatures>>=
-## if(!exists("probeAnno"))
-data("probeAnno")
-ispm = rep(FALSE, nc*nc)
-ispm[PMind] = TRUE
-isbg = (probeAnno$probeReverse$no_feature=="no" &
-        probeAnno$probeDirect$no_feature=="no" &
-        ispm)
+%
+<<isPM>>=
+isPM = isBG = logical(nrow(exprs(davidTiling)))
+for(j in probeAnno$probeReverse)
+  isPM[ as.character(j) != ""] = TRUE
+isBG = (probeAnno$probeReverse$no_feature=="no" &
+        probeAnno$probeDirect$no_feature=="no")
 @
+<<table, print=TRUE>>=
+sum(isPM)
+tab=table(isPM, isBG)
+@ 
+%
+There are \Sexpr{tab["FALSE", "FALSE"]} mismatch probes, whose signal
+we will not try to normalize, since we only have meaningful reference
+intensities for the \Sexpr{sum(isPM)} perfect match probes.  For the
+background estimation, we will use the \Sexpr{tab["TRUE", "TRUE"]}
+features for which we expect no specific signal. Some of them will
+indeed have specific signal, due to new transcripts that were not yet
+annotated in SGD in August 2005; but this is not a concern, since we
+will only statistical properties of the signal distribution that are
+insensitive to a small set of outliers. Alternatively, as we show
+below, we could also use the signal from the MM probes for background
+estimation.
 
 %----------------------------------------
 \section{Normalization}
-<<normalizeByReference>>=
+We select the 5 arrays that had RNA hybridized to them and the 3
+arrays that had DNA hybridized to them. We want to normalize the
+intensity readings from the former by using the latter as a reference.
+%
+<<selectArrays>>=
 isRNA = davidTiling$nucleicAcid %in% c("poly(A) RNA","total RNA")
 isDNA = davidTiling$nucleicAcid %in% "genomic DNA"
 stopifnot(sum(isRNA)==5, sum(isDNA)==3)
-## if(!exists("xn2"))
+@ 
+
+<<normalizeByReference>>=
+pfn = sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA)))
+if(!exists("xn2"))
   xn2 = cache("xn2",
     normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-                         pm=PMind, background=isbg,
-                         plotFileNames=sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA)))))
+                         pm=isPM, background=isBG,
+                         plotFileNames=pfn))
 @
  
 %----------------------------------------
@@ -142,20 +144,78 @@ For comparison, we also compare to the situation in which
 we do not throw out the weakest features, by setting 
 \Robject{cutoffQuantile=0}.
 <<normalizeWithoutThrowout>>=
-## if(!exists("xn1"))
+if(!exists("xn1"))
   xn1 = cache("xn1",
     normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-                         pm=PMind, background=isbg, cutoffQuantile=0))
+                         pm=isPM, background=isBG, cutoffQuantile=0))
 @ 
 %
 
-\subsection{PM-MM}
-<<PMMM>>=
-z = exprs(davidTiling)[PMind, isRNA] - exprs(davidTiling)[MMind, isRNA] + 16
-z[z<=0] = NA
+\subsection{Background correction by MM}
+Instead of the background correction based on ``similar'' no-target
+probes that is done in \Rfunction{normalizeByReference}, we can also
+consider background correction by MM probes.
 
-xMM = matrix(as.numeric(NA), nrow=nc*nc, ncol=sum(isRNA))
-xMM[PMind, ] = log2(z)
+There is a slight complication: the set of probes that we are
+considering as PM in this document is somewhat different from those
+that went into the design of PM/MM pairs on the array, since different
+versions of the yeast genome sequence were used. We take the
+intersection. For this, we determine the indices of the designed PM/MM
+pairs. The array has 2560 rows and 2560 columns. If we count the rows
+and columns from 0 to 2559, then the linear indices of the features
+(e.\,g.\, in the expression matrix of the \Rclass{eSet}
+\Robject{davidTiling}) are given by r*2560+c. The PM features lie in
+rows $1, 3, \ldots, 2557$, their corresponding MM features in rows $2,
+4, \ldots, 2558$. We are going to use this information, as well as the 
+%
+<<PMMMpairs>>=
+library("Scerevisiaetilingprobe")
+nc = as.integer(2560)
+ipm = rep(as.integer(seq(1, nc-3, by=2)), each=nc) * nc + (1:nc)
+seqPM = Scerevisiaetilingprobe$sequence[ipm]
+seqMM = Scerevisiaetilingprobe$sequence[ipm+nc]
+ispair = (seqPM==complementSeq(seqMM, start=13, stop=13))
+@ 
+%
+We see that out of the \Sexpr{length(ipm)} probes in odd-numbered
+rows, listed by \Robject{ipm}, most do indeed have a corresponding
+mismatch probe in the row below.
+%
+@
+<<ispair,print=TRUE>>=
+length(ispair)
+table(ispair)
+@ 
+%
+We define vectors \Robject{PMind} and \Robject{MMind} that contains the
+indices of PM/MM pairs.
+%
+<<PMind>>=
+PMind = ipm[ispair]
+MMind = PMind + nc
+@ 
+%
+<<PMMMnormalize>>=
+normalizeByReferenceWithMM = function(x, reference, pm, mm, cutoffQuantile=0.05) {
+  refSig = 2^rowMeans(log2(exprs(reference)[pm,]))
+
+  xn = (exprs(x)[pm,] - exprs(x)[mm,]) / refsig
+  vsnres = vsn(xn, lts.quantile=0.95, subsample=2e5)
+  yn = exprs(vsnres)/log(2)
+  
+  ## throw out data from probes that have too small refSig, they are likely to
+  ## be dominated by noise / unspecific signal
+  throwOut = (refSig < quantile(refSig, probs=cutoffQuantile))
+  yn[throwOut, ] = NA
+
+  res = matrix(as.numeric(NA), nrow=n, ncol=d)
+  res[pm, ] = yn
+  
+  return(res)
+}
+
+xwmm = normalizeByReferenceWithMM(davidTiling[, isRNA], davidTiling[, isDNA],
+  PMind, MMind) 
 @ 
 
 %----------------------------------------
@@ -181,11 +241,11 @@ the intensity data, in order that corresponds to \Robject{sta} and
 dat = vector(mode="list", length=5)
 dat[[1]] = log2(exprs(davidTiling)[ind, which(isDNA)[1]])
 dat[[2]] = log2(exprs(davidTiling)[ind, which(isRNA)[1]])
-dat[[3]] = xMM[ind, 1]
-dat[[4]] = dat[[2]]-dat[[1]]
-dat[[5]] = exprs(xn1)[ind, 1]
-dat[[6]] = exprs(xn2)[ind, 1]
-for(j in 4:length(dat))
+dat[[3]] = dat[[2]]-dat[[1]]
+dat[[4]] = exprs(xn1)[ind, 1]
+dat[[5]] = exprs(xn2)[ind, 1]
+dat[[6]] = xwmm[ind, 1]
+for(j in 3:length(dat))
   dat[[j]] = dat[[j]] - quantile(dat[[j]], 0.05, na.rm=TRUE)
 @ 
 %
