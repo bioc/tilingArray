@@ -7,7 +7,7 @@
    tilingArray package overview
 }
 \details{
-  This package provides some functionalities that can be useful for the
+  The package provides some functionalities that can be useful for the
   analysis of high-density tiling microarray data (such as Affymetrix
   genechips) for measuring transcript abundance and architecture.
   The main functionalities of the package are:
