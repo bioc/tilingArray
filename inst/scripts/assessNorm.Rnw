@@ -42,7 +42,6 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 \maketitle
 \tableofcontents
 
-
 \section{Introduction}
 The purpose of this document is to assess the performance of the
 probe-response normalization by the function
@@ -286,14 +285,8 @@ ticks = c(217, 223, 224, 225, 226)
 comparisonPlot((sta+end)[sel]/2, lapply(dat, "[", sel), yscale=ysc, anno=anno, ticks=ticks, cex=0.2)
 @ 
 %
-The result is shown in Figure~\ref{assessNorm-alongChromPlot}.
-Here's a bit of a hack: the plot symbols are too big if the plot is
-produced as above, and somehow the PDF and EPS drivers of R ignore the \Robject{cex} parameter. 
-However, one can open the EPS file and replace all
-occurences of the string ``3.00'' by ``1.00''.
-
-%
-\myincfig{assessNorm-alongChromPlot}{0.8\textwidth}{% Scatterplot of
+The result is shown in Figure~\ref{assessNorm-alongChromPlot}.  
+It shows scatterplots of
 different types of signal ($y$-axis) along genomic coordinates
 ($x$-axis). Each dot corresponds to a microarray feature.  Note how
 the signal distributions in panels b)-f) vary both with respect to the
@@ -311,7 +304,22 @@ d) Background subtraction of the RNA-signal, divide by DNA-signal, then
 variance stabilizing normalization (vsn, glog base 2). 
 e) In addition to d), drop the 5\% weakest features in the DNA hybridization. 
 f) Similar to e), but using the MM probes for background correction instead.
-}
+
+\myincfig{assessNorm-alongChromPlot}{0.96\textwidth}{% 
+Along-chromosome plots of the data for different normalization methods. 
+Please see text.}
+
+Now here's a bit of a hack: the plot symbols are too big if the plot is
+produced as above, and somehow the PDF and EPS drivers of R ignore the
+\Robject{cex} parameter.  However, one can open the EPS file and
+replace all occurences of the string ``3.00'' by ``1.00''.
+%
+<<repairEPS, results=hide>>=
+writeLines(sub("3.00", "1.00", readLines("assessNorm-alongChromPlot.eps"), fixed=TRUE),
+  con=("assessNorm-tmp.eps"))
+system("ps2pdf assessNorm-tmp.eps assessNorm-alongChromPlot.pdf")
+@ 
+
 
 %----------------------------------------
 \subsection{Quantitatively}
@@ -353,65 +361,77 @@ negativeCtrls = cbind(c(216800, 217700),
 #     )
 @ 
 %
-
-Noise $N$ is calculated as the weighted average of the differences
-between 95\% and 5\% quantiles of the data within each of the control
-regions,
+Noise $\sigma$ is calculated as the weighted average of the
+differences between 97.5\% and 2.5\% quantiles of the data within each
+of the control regions. The range between the 97.5\% and 2.5\%
+quantiles contains 95\% of the data, while 5\% is outside the range.
 \begin{equation}
-N = \frac{1}{Q_{0.95}^{\mbs{Norm}}-Q_{0.05}^{\mbs{Norm}}}
+\sigma = \frac{1}{Q^{0.975}_N-Q^{0.025}_N}
 \cdot\frac%
-{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}|r|\left(Q_{0.95}^r-Q_{0.05}^r\right)}
-{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}|r|}.
+{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}n_r\left(Q^{0.975}_r-Q^{0.025}_r\right)}
+{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}n_r}.
 \end{equation}
-Here, the symbol $r$ counts over the different regions, and $|r|$ is
+Here, the symbol $r$ counts over the different regions, and $n_r$ is
 the number of probes representing that region. The constant in the
 denominator is the differences between 95\% and 5\% quantiles for the
-standard Normal distribution, hence $N$ is equal to 1 if the data
-comes from the standard Normal distribution.
+standard Normal distribution, hence $\sigma$ is equal to 1 if the data
+come from the standard Normal distribution.
 
-Signal $S$ is calculated as the difference between the weighted averages of the means
+Signal $\Delta\mu$ is calculated as the difference between the weighted averages of the means
 of positive and negative control regions.
 \begin{equation}
-S =\frac{\displaystyle\sum_{r\in\{\mbs{pos}\}} |r| \mu_r}{\displaystyle\sum_{r\in\{\mbs{pos}\}}|r|}-
-   \frac{\displaystyle\sum_{r\in\{\mbs{neg}\}} |r| \mu_r}{\displaystyle\sum_{r\in\{\mbs{neg}\}}|r|}.
+\Delta\mu =
+\frac{\displaystyle\sum_{r\in\{\mbs{pos}\}} n_r \mu_r}{\displaystyle\sum_{r\in\{\mbs{pos}\}}n_r} -
+\frac{\displaystyle\sum_{r\in\{\mbs{neg}\}} n_r \mu_r}{\displaystyle\sum_{r\in\{\mbs{neg}\}}n_r}.
 \end{equation}
 
 I have explored many variations of this calculation, using different
-definitions of $N$, $S$, and of the control regions. Qualitatively, the 
-results were always the same as those shown in the following.
+definitions of $\sigma$, $\Delta\mu$, and of the control regions. The
+ranking (relative order) of the methods was always the same as shown
+in the following.
 %
 <<defineWithinAndBetween>>=
-fac = 2*qnorm(0.95)
+fac = 2*qnorm(0.975)
 
-withinAndBetween = function(x) {
-  meanAndSd = function(region) {
-    d = x[(sta>=region[1]) & (end<=region[2])]
-    c(mean(d, na.rm=TRUE), 
-      diff(quantile(d, c(0.05, 0.95), na.rm=TRUE))/fac, 
-      sum(!is.na(d)))
+withinAndBetween = function(x, ...) {
+  meanAndSd = function(region, dohist=FALSE) {
+    d = x[(sta>=region[1]) & (end<=region[2]) & !is.na(x)]
+    res = c(mean(d), diff(quantile(d, c(0.025, 0.975)))/fac, length(d)) 
+    if(dohist) hist(d, 20, main=paste(signif(res, 3)), col="orange")
+    res
   }
-  p = apply(positiveCtrls, 2, meanAndSd)
-  n = apply(negativeCtrls, 2, meanAndSd)
-  ## cat("p\n"); print(p); cat("n\n"); print(n)
-  signal = sum(p[1,]*p[3,])/sum(p[3,]) - sum(n[1,]*n[3,])/sum(n[3,])
-  noise  = (sum(p[2,]*p[3,])+sum(n[2,]*n[3,])) / (sum(p[3,])+sum(n[3,]))
-  return(c("s/n"=signal/noise,s=signal,n=noise))
+  p = apply(positiveCtrls, 2, meanAndSd, ...)
+  n = apply(negativeCtrls, 2, meanAndSd, ...)
+  dmu =  sum(p[1,]*p[3,])/sum(p[3,]) - sum(n[1,]*n[3,])/sum(n[3,])
+  sig = (sum(p[2,]*p[3,])+sum(n[2,]*n[3,])) / (sum(p[3,])+sum(n[3,]))
+  return(c("S/N"=dmu/sig, "S"=dmu, "N"=sig))
 }
 @ 
 <<applyWithinAndBetween, print=TRUE>>=
-sn = sapply(dat[2:6], withinAndBetween)
-
+sn = sapply(dat[2:6], withinAndBetween, dohist=TRUE)
 @ 
+<<applyWithinAndBetween, eval=FALSE, echo=FALSE, eps=FALSE, fig=TRUE, include=FALSE>>=
+par(mfcol=c(4,5))
+sn = sapply(dat[2:6], withinAndBetween, dohist=TRUE)
+sn
+@ 
+%
+%For excruciating detail, the histograms of the individual
+%distributions are also shown in Figure~\ref{assessNorm-applyWithinAndBetween}. 
+
+%\myincfig{assessNorm-applyWithinAndBetween}{\textwidth}{
+%Histograms of the probe intensity distribution for each of the 4 
+%control regions (rows) and the 5 methods b)-f) (columns).
+%}
 
 
+%------------------------------------------------------------
 \begin{thebibliography}{10}
 
-\bibitem{David2006}
-Lior David, Wolfgang Huber, Marina Granovskaia, Joern Toedling, Curtis J. Palm, Lee Bofkin, Ted Jones,
-Ronald W. Davis, and Lars M. Steinmetz
-\newblock A high-resolution map of transcription in the
-yeast genome.
-\newblock \textit{PNAS}, 2006.
+\bibitem{David2006} Lior David, Wolfgang Huber, Marina Granovskaia,
+Joern Toedling, Curtis J. Palm, Lee Bofkin, Ted Jones, Ronald
+W. Davis, and Lars M. Steinmetz \newblock A high-resolution map of
+transcription in the yeast genome.  \newblock \textit{PNAS}, 2006.
 
 \end{thebibliography}
 
