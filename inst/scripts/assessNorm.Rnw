@@ -76,7 +76,7 @@ require Gigabytes of RAM. I have sprinkled \Robject{cache()} and
 \Robject{if(exists(...))} statements around the most massive
 computations -- this is simply so that during the writing of the
 vignette I can rerun \Rfunction{Sweave} on it in an incremental
-fashion without having to redo all computations from
+fashion without always having to redo all computations from
 scratch. Eventually they will go away, and you can safely ignore
 them.
 
@@ -89,7 +89,7 @@ controls. The \Robject{probeAnno} object contains annotations for each
 probe. It was obtained by aligning the probe sequence to the genomic
 sequence of S. cerevisiae in August 2005. Please see its manual page
 and the script \texttt{makeProbeAnno.R} in the \Rpackage{davidTiling}
-for details.
+package for details.
 %
 <<probeAnno>>=
 if(!exists("probeAnno"))
@@ -120,7 +120,7 @@ background estimation, we will use the \Sexpr{tab["TRUE", "TRUE"]}
 features for which we expect no specific signal. Some of them will
 indeed have specific signal, due to new transcripts that were not yet
 annotated in SGD in August 2005; but this is not a concern, since we
-will only statistical properties of the signal distribution that are
+will only use statistical properties of the signal distribution that are
 insensitive to a small set of outliers. Alternatively, as we show
 below, we could also use the signal from the MM probes for background
 estimation.
@@ -175,12 +175,16 @@ and columns from 0 to 2559, then the linear indices of the features
 (e.\,g.\, in the expression matrix of the \Rclass{eSet}
 \Robject{davidTiling}) are given by r*2560+c. The PM features lie in
 rows $1, 3, \ldots, 2557$, their corresponding MM features in rows $2,
-4, \ldots, 2558$. We are going to use this information, as well as the 
+4, \ldots, 2558$. We are going to use this information, as well as the
+probe sequences that are provided in the
+\Rpackage{Scerevisiaetilingprobe} package.
 %
 <<PMMMpairs>>=
 library("Scerevisiaetilingprobe")
 
 nc = as.integer(2560)
+stopifnot(nc*nc==nrow(davidTiling))
+
 ipm = rep(as.integer(seq(1, nc-3, by=2)), each=nc) * nc + (1:nc)
 seqPM = Scerevisiaetilingprobe$sequence[ipm]
 seqMM = Scerevisiaetilingprobe$sequence[ipm+nc]
@@ -198,24 +202,28 @@ length(ispair)
 table(ispair)
 @ 
 %
-We define vectors \Robject{PMind} and \Robject{MMind} that contains the
-indices of PM/MM pairs.
+We define vectors \Robject{PMind} and \Robject{MMind} that contain the
+indices of PM/MM pairs,
 %
 <<PMind>>=
 PMind = ipm[ispair]
 MMind = PMind + nc
 @ 
 %
+and a function \Rfunction{normalizeByReferenceWithMM} that is similar
+to \Rfunction{normalizeByReference} in the \Rpackage{tilingArray}
+package, except for that for each PM probe it uses the corresponding
+MM value for the background correction rather than the background
+estimator that is used in \Rfunction{normalizeByReference}.
+%
 <<PMMMnormalize>>=
 normalizeByReferenceWithMM = function(x, reference, pm, mm, cutoffQuantile=0.05) {
   refSig = 2^rowMeans(log2(exprs(reference)[pm,]))
 
   xn = (exprs(x)[pm,] - exprs(x)[mm,]) / refSig
-  vsnres = vsn(xn, lts.quantile=0.95, subsample=2e5)
+  vsnres = vsn(xn, lts.quantile=0.95, subsample=2e5, verbose=FALSE)
   yn = exprs(vsnres)/log(2)
   
-  ## throw out data from probes that have too small refSig, they are likely to
-  ## be dominated by noise / unspecific signal
   throwOut = (refSig < quantile(refSig, probs=cutoffQuantile))
   yn[throwOut, ] = NA
 
@@ -258,14 +266,15 @@ dat[[5]] = exprs(xn2)[ind, 1]
 dat[[6]] = xwmm[ind, 1]
 for(j in 3:length(dat))
   dat[[j]] = dat[[j]] - quantile(dat[[j]], 0.05, na.rm=TRUE)
+names(dat) = letters[seq(along=dat)]
 @ 
 %
 We select a 10kB region around the highly expressed genes RPN2 and SER33
 to fit on a plot, and set the $y$-axis limits:
 <<selectRegionForPlot>>=
 sel = (sta>=216600 & end<=227000)
-ysc = sapply(dat, function(py) quantile(py, probs=c(0, 0.99), na.rm=TRUE))
-ysc[, 4] = ysc[, 5] = ysc[, 6]
+ysc = sapply(dat, function(py) quantile(py, probs=c(0, 1), na.rm=TRUE))
+ysc[, 3:6] = c(-3,8)
 @ 
 %
 Now we are ready to plot:
@@ -284,9 +293,12 @@ However, one can open the EPS file and replace all
 occurences of the string ``3.00'' by ``1.00''.
 
 %
-\myincfig{assessNorm-alongChromPlot}{0.95\textwidth}{% 
-Scatterplot of different types of signal ($y$-axis) along genomic
-coordinates ($x$-axis). Each dot corresponds to a microarray feature. 
+\myincfig{assessNorm-alongChromPlot}{0.8\textwidth}{% Scatterplot of
+different types of signal ($y$-axis) along genomic coordinates
+($x$-axis). Each dot corresponds to a microarray feature.  Note how
+the signal distributions in panels b)-f) vary both with respect to the
+variability within transcribed and untranscribed segments, and
+in the amplitude between them.
 a) signal from one of the DNA hybridizations (logarithmic scale, base 2).  
 The $y$-coordinate of each dot is also encoded using
 a pseudo-color scheme. Dark red corresponds to features that have a 
@@ -294,17 +306,29 @@ very weak response, dark blue to those with the strongest response.
 The same coloring is also used in panels b)-f).
 b) unnormalized intensities from one of the poly(A) RNA bybridizations
 (logarithmic scale, base 2).  
-c) $\log_2(\mbox{PM}-\mbox{MM}+16)$
-d) Divide RNA-signal by DNA-signal then take logarithm (base 2). 
-e) Background subtraction of the RNA-signal, divide by DNA-signal, then 
+c) Divide RNA-signal by DNA-signal then take logarithm (base 2). 
+d) Background subtraction of the RNA-signal, divide by DNA-signal, then 
 variance stabilizing normalization (vsn, glog base 2). 
-f) In addition to d), drop the 5\% weakest features in the DNA hybridization. 
+e) In addition to d), drop the 5\% weakest features in the DNA hybridization. 
+f) Similar to e), but using the MM probes for background correction instead.
 }
 
 %----------------------------------------
 \subsection{Quantitatively}
-<<defineControls>>=
 
+In order to assess to quantitatively assess the results of
+normalization, we consider a signal/noise ratio. Note that only
+looking at one or another (signal, or noise) by itself could be
+misleading. 
+
+We define a set of control regions, which correspond to either highly
+expressed transcripts (\Robject{positiveCtrls}) or untranscribed
+intergenic regions (\Robject{negativeCtrls}). The assumption is that
+the signal within a region should be constant, and deviations from
+that are ``noise'', while the difference between positve and negative
+controls should be large, and is counted as ``signal''.
+
+<<defineControls>>=
 positiveCtrls = cbind(c(217860,220697), ## RPN2
                       c(221078,222487)) ## SER33 	.
 negativeCtrls = cbind(c(216800, 217700),
@@ -329,12 +353,32 @@ negativeCtrls = cbind(c(216800, 217700),
 #     )
 @ 
 %
-This function calculates number that quantify \emph{signal} and
-\emph{noise}.  Noise is calculated as the weighted average of the
-differences between 95\% and 5\% quantiles of the data within each of
-the control regions.  Divide by
-$Q_{0.95}^{\mbs{Norm}}-Q_{0.05}^{\mbs{Norm}}\approx 3.28$ so that it
-corresponds to the standard deviation if the distribution were Normal.
+
+Noise $N$ is calculated as the weighted average of the differences
+between 95\% and 5\% quantiles of the data within each of the control
+regions,
+\begin{equation}
+N = \frac{1}{Q_{0.95}^{\mbs{Norm}}-Q_{0.05}^{\mbs{Norm}}}
+\cdot\frac%
+{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}|r|\left(Q_{0.95}^r-Q_{0.05}^r\right)}
+{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}|r|}.
+\end{equation}
+Here, the symbol $r$ counts over the different regions, and $|r|$ is
+the number of probes representing that region. The constant in the
+denominator is the differences between 95\% and 5\% quantiles for the
+standard Normal distribution, hence $N$ is equal to 1 if the data
+comes from the standard Normal distribution.
+
+Signal $S$ is calculated as the difference between the weighted averages of the means
+of positive and negative control regions.
+\begin{equation}
+S =\frac{\displaystyle\sum_{r\in\{\mbs{pos}\}} |r| \mu_r}{\displaystyle\sum_{r\in\{\mbs{pos}\}}|r|}-
+   \frac{\displaystyle\sum_{r\in\{\mbs{neg}\}} |r| \mu_r}{\displaystyle\sum_{r\in\{\mbs{neg}\}}|r|}.
+\end{equation}
+
+I have explored many variations of this calculation, using different
+definitions of $N$, $S$, and of the control regions. Qualitatively, the 
+results were always the same as those shown in the following.
 %
 <<defineWithinAndBetween>>=
 fac = 2*qnorm(0.95)
@@ -348,8 +392,6 @@ withinAndBetween = function(x) {
   }
   p = apply(positiveCtrls, 2, meanAndSd)
   n = apply(negativeCtrls, 2, meanAndSd)
-  wtav = function(q, i)
-    sum(q[i,]*q[3,])/sum(q[3,])
   ## cat("p\n"); print(p); cat("n\n"); print(n)
   signal = sum(p[1,]*p[3,])/sum(p[3,]) - sum(n[1,]*n[3,])/sum(n[3,])
   noise  = (sum(p[2,]*p[3,])+sum(n[2,]*n[3,])) / (sum(p[3,])+sum(n[3,]))
@@ -357,7 +399,7 @@ withinAndBetween = function(x) {
 }
 @ 
 <<applyWithinAndBetween, print=TRUE>>=
-sn = sapply(dat, withinAndBetween)
+sn = sapply(dat[2:6], withinAndBetween)
 
 @ 
 
