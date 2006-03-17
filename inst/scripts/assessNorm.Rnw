@@ -76,8 +76,8 @@ require Gigabytes of RAM. I have sprinkled \Robject{cache()} and
 computations -- this is simply so that during the writing of the
 vignette I can rerun \Rfunction{Sweave} on it in an incremental
 fashion without always having to redo all computations from
-scratch. Eventually they will go away, and you can safely ignore
-them.
+scratch. Eventually they will go away, and for the comprehension of
+the computations they are irrelevant.
 
 %--------------------------------------------------
 \section{Selection of PM and background features}
@@ -101,7 +101,7 @@ probe has a perfect match anywhere in the genome, \Robject{isBG} is
 either strand.
 %
 <<isPM>>=
-isPM = isBG = logical(nrow(exprs(davidTiling)))
+isPM = logical(nrow(exprs(davidTiling)))
 for(j in probeAnno$probeReverse)
   isPM[ as.character(j) != ""] = TRUE
 isBG = (probeAnno$probeReverse$no_feature=="no" &
@@ -282,7 +282,8 @@ anno = data.frame(start=c(217860, 221078),
                   end  =c(220697, 222487),
                   name =I(c("RPN2", "SER33")))
 ticks = c(217, 223, 224, 225, 226)
-comparisonPlot((sta+end)[sel]/2, lapply(dat, "[", sel), yscale=ysc, anno=anno, ticks=ticks, cex=0.2)
+comparisonPlot((sta+end)[sel]/2, lapply(dat, "[", sel), yscale=ysc, 
+  anno=anno, ticks=ticks, cex=0.2)
 @ 
 %
 The result is shown in Figure~\ref{assessNorm-alongChromPlot}.  
@@ -341,48 +342,37 @@ positiveCtrls = cbind(c(217860,220697), ## RPN2
                       c(221078,222487)) ## SER33 	.
 negativeCtrls = cbind(c(216800, 217700),
                       c(222800, 227000)) ## SPO22
-
-## controls on chromosome 4 + :
-# sta = probeAnno$"4.+.start"
-# end = probeAnno$"4.+.end"
-# ind = probeAnno$"4.+.index"
-# positiveCtrls = cbind(
-#     c( 22823,  25876),  ## LRG1
-#     c( 44066,  45907),  ## SSB1
-#     c( 78427,  79059),  ## SHR3
-#     c(116322, 116867)   ## ARF1
-#     )
-# negativeCtrls = cbind(
-#     c( 26000,  30500), ## LRG1 ... YDL237W
-#     c( 48000,  49800), ## SSB1 ... 
-#     c(115989, 116133),  
-#     c(121429, 121973),
-#     c(114261, 114581) 
-#     )
 @ 
 %
-Noise $\sigma$ is calculated as the weighted average of the
-differences between 97.5\% and 2.5\% quantiles of the data within each
-of the control regions. The range between the 97.5\% and 2.5\%
-quantiles contains 95\% of the data, while 5\% is outside the range.
+Noise $\sigma$ is calculated as the 
+% weighted 
+average of the differences between 97.5\% and 2.5\% quantiles of the
+data within each of the control regions. The range between the 97.5\%
+and 2.5\% quantiles contains 95\% of the data, while 5\% is outside
+the range.
 \begin{equation}
 \sigma = \frac{1}{Q^{0.975}_N-Q^{0.025}_N}
 \cdot\frac%
-{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}n_r\left(Q^{0.975}_r-Q^{0.025}_r\right)}
-{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}n_r}.
+{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}Q^{0.975}_r-Q^{0.025}_r}
+{\displaystyle|\{\mbs{pos},\mbs{neg}\}|}.
+%{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}n_r\left(Q^{0.975}_r-Q^{0.025}_r\right)}
+%{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}n_r}.
 \end{equation}
-Here, the symbol $r$ counts over the different regions, and $n_r$ is
-the number of probes representing that region. The constant in the
-denominator is the differences between 95\% and 5\% quantiles for the
-standard Normal distribution, hence $\sigma$ is equal to 1 if the data
-come from the standard Normal distribution.
+Here, the symbol $r$ counts over the different regions.
+% and $n_r$ is the number of probes representing that region. 
+The constant in the denominator is the differences between 95\% and
+5\% quantiles for the standard Normal distribution, hence $\sigma$ is
+equal to 1 if the data come from the standard Normal distribution.
 
-Signal $\Delta\mu$ is calculated as the difference between the weighted averages of the means
-of positive and negative control regions.
+Signal $\Delta\mu$ is calculated as the difference between the 
+% weighted 
+averages of the means of positive and negative control regions.
 \begin{equation}
 \Delta\mu =
-\frac{\displaystyle\sum_{r\in\{\mbs{pos}\}} n_r \mu_r}{\displaystyle\sum_{r\in\{\mbs{pos}\}}n_r} -
-\frac{\displaystyle\sum_{r\in\{\mbs{neg}\}} n_r \mu_r}{\displaystyle\sum_{r\in\{\mbs{neg}\}}n_r}.
+\frac{\displaystyle\sum_{r\in\{\mbs{pos}\}}\mu_r}{\displaystyle|\{\mbs{pos}\}|} -
+\frac{\displaystyle\sum_{r\in\{\mbs{neg}\}}\mu_r}{\displaystyle|\{\mbs{neg}\}|}.
+%\frac{\displaystyle\sum_{r\in\{\mbs{pos}\}} n_r \mu_r}{\displaystyle\sum_{r\in\{\mbs{pos}\}}n_r} -
+%\frac{\displaystyle\sum_{r\in\{\mbs{neg}\}} n_r \mu_r}{\displaystyle\sum_{r\in\{\mbs{neg}\}}n_r}.
 \end{equation}
 
 I have explored many variations of this calculation, using different
