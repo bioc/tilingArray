@@ -277,7 +277,8 @@ ysc[, 3:6] = c(-3,8)
 @ 
 %
 Now we are ready to plot:
-<<alongChromPlot, fig=TRUE, include=FALSE, height=10, width=7>>=
+% A4 is 210 x 297 mm ...8.27 x 11.7 inches
+<<alongChromPlot, fig=TRUE, include=FALSE, height=11, width=8.4>>=
 anno = data.frame(start=c(217860, 221078),
                   end  =c(220697, 222487),
                   name =I(c("RPN2", "SER33")))
@@ -316,7 +317,7 @@ produced as above, and somehow the PDF and EPS drivers of R ignore the
 replace all occurences of the string ``3.00'' by ``1.00''.
 %
 <<repairEPS, results=hide>>=
-writeLines(sub("3.00", "1.00", readLines("assessNorm-alongChromPlot.eps"), fixed=TRUE),
+writeLines(sub(" 3.00", " 1.00", readLines("assessNorm-alongChromPlot.eps"), fixed=TRUE),
   con=("assessNorm-tmp.eps"))
 system("ps2pdf assessNorm-tmp.eps assessNorm-alongChromPlot.pdf")
 @ 

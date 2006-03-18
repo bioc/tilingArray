@@ -199,14 +199,18 @@ Segmentation with confidence intervals.
 %--------------------------------------------------
 \subsection{Using the \Rfunction{plotAlongChrom} function for more elaborate displays.}
 
-Since the data in the \Rpackage{davidTiling} package is
+Since the data in the \Rpackage{davidTiling} package are
 strand-specific, we can do the segmentation for the ``-'' strand as
 well and produce the along-chromosome plot shown in
-Figure~\ref{segmentation-plotAlongChrom}. We run the same computations as
-above (code not shown) to obtain the object \Robject{segci}.
+Figure~\ref{segmentation-fig1}. To do this, we define the
+function \Rfunction{segFun}. It encapsulates the complete set of
+computations, as shown above, for one chromosome strand.  Its result
+is a \Rclass{segmentation} object with confidence intervals.
 %
-<<segci, echo=FALSE, results=hide>>=
-myfun = function(chrstrd) {
+<<segFun, results=hide>>=
+segFun = function(chrstrd) {
+  writeLines(sprintf("Working on %s", chrstrd), con="segmentation.log")
+
   what = c("start", "end", "index", "unique")
   prbs = do.call("data.frame", mget(paste(chrstrd, what, sep="."), probeAnno))
   colnames(prbs) = what
@@ -227,27 +231,113 @@ myfun = function(chrstrd) {
 
   confint(s, parm=nseg)
 }
-
-segci = cache("segci", myfun("1.-"))
 @
+%
+For Figure~\ref{segmentation-fig1}, we call \Rfunction{segFun} on the
+``-'' strand of chromosome 1.  For Figure~\ref{segmentation-fig2}, we
+also call it on a number of other chromosomes. This computation will
+take a couple of hours. Note that it can be trivially parallelized
+since the computations for different chromosome strands are
+independent of each other. Finally, we collect all results in the
+environment \Robject{segObj}.
+%
+<<makeSegObj>>=
+toDo = c("1.-", "2.+", "2.-", "5.+", "5.-", "9.+", "9.-", "13.+", "13.-", "14.+", "14.-","15.+", "15.-")
+for(w in toDo) {
+  if(!file.exists(paste(w, "rda", sep="."))) {
+    assign(w, segFun(w))
+    save(list=w, file=paste(w, "rda", sep="."))
+  }
+}
+
+segObj = new.env(parent = baseenv())
+assign("1.+", segwi, segObj)
+for(w in toDo) {
+  load(paste(w, "rda", sep="."))
+  assign(w, w, segObj)
+}
+
+
+data("gff")
+myGff = gff[ gff$Name!="tR(UCU)E", ]
+ylim  = c(-4.5, 3.5)
+@ 
 
 The function \Rfunction{plotAlongChrom} accepts an environment as its
-first argument which is expected to contain objects of class
+first argument, which is expected to contain objects of class
 \Rclass{segmentation} with names given by 
 \Robject{paste(chr, c("+", "-"), sep=".")}, where \Robject{chr} is the
 chromosome identifier.
 %
-<<plotAlongChrom, fig=TRUE, include=FALSE, width=8, height=4>>=
-data("gff")
-segObj = new.env(parent = baseenv())
-assign("1.+", segwi, segObj)
-assign("1.-", segci, segObj)
-plotAlongChrom(segObj, chr=1, coord = 1000*c(101.5, 115),
-               gff = gff, doLegend=FALSE)
-@ 
+\myincfig{segmentation-fig1}{\textwidth}{% 
+Along-chromosome plot similar to Figure 1 in the paper~\cite{David2006}.}
+\myincfig{segmentation-fig2}{\textwidth}{% 
+Along-chromosome plots similar to Figure 2 in the paper~\cite{David2006}.}
 %
-\myincfig{segmentation-plotAlongChrom}{\textwidth}{% 
-Along-chromosome plot similar to the one shown in the paper~\cite{David2006}.}
+<<fig1, fig=TRUE, eps=FALSE, include=FALSE, width=16, height=6>>=
+plotAlongChrom(segObj=so, chr=1, coord = c(30, 130)*1e3, ylim=ylim, 
+               ## probeAnno = probeAnno, 
+               gff=myGff,
+               featureNoLabel = c("uORF", "binding_site", "TF_binding_site"),
+               doLegend=FALSE)  
+@ 
+
+<<fig2, fig=TRUE, eps=FALSE, include=FALSE, width=11, height=5.5>>=
+dx = 0.20
+dy = 0.05
+pushViewport(viewport(x=0.01, width=0.97, height=0.97, just=c("left", "center"),
+                      layout=grid.layout(3, 8,
+                        height=c(1, dy, 1),
+                        width =c(dx, 1, dx, 1, dx, 1, dx, 1))))
+         
+myPlot = function(row, col, ...) {
+  pushViewport(viewport(layout.pos.row=row, layout.pos.col=col))
+  grid.rect(x=-0.1, width=1.15, y=0.0, height=1.02, just=c("left", "bottom"),
+            default.units="npc", gp=gpar(lwd=0.2))
+  plotAlongChrom(..., segObj=so, ylim=ylim,  
+                 probeAnno = probeAnno, gff=myGff,
+                 featureNoLabel = c("CDS", "uORF", "binding_site", "TF_binding_site"),
+                 doLegend=FALSE)  
+  popViewport()
+}
+
+## A) 13:550k splicing RPS16A, RPL13B
+myPlot(1, 2, chr=13, coord = c(550044, 553360), main="a")
+## B) GCN4
+myPlot(1, 4, chr=5, coord = c(138660, 141880), main="b")
+## C) MET7, novel architecture
+myPlot(1, 6, chr=15, coord = c(784700, 790000), main="c")
+## D) overlapping transcripts
+myPlot(1, 8, chr=14, coord = c(342200, 347545), main="d")
+## E) SER3
+myPlot(3, 2, chr=5, coord = c(321900, 326100), main="e")
+## F) 2:360.5-366.5: novel isolated
+myPlot(3, 4, chr=2, coord = c(360500, 365970), main="f")
+## G) 9:221-227: novel antisense SPO22
+myPlot(3, 6, chr=9, coord = c(221000, 226500), main="g")
+
+## legend
+fc = tilingArray:::featureColors(1)[c("CDS", "CDS_dubious", "uORF", "ncRNA", "TF_binding_site"), ]
+pc = c("Watson strand probe"="#00441b", "Crick strand probe"="#081d58", "Non-unique probe"="grey")
+sc = c("Segment boundary"="#777777")
+
+pushViewport(dataViewport(xscale=c(0,1), yscale=c(-7,nrow(fc)+1), layout.pos.col=8, layout.pos.row=3))
+h1  = nrow(fc):1
+h2  = 0:(1-length(pc))
+h3  = -length(pc)
+
+w   = 0.2
+grid.rect(x=0, width=w, y=h1, height = unit(1, "native")- unit(2, "mm"), 
+          just  = c("left", "center"), default.units="native",
+          gp    = do.call("gpar", fc))
+grid.circle(x = w/2, y=h2, r=0.2, default.units="native",
+            gp = gpar(col=pc, fill=pc))
+grid.lines(x=w/2, y=h3+c(-.3,+.3), default.units="native", gp=gpar(col=sc))
+grid.text(label = c(rownames(fc), names(pc), names(sc)), x = w*1.1, y = c(h1,h2,h3),
+          just  = c("left", "center"), default.units="native",
+          gp=gpar(cex=.7))
+popViewport(2)
+@ 
 
 
 
