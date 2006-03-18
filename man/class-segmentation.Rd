@@ -3,12 +3,14 @@
 \alias{segmentation-class}
 \alias{confint}
 \alias{confint,segmentation-method}
+\alias{logLik,segmentation-method}
 \alias{plot,segmentation-method}
 \alias{show,segmentation-method}
 
-\concept{confint}
 \concept{plot}
 \concept{show}
+\concept{confint}
+\concept{logLik}
 
 \title{
   The class segmentation represents a segmentation result.
@@ -78,6 +80,7 @@
       The other parameters are directly passed on to
       \code{\link[strucchange]{confint.breakpointsfull}}.
     }
+    \item{logLik}{Return the log-likelihoods of fitted models.}
     \item{plot}{The method \code{plot(x, y, xlim, xlab="x", ylab="y",
 	bpcol="black", bplty=1, pch=16, ...)}
       provides a simple visualization of the result of a

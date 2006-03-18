@@ -72,7 +72,6 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
 
-
     /* currently R_alloc will not work for vs*sizeof() > 2 GB */
     vs = (long) maxcp * (long) n;
     PROTECT(v1 = allocVector(REALSXP, vs)); 
@@ -124,9 +123,9 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        the cp change points; element cp has value n, which corresponds
        to a changepoint at the rightmost point */
     for(cp=0;  cp<maxcp; cp++) {
-        /* Calculate J, the log-likelihood. TO DO: constant factors, sqrt(2*pi) */
+        /* Calculate J, the log-likelihood. */
         z = MAT_ELT(mI, n-1, cp, n);
-	J[cp] = finite(z) ? -log(z/n) : R_NegInf;
+	J[cp] = finite(z) ? -(double)n/2.0*(1+log(2*M_PI)+log(z/n)) : R_NegInf;
 
 	for(j=cp+1; j<maxcp; j++)
 	    MAT_ELT(th, cp, j, maxcp) = -1;

@@ -8,8 +8,8 @@
 ##--------------------------------------------------
 validSegmentation = function(object) {
 
-  ## check that slots 'breakpoints', 'negloglik', 'hasConfint' all have the same length
-  if(!((length(object@breakpoints)==length(object@negloglik)) &&
+  ## check that slots 'breakpoints', 'logLik', 'hasConfint' all have the same length
+  if(!((length(object@breakpoints)==length(object@logLik)) &&
        (length(object@breakpoints)==length(object@hasConfint))))
     return(FALSE)
      
@@ -44,7 +44,7 @@ setClass("segmentation",
       x = "numeric",
       flag = "integer",
       breakpoints = "list",
-      negloglik = "numeric",
+      logLik = "numeric",
       hasConfint = "logical",
       nrSegments = "integer"
    ),
@@ -53,7 +53,7 @@ setClass("segmentation",
       x = numeric(0),
       flag = integer(0),
       breakpoints = list(),
-      negloglik = numeric(0),
+      logLik = numeric(0),
       hasConfint = logical(0),
       nrSegments = as.integer(NA)
    ),

@@ -34,7 +34,7 @@ segment = function(y, maxseg, maxk) {
     y = y,
     x = numeric(0), flag=integer(0),
     breakpoints = bp,
-    negloglik = fs$J,
+    logLik = fs$J,
     hasConfint = rep(FALSE, length(bp)))
 } ## segment
 
@@ -115,5 +115,13 @@ setMethod("show", "segmentation",
     ans = c(ans, 
       sprintf("Selected S = %d\n", object@nrSegments))
     cat(ans, "\n", sep="")
+  })
+
+##--------------------------------------------------
+## logLik
+##--------------------------------------------------
+setMethod("logLik", "segmentation", 
+  function(object, ...) {
+    object@logLik
   })
 
