@@ -197,18 +197,15 @@ Segmentation with confidence intervals.
 }
 
 %--------------------------------------------------
-\subsection{Using the \Rfunction{plotAlongChrom} function for more elaborate displays.}
+\subsection{Definition of segFun}
 
-Since the data in the \Rpackage{davidTiling} package are
-strand-specific, we can do the segmentation for the ``-'' strand as
-well and produce the along-chromosome plot shown in
-Figure~\ref{segmentation-fig1}. To do this, we define the
-function \Rfunction{segFun}. It encapsulates the complete set of
-computations, as shown above, for one chromosome strand.  Its result
+For the subsequent considerations, it will be useful to define the
+function \Rfunction{segFun}.  It encapsulates the complete set of
+segmentation computations, as shown above, for one chromosome strand.  Its result
 is a \Rclass{segmentation} object with confidence intervals.
 %
 <<segFun, results=hide>>=
-segFun = function(chrstrd) {
+segFun = function(chrstrd, nrBasesPerSegment=1500) {
   writeLines(sprintf("Working on %s", chrstrd), con="segmentation.log")
 
   what = c("start", "end", "index", "unique")
@@ -222,17 +219,30 @@ segFun = function(chrstrd) {
   prbs = prbs[numna==0,]
 
   sprb = prbs[ sampleStep(prbs$mid, step=7), ]
-  nseg = round(sprb$end[nrow(sprb)]/1500)
+  nseg = round(sprb$end[nrow(sprb)]/nrBasesPerSegment)
 
   y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
   s = segment(y, maxseg=nseg, maxk=3000)
   s@x = sprb$mid
   s@flag = sprb$unique
 
-  confint(s, parm=nseg)
-}
+  confint(s, parm=nseg) }
 @
-%
+
+%--------------------------------------------------
+\subsection{Model selection.}
+<<segBig>>=
+segBig = cache(segBig, segFun("1.+", 2500))
+@ 
+
+%--------------------------------------------------
+\subsection{Using the \Rfunction{plotAlongChrom} function for more elaborate displays.}
+
+Since the data in the \Rpackage{davidTiling} package are
+strand-specific, we can do the segmentation for the ``-'' strand as
+well and produce the along-chromosome plot shown in
+Figure~\ref{segmentation-fig1}. 
+
 For Figure~\ref{segmentation-fig1}, we call \Rfunction{segFun} on the
 ``-'' strand of chromosome 1.  For Figure~\ref{segmentation-fig2}, we
 also call it on a number of other chromosomes. This computation will
