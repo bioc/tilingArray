@@ -4,7 +4,7 @@
 \newcommand{\Rpackage}[1]{\textit{#1}}
 \newcommand{\Rfunction}[1]{\textit{#1}}
 \newcommand{\Rclass}[1]{\textit{#1}}
-\usepackage{/home/huber/R/share/texmf/Sweave}
+\usepackage{/home/huber/R-devel/share/texmf/Sweave}
 
 \begin{document}
 
@@ -29,7 +29,7 @@ segmentation.
 The cost matrix $G_{km}$ is the sum of squared residuals for a segment
 from $m$ to $m+k-1$ (i.\,e.\ including $m+k-1$ but excluding $m+k$),
 \begin{equation}\label{eq:costFun}
-G_{km} := \frac{1}{J} \sum_{j=1}^J \sum_{n=m}^{m+k-1} 
+G_{km} := \sum_{j=1}^J \sum_{n=m}^{m+k-1} 
 \left(y_{nj} - \hat{\mu}_{km} \right)^2
 \end{equation}
 where $1\le m \le m+k-1\le N$ and $\hat{\mu}_{km}$ is the mean of that segment,
@@ -47,15 +47,12 @@ which I need to get the algorithm from complexity $O(N^2)$ to $O(N)$.
 \newpage
 \section{Algebra}
 \begin{eqnarray}
-\lefteqn{G_{km} = \frac{1}{J} \sum_{j=1}^J \sum_{n=m}^{m+k-1} 
+\lefteqn{G_{km} = \sum_{j=1}^J \sum_{n=m}^{m+k-1} 
 \left(y_{nj} - \hat{\mu}_{km} \right)^2} \\
 %
-&=& \frac{1}{J} \left( 
-\sum_{n,j} y_{nj}^2 - \frac{1}{Jk} \left(\sum_{n',j'} y_{n'j'}\right)^2
-\right) \\
+&=& \sum_{n,j} y_{nj}^2 - \frac{1}{Jk} \left(\sum_{n',j'} y_{n'j'}\right)^2 \\
 %
-&=& \frac{1}{J} \sum_n q_n - 
-\frac{1}{J^2k}\left(\sum_n r_n\right)^2 \label{Gbyqr}
+&=& \sum_n q_n - \frac{1}{Jk}\left(\sum_n r_n\right)^2 \label{Gbyqr}
 \end{eqnarray}
 with
 \begin{eqnarray}
@@ -80,8 +77,8 @@ d = cumsum(q)
 \end{Sinput}
 then (\ref{Gbyqr}) becomes
 \begin{equation}
-\frac{1}{J}(d_{m+k-1}-d_{m-1}) - 
-\frac{1}{J^2k}(c_{m+k-1}^2-c_{m-1}^2)
+(d_{m+k-1}-d_{m-1}) - 
+\frac{1}{Jk}(c_{m+k-1}^2-c_{m-1}^2)
 \end{equation}
 
 
