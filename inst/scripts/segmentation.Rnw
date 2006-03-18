@@ -244,9 +244,11 @@ environment \Robject{segObj}.
 <<makeSegObj>>=
 toDo = c("1.-", "2.+", "2.-", "5.+", "5.-", "9.+", "9.-", "13.+", "13.-", "14.+", "14.-","15.+", "15.-")
 for(w in toDo) {
-  if(!file.exists(paste(w, "rda", sep="."))) {
+  fn = paste(w, "rda", sep=".")
+  if(!file.exists(fn)) {
+    writeLines(date(), con=fn) ## lock
     assign(w, segFun(w))
-    save(list=w, file=paste(w, "rda", sep="."))
+    save(list=w, file=fn, compress=TRUE)
   }
 }
 
