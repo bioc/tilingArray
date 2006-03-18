@@ -232,7 +232,7 @@ segFun = function(chrstrd, nrBasesPerSegment=1500) {
 %--------------------------------------------------
 \subsection{Model selection.}
 <<segBig>>=
-segBig = cache(segBig, segFun("1.+", 2500))
+segBig = cache("segBig", segFun("1.+", 2500))
 @ 
 
 %--------------------------------------------------
