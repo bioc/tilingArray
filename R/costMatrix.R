@@ -3,8 +3,6 @@
 ## G[k,i] is the sum of squared residuals of a segment from i to (i+k-1)
 ##-----------------------------------------------------------------------
 costMatrix = function(x, maxk) {
-  if(!is.numeric(maxk)||maxk<=1||length(maxk)!=1)
-    stop("'maxk' must be a single positive number.")
   if(!is.numeric(x)||!(is.vector(x)||is.matrix(x)))
     stop("'x' must be a numeric vector or matrix.")
 
@@ -19,7 +17,10 @@ costMatrix = function(x, maxk) {
   }
   n = length(r)
   
-  ## see Wolfgang's handwritten notes for explanation of the algebra
+  if(!is.numeric(maxk)||(length(maxk)!=1)||(maxk<1)||(maxk>n))
+    stop(sprintf("'maxk' must be a single number between 1 and the number of rows of 'x': %d.", n))
+
+  ## see inst/doc/costMatrix.tex (.pdf) for explanation of the algebra
   cr = cumsum(r)
   cq = cumsum(q)
   
