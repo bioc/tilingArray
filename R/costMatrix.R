@@ -26,13 +26,13 @@ costMatrix = function(x, maxk) {
   
   G = matrix(as.numeric(NA), nrow=maxk, ncol=n)
   k = 1:maxk
-  G[, 1] = (cq[k] - cr[k]*cr[k]/(k*d)) / d
-  for(k in 1:maxk) {
+  G[, 1] = cq[k] - cr[k]*cr[k]/(k*d)
+  for(k in 1:(maxk-1)) {
     i   = 1:(n-k)
     j   = 2:(n-k+1)
     cqk = cq[i+k]-cq[i]
     crk = cr[i+k]-cr[i]
-    G[k,j] = (cqk - crk*crk/(k*d))/d
+    G[k,j] = cqk - crk*crk/(k*d)
   }
   return(G)
 }

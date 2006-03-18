@@ -14,6 +14,8 @@ costMatrix(x, maxk)
   \item{maxk}{Positive integer.}
 }
 \details{
+  See the vignette costMatrix.tex (.pdf) in the \code{inst/doc} directory of
+  the package.
 }
 
 \value{
@@ -25,14 +27,14 @@ costMatrix(x, maxk)
 \examples{
 d = 4
 x = apply(matrix(rnorm(200), ncol=d), 2, cumsum)
-maxk = 30
+maxk = 50
  
 G = costMatrix(x, maxk=maxk)
  
 G.pedestrian = matrix(NA, nrow=nrow(G), ncol=ncol(G))
 for(i in 1:(ncol(G)))
   for(k in 1:min(nrow(G), nrow(x)-i+1))
-    G.pedestrian[k, i] = (k*d-1)/d*var(as.vector(x[i:(i+k-1), ]))
+    G.pedestrian[k, i] = (k*d-1)*var(as.vector(x[i:(i+k-1), ]))
  
 stopifnot(identical(is.na(G), is.na(G.pedestrian)))
 stopifnot(max(abs(G-G.pedestrian), na.rm=TRUE) <= 1e-6)
