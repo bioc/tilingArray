@@ -142,23 +142,25 @@ in the regions of duplicated sequence.
 \subsection{Call the segmentation algorithm}
 The segmentation algorithm needs two parameters, \Robject{maxseg}, the
 maximum number of segments that the algorithm is going to consider,
-and \Robject{maxk}, the maximum length per segment of individual
-segments. The algorithm will calculate all optimal segmentations with
-$1, 2, \ldots, \mbox{maxseg}$ segments.  Note that \Robject{maxk} is
-measured in number of data points, not in genomic coordinates.  The
-choice that we make here corresponds to an \emph{average} length per
-segment of 1500 bases.  Our choice of the parameter \Robject{maxk}
-corresponds to a maximum segment length of about $7.5 \times 3,000 =
-22,500$ bases.
+and \Robject{maxk}, the maximum length of individual segments. We
+choose \Robject{maxseg} to be quite high, such that it corresponds to
+an \emph{average} length per segment of 750 bases.  The algorithm will
+calculate all optimal segmentations with $1, 2, \ldots,$
+\Robject{maxseg} segments, and we can still later choose our prefered
+one.  Note that \Robject{maxk} is measured in number of data points,
+not in genomic coordinates.  Our choice of the parameter
+\Robject{maxk} corresponds to a maximum segment length of about $7.5
+\times 3,000 = 22,500$ bases. Note that there is no minimum length
+restriction for the segments.
 %
-<<nseg, print=TRUE>>=
-nseg = round(sprb$end[nrow(sprb)]/1500)
+<<maxseg, print=TRUE>>=
+maxseg = round(sprb$end[nrow(sprb)]/750)
 @ 
 %
 <<segment>>=
 segw = cache("segw", {
   y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
-  segw = segment(y, maxseg=nseg, maxk=3000)
+  segw = segment(y, maxseg=maxseg, maxk=3000)
   segw@x = sprb$mid
   segw@flag = sprb$unique
   segw
@@ -181,6 +183,7 @@ This is simply a call to the \Rfunction{confint} method of the
 \Rclass{segmentation} class.
 %
 <<confint>>=
+nseg = round(sprb$end[nrow(sprb)]/1500)
 segwi = cache("segwi",
   confint(segw, parm=nseg)
 )
@@ -195,6 +198,74 @@ plot(segwi, nseg, pch=".", xlim=c(0, 40000))
 \myincfig{segmentation-plotseg}{\textwidth}{% 
 Segmentation with confidence intervals.
 }
+
+
+
+%--------------------------------------------------
+\subsection{Model selection.}
+The log-likelihood is
+\begin{equation}
+\log L = -\frac{n}{2}\left(\log 2\pi +1 +\log\frac{\sum_i r_i}{n}\right),
+\end{equation}
+where $r_i$ the $i$-th residual and $n$ the number of data points.
+AIC and BIC are defined as
+\begin{eqnarray}
+\mbox{AIC}&=& -2\log L + 2p\\
+\mbox{BIC}&=& -2\log L + p\log n
+\end{eqnarray}
+where $p$ is the number of parameters of the model. In our case,
+$p=2S$, since for a segmentation with $S$ segments, we estimate $S-1$
+changepoints, $S$ mean values, and 1 standard deviation. We can
+also consider the penalized likelihoods
+\begin{eqnarray}
+\log L_{\mbs{AIC}}&=& \log L - p\\
+\log L_{\mbs{BIC}}&=& \log L -\frac{p}{2}\log n
+\end{eqnarray}
+%
+We define a function \Rfunction{penLL} that implements these
+%
+<<defpenLL>>
+penLL = function(ll, npar, ndat, what)
+  switch(what,
+  AIC = ll - npar,
+  BIC = ll - log(ndat)*npar/2,
+  stop("Zapperlot"))
+@
+% 
+and plot them as functions of $S$, see Figure~\ref{segmentation-modelSelect
+%
+<<modelSelect, fig=TRUE, eps=FALSE, include=FALSE, width=4.5, height=4.5>>=
+plotPenLL = function(s) {
+  cols = brewer.pal(3, "Set1")
+  ll = logLik(s)
+  ylim = ll[c(50, length(ll))]
+  plot(ll, type="l", col=cols[1], ylab="(penalized) log likelihood", xlab="S", ylim=ylim)
+  lines(penLL(ll, npar=2*(1:length(ll)), ndat=nrow(s@y), what="AIC"), col=cols[2])
+  bic = penLL(ll, npar=2*(1:length(ll)), ndat=nrow(s@y), what="BIC")
+  lines(bic, col=cols[3])
+
+  lenChr= s@x[length(s@x)]
+  nrSegChoice = round(lenChr/1500)
+  optBIC = mean(which.max(bic))
+  x0= c(nrSegChoice, optBIC)
+  segments(x0=x0, x1=x0, y0=ylim[1]+diff(ylim)*0.05, y1=ylim[1]+diff(ylim)*0.95,
+          col=c("#707070", cols[3]), lty=2)
+  
+  legend(0, ylim[2], expression(LL, tilde(LL)[AIC], tilde(LL)[BIC]),
+         xjust=0, yjust=1, col=cols, lwd=1)
+}
+
+par(mai=c(1,1,0.01,0.01))
+plotPenLL(segwi)
+@ 
+%
+\myincfig{segmentation-modelSelect}{\textwidth}{% 
+Model selection: log-likelihood and two versions of penalized
+log-likelihood (AIC and BIC) as a function of the number of segments
+$S$. Vertical green bar corresponds to optimal $\log L_{\mbs{BIC}}$,
+vertical grey bar to our ``subjective'' choice of average segment
+length 1,500 bases.}
+
 
 %--------------------------------------------------
 \subsection{Definition of segFun}
@@ -228,13 +299,6 @@ segFun = function(chrstrd, nrBasesPerSegment=1500) {
 
   confint(s, parm=nseg) }
 @
-
-%--------------------------------------------------
-\subsection{Model selection.}
-<<segBig>>=
-segBig = cache("segBig", segFun("1.+", 750))
-@ 
-
 %--------------------------------------------------
 \subsection{Using the \Rfunction{plotAlongChrom} function for more elaborate displays.}
 
