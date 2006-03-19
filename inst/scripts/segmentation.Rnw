@@ -333,7 +333,6 @@ for(w in toDo) {
   assign(w, w, segObj)
 }
 
-
 data("gff")
 myGff = gff[ gff$Name!="tR(UCU)E", ]
 ylim  = c(-4.5, 3.5)
@@ -351,7 +350,7 @@ Along-chromosome plot similar to Figure 1 in the paper~\cite{David2006}.}
 Along-chromosome plots similar to Figure 2 in the paper~\cite{David2006}.}
 %
 <<fig1, fig=TRUE, eps=FALSE, include=FALSE, width=16, height=6>>=
-plotAlongChrom(segObj=so, chr=1, coord = c(30, 130)*1e3, ylim=ylim, 
+plotAlongChrom(segObj=segObj, chr=1, coord = c(30, 130)*1e3, ylim=ylim, 
                ## probeAnno = probeAnno, 
                gff=myGff,
                featureNoLabel = c("uORF", "binding_site", "TF_binding_site"),
