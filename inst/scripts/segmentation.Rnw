@@ -310,12 +310,13 @@ Figure~\ref{segmentation-fig1}.
 For Figure~\ref{segmentation-fig1}, we call \Rfunction{segFun} on the
 ``-'' strand of chromosome 1.  For Figure~\ref{segmentation-fig2}, we
 also call it on a number of other chromosomes. This computation will
-take a couple of hours. Note that it can be trivially parallelized
-since the computations for different chromosome strands are
-independent of each other. Finally, we collect all results in the
-environment \Robject{segObj}.
+take a couple of hours (about 18h on mine). Note that the
+\Robject{for}--loop below can be trivially parallelized since the
+computations for different chromosome strands are independent of each
+other. 
+\Robject{segObj}.
 %
-<<makeSegObj>>=
+<<computeSegmentations>>=
 toDo = c("1.-", "2.+", "2.-", "5.+", "5.-", "9.+", "9.-", "13.+", "13.-", "14.+", "14.-","15.+", "15.-")
 for(w in toDo) {
   fn = paste(w, "rda", sep=".")
@@ -325,7 +326,11 @@ for(w in toDo) {
     save(list=w, file=fn, compress=TRUE)
   }
 }
-
+@ 
+%
+Finally, we collect all results in the environment \Robject{segObj}.
+%
+<<makeSegObj>>=
 segObj = new.env(parent = baseenv())
 assign("1.+", segwi, segObj)
 for(w in toDo) {
@@ -355,7 +360,7 @@ plotAlongChrom(segObj=segObj, chr=1, coord = c(30, 130)*1e3, ylim=ylim,
                ## probeAnno = probeAnno, 
                gff=myGff, showConfidenceIntervals=FALSE,
                featureNoLabel = c("uORF", "binding_site", "TF_binding_site"),
-               doLegend=FALSE)  
+               doLegend=FALSE, main="")  
 @ 
 
 <<fig2, fig=TRUE, eps=FALSE, include=FALSE, width=11, height=5.5>>=
@@ -372,7 +377,8 @@ myPlot = function(row, col, ...) {
   grid.rect(x=-0.1, width=1.15, y=0.0, height=1.02, just=c("left", "bottom"),
             default.units="npc", gp=gpar(lwd=0.2))
   plotAlongChrom(..., segObj=segObj, ylim=ylim,  
-                 probeAnno = probeAnno, gff=myGff,
+                 ## probeAnno = probeAnno, 
+                 gff=myGff,
                  featureNoLabel = c("uORF", "binding_site", "TF_binding_site"),
                  doLegend=FALSE)  
   popViewport()
