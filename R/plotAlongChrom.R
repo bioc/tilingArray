@@ -188,16 +188,16 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
 ## plot Segmentation with Dots
 ## ------------------------------------------------------------
 plotSegmentationDots = function(dat, xlim, ylim, threshold, 
-  chr, strand, vpr, colors, pointSize) {
+  chr, strand, vpr, colors, pointSize, showConfidenceIntervals=TRUE) {
 
   if(is.matrix(dat$y))
     dat$y = rowMeans(dat$y) ##  if >1 samples, take mean over samples
   stopifnot(length(dat$y)==length(dat$x), length(dat$flag)==length(dat$x))
   
+  xorg  = dat$x
   if(missing(xlim)) {
     xlim=range(dat$x, na.rm=TRUE)
   } else {
-    xorg  = dat$x
     sel  = (dat$x>=xlim[1])&(dat$x<=xlim[2])
     dat$x = dat$x[sel]
     dat$y = dat$y[sel]
@@ -224,14 +224,17 @@ plotSegmentationDots = function(dat, xlim, ylim, threshold,
     grid.lines(y=unit(0, "native"), gp=gpar(col=colors["threshold"]))
 
   ## segment boundaries
+  sel = ((xorg[dat$estimate]>=xlim[1]) & (xorg[dat$estimate]<=xlim[2]))
   mySeg = function(j, what)
     grid.segments(x0 = unit(j, "native"), x1 = unit(j, "native"),
                   y0 = unit(0.1, "npc"),  y1 = unit(0.9, "npc"),
                   gp = gpar(col=colors[what], lty=c(cp=1, ci=2)[what]))
     
-  if(!is.null(dat$estimate)) mySeg(xorg[dat$estimate], "cp")
-  if(!is.null(dat$upper))    mySeg(xorg[dat$upper], "ci")
-  if(!is.null(dat$lower))    mySeg(xorg[dat$lower], "ci")
+  if(!is.null(dat$estimate)) mySeg(xorg[dat$estimate][sel], "cp")
+  if(showConfidenceIntervals) {
+    if(!is.null(dat$upper))    mySeg(xorg[dat$upper][sel], "ci")
+    if(!is.null(dat$lower))    mySeg(xorg[dat$lower][sel], "ci")
+  }
   
   grid.points(dat$x[ord], dat$y[ord], pch=20, size=pointSize, gp=gpar(col=colo))
   popViewport(2)

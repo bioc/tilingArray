@@ -113,6 +113,12 @@ plotAlongChrom(segObj, y, probeAnno, gff,
     \item a numeric scalar names \code{theThreshold}, which is used to 
     draw a horizontal "threshold" line in the plot.
   }
+
+  \emph{\dots and the different signal visualization methods (\code{what} option)}:
+  If \code{what=="dots"}, the argument \code{showConfidenceIntervals}
+  can  be a logical scalar to choose whether vertical dashed lines are
+  drawn for the confidence interval. In any case, these are only drawn
+  if they are present in the \code{segmentation} object in \code{segObj}.
 } 
   
 

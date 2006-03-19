@@ -251,7 +251,7 @@ plotPenLL = function(s) {
   segments(x0=x0, x1=x0, y0=ylim[1]+diff(ylim)*0.05, y1=ylim[1]+diff(ylim)*0.95,
           col=c("#707070", cols[3]), lty=2)
   
-  legend(0, ylim[2], expression(LL, tilde(LL)[AIC], tilde(LL)[BIC]),
+  legend(0, ylim[2], expression(log~L, log~tilde(L)[AIC], log~tilde(L)[BIC]),
          xjust=0, yjust=1, col=cols, lwd=1)
 }
 
@@ -352,7 +352,7 @@ Along-chromosome plots similar to Figure 2 in the paper~\cite{David2006}.}
 <<fig1, fig=TRUE, eps=FALSE, include=FALSE, width=16, height=6>>=
 plotAlongChrom(segObj=segObj, chr=1, coord = c(30, 130)*1e3, ylim=ylim, 
                ## probeAnno = probeAnno, 
-               gff=myGff,
+               gff=myGff, showConfidenceIntervals=FALSE,
                featureNoLabel = c("uORF", "binding_site", "TF_binding_site"),
                doLegend=FALSE)  
 @ 
@@ -371,7 +371,7 @@ myPlot = function(row, col, ...) {
             default.units="npc", gp=gpar(lwd=0.2))
   plotAlongChrom(..., segObj=segObj, ylim=ylim,  
                  probeAnno = probeAnno, gff=myGff,
-                 featureNoLabel = c("CDS", "uORF", "binding_site", "TF_binding_site"),
+                 featureNoLabel = c("uORF", "binding_site", "TF_binding_site"),
                  doLegend=FALSE)  
   popViewport()
 }
