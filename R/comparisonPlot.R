@@ -1,7 +1,8 @@
 comparisonPlot = function(x, y, xscale=range(x), yscale, anno, ticks, pch=20, cex=1, bgcol="#efefef") {
   
   myColorRamp = function(d, rg=range(d)) {
-    cols = colorRamp(c("red", "yellow", "blue"))((d-rg[1])/(rg[2]-rg[1])) / 256
+    ## cols = colorRamp(c("red", "yellow", "blue"))((d-rg[1])/(rg[2]-rg[1])) / 256
+    cols = colorRamp(rev(hcl(seq(50,360,by=5), 75, 65)))((d-rg[1])/(rg[2]-rg[1])) / 256
     return(rgb(cols[,1], cols[,2], cols[,3]))
   }
   cols = myColorRamp(y[[1]])
