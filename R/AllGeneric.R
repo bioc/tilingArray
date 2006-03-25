@@ -15,5 +15,7 @@
 setGeneric("confint", function(object, parm, level = 0.95, ...) standardGeneric("confint"))
 setGeneric("logLik", function(object, ...) standardGeneric("logLik"))
 
+if(!isGeneric("plot"))
+  setGeneric("plot")
 
 
