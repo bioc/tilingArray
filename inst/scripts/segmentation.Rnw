@@ -22,6 +22,7 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 \newcommand{\Rpackage}[1]{\textit{#1}}
 \newcommand{\Rclass}[1]{\textit{#1}}
 \newcommand{\Rfunction}[1]{{\small\texttt{#1}}}
+\newcommand{\mbs}[1]{{\mbox{\scriptsize #1}}}
 
 \newcommand{\myincfig}[3]{%
   \begin{figure}[htbp]
@@ -232,7 +233,7 @@ penLL = function(ll, npar, ndat, what)
   stop("Zapperlot"))
 @
 % 
-and plot them as functions of $S$, see Figure~\ref{segmentation-modelSelect
+and plot them as functions of $S$, see Figure~\ref{segmentation-modelSelect}
 %
 <<modelSelect, fig=TRUE, eps=FALSE, include=FALSE, width=4.5, height=4.5>>=
 plotPenLL = function(s) {
