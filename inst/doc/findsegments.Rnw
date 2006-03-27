@@ -24,7 +24,7 @@
 \begin{document}
 
 %------------------------------------------------------------
-\title{How to use the segment function to fit a piecewise constant curve}
+\title{The \Rfunction{segment} function to fit a piecewise constant curve}
 %------------------------------------------------------------
 \author{Wolfgang Huber}
 \maketitle
@@ -50,9 +50,9 @@ To demonstrate and verify the correctness of the algorithm, let's generate
 simulated data:
 %
 <<defGenData>>=
-genData = function(lenx, nrcp, stddev=0.1) {
+genData = function(lenx, nrSeg, stddev=0.1) {
   x  = numeric(lenx)
-  cp = sort(sample(1:floor(lenx/15), nrcp-1) * 15)
+  cp = sort(sample(1:floor(lenx/15), nrSeg-1) * 15)
   cpb = c(1, cp, lenx+1)
   s  = 0
   for (j in 2:length(cpb)) {
@@ -65,20 +65,19 @@ genData = function(lenx, nrcp, stddev=0.1) {
 @ 
 <<plotData,fig=TRUE,include=FALSE>>=
 lenx = 1000
-nrcp = 10
-gd = genData(lenx, nrcp)
+nrSeg = 10
+gd = genData(lenx, nrSeg)
 plot(gd$x, pch=".")
 abline(v=gd$cp, col="red")
 @ 
 %
 \myincfig{findsegments-plotData}{0.6\textwidth}{%
-A simulated data example with \Sexpr{nrcp} change points. 
-Their estimated locations are shown with red
-vertical lines}
+A simulated data example with \Sexpr{nrSeg} segments.
+Their estimated locations are shown with red vertical lines}
 %
 The result is shown in Figure~\ref{findsegments-plotData}.
 We can use the function \Rfunction{segment} to reconstruct the
-changepoints from the \Robject{x} data alone.
+change-points from the \Robject{x} data alone.
 %
 <<loadlib, results=hide>>=
 library("tilingArray")
@@ -88,43 +87,85 @@ maxseg = 12
 maxk = 500
 seg  = segment(gd$x, maxk=maxk, maxseg=maxseg)
 seg
-seg@breakpoints[nrcp+(-1:1)]
+seg@breakpoints[nrSeg+(-1:1)]
 gd$cp
 @ 
 %
-We see that the \Sexpr{nrcp}-th element of the list \Robject{seg\@breakpoints} 
-exactly reconstructs the change points \Robject{gd\$cp} that were 
+We see that the \Sexpr{nrSeg}-th element of the list \Robject{seg\@breakpoints} 
+exactly reconstructs the change-points \Robject{gd\$cp} that were 
 used in the simulation.
 
-The parameters \Robject{maxseg} and \Robject{maxk} are the maximum number of
-segments and the maximum length per segment. The algorithm finds for each
-value of $k$ from \Robject{1} to \Robject{maxseg} the best segmentation under
-the restriction that no individual segment be longer than \Robject{maxk}.  In
-the original paper of Picard et al.~\cite{Picard} and in their software,
-\Robject{maxk} is implicitely set to the number of data points
-\Robject{length(x)}. I have introduced this parameter to reduce the
-algorithm's complexity. The complexity of Picard's software is
-\Robject{length(x)*length(x)} in memory and
-\Robject{length(x)*length(x)*maxcp} in time,
-the complexity of the \Rfunction{segment} function is 
-\Robject{length(x)*maxk} in memory and
-\Robject{length(x)*maxk*maxcp} in time. As I am
-applying it to data with \Robject{length(x)} $\approx 10^5$ and
-\Robject{maxk} $\approx 250$, the difference can be substantial.
+The parameters \Robject{maxseg} and \Robject{maxk} are the maximum
+number of segments and the maximum length per segment. The algorithm
+finds for each value of $k$ from \Robject{1} to \Robject{maxseg} the
+best segmentation under the restriction that no individual segment be
+longer than \Robject{maxk}.  In the paper of Picard et
+al.~\cite{Picard} and in their software, \Robject{maxk} is implicitely
+set to the number of data points \Robject{length(x)}. I have
+introduced this parameter to reduce the algorithm's complexity. The
+complexity of Picard's software is \Robject{length(x)*length(x)} in
+memory and \Robject{length(x)*length(x)*maxcp} in time, the complexity
+of the \Rfunction{segment} function is \Robject{length(x)*maxk} in
+memory and \Robject{length(x)*maxk*maxcp} in time. As I am applying it
+to data with \Robject{length(x)} $\approx 10^5$ and \Robject{maxk}
+$\approx 250$, the difference can be substantial.
 
-%--------------------------------------------------
-\section{Some more testing}
-%--------------------------------------------------
+%-----------------------------------------------------------------------------------------
+\section{More testing of the change-point estimates on simulated data}
+%-----------------------------------------------------------------------------------------
 Here is a little for-loop that generates data using random parameters 
 and checks whether \Rfunction{segment} can reconstruct them. 
 %
-<<testing>>=
+<<testCP>>=
 set.seed(4711)
 for(i in 1:20){
-  gd  = genData(lenx, nrcp)
+  gd  = genData(lenx, nrSeg)
   seg = segment(gd$x, maxk=maxk, maxseg=maxseg)
-  stopifnot(seg@breakpoints[[nrcp]][, "estimate"] == gd$cp)
+  stopifnot(seg@breakpoints[[nrSeg]][, "estimate"] == gd$cp)
 }
+@ 
+
+%-----------------------------------------------------------------------------------------
+\section{Model selection on simulated data}
+%-----------------------------------------------------------------------------------------
+In this section we show that the BIC works pretty well for finding the
+correct number of segments (parameter $S$ in the paper) \emph{if} the
+data are generated by the model.
+%
+<<modelSelect1>>=
+nrSeg = 22
+gd = genData(lenx, nrSeg)
+s = segment(gd$x, maxk=lenx, maxseg=as.integer(nrSeg * 2.5))
+@ 
+
+<<modelSelect2,fig=TRUE,include=FALSE,width=7,height=7.5>>=
+par(mfrow=c(2,1))
+plot(gd$x, pch=".")
+nrBIC = which.max(logLik(s, penalty="BIC"))
+abline(v=s@breakpoints[[nrBIC]][, "estimate"], col="blue")
+
+ll = logLik(s)
+ylim = c(ll[10], ll[length(ll)])
+plot(ll, type="l", col="black", ylim=ylim)
+lines(logLik(s, penalty="AIC"), col="red")
+lines(logLik(s, penalty="BIC"), col="blue")
+legend(1, ylim[2], c("LL", "LL-AIC", "LL-BIC"), 
+  lty=1, col=c("black", "red", "blue"))
+@ 
+%
+The result is shown in Figure~\ref{findsegments-modelSelect2}.
+%
+\myincfig{findsegments-modelSelect2}{\textwidth}{%
+Upper panel: simulated data example with \Robject{nrSeg=}\Sexpr{nrSeg}
+segments and vertical lines representing the fitted model with
+\Robject{nrBIC=}\Sexpr{nrBIC}, selected by maximum $\log
+L_{\mbox{\scriptsize BIC}}$.  Lower panel: log-likelihood $\log L$, penalized
+likelihoods $\log L_{\mbox{\scriptsize AIC}}$ and $\log
+L_{\mbox{\scriptsize BIC}}$.}
+
+<<printMaxima>>=
+which.max(logLik(s, "AIC"))
+which.max(logLik(s, "BIC"))
 @ 
 
 %--------------------------------------------------
