@@ -1,7 +1,9 @@
 \name{segmentation}
 \docType{class}
 \alias{segmentation-class}
+
 \alias{confint}
+\alias{logLik}
 \alias{confint,segmentation-method}
 \alias{logLik,segmentation-method}
 \alias{plot,segmentation-method}
@@ -31,7 +33,7 @@
       The length of this vector must be either the same as
       \code{nrow(y)}, or 0. The latter case is equivalent to
       \code{x=1:nrow(y)}.}
-    \item{\code{\flag}:}{An integer vector, whose length must be either the same as
+    \item{\code{flag}:}{An integer vector, whose length must be either the same as
       \code{nrow(y)}, or 0. This can be used to \emph{flag} certain
       probes for special treatment, for example by
       \code{\link{plotAlongChrom}}.}
