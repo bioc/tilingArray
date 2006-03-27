@@ -223,17 +223,7 @@ also consider the penalized likelihoods
 \log L_{\mbs{BIC}}&=& \log L -\frac{p}{2}\log n
 \end{eqnarray}
 %
-We define a function \Rfunction{penLL} that implements these
-%
-<<defpenLL>>=
-penLL = function(ll, npar, ndat, what)
-  switch(what,
-  AIC = ll - npar,
-  BIC = ll - log(ndat)*npar/2,
-  stop("Zapperlot"))
-@
-% 
-and plot them as functions of $S$, see Figure~\ref{segmentation-modelSelect}
+We plot them as functions of $S$, see Figure~\ref{segmentation-modelSelect}
 %
 <<modelSelect, fig=TRUE, eps=FALSE, include=FALSE, width=4.5, height=4.5>>=
 plotPenLL = function(s) {
@@ -241,8 +231,8 @@ plotPenLL = function(s) {
   ll = logLik(s)
   ylim = ll[c(50, length(ll))]
   plot(ll, type="l", col=cols[1], ylab="(penalized) log likelihood", xlab="S", ylim=ylim)
-  lines(penLL(ll, npar=2*(1:length(ll)), ndat=nrow(s@y), what="AIC"), col=cols[2])
-  bic = penLL(ll, npar=2*(1:length(ll)), ndat=nrow(s@y), what="BIC")
+  lines(logLik(s, penalty="AIC"), col=cols[2])
+  bic = logLik(s, penalty="BIC")
   lines(bic, col=cols[3])
 
   lenChr= s@x[length(s@x)]

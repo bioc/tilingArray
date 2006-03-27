@@ -80,7 +80,9 @@
       The other parameters are directly passed on to
       \code{\link[strucchange]{confint.breakpointsfull}}.
     }
-    \item{logLik}{Return the log-likelihoods of fitted models.}
+    \item{logLik}{The method \code{logLik(object, penalty="none", ...)}
+      returns the log-likelihoods of fitted models. Valid values for the argument
+      \code{penalty} are \code{none}, \code{AIC} and \code{BIC}.}
     \item{plot}{The method \code{plot(x, y, xlim, xlab="x", ylab="y",
 	bpcol="black", bplty=1, pch=16, ...)}
       provides a simple visualization of the result of a

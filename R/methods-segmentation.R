@@ -121,7 +121,15 @@ setMethod("show", "segmentation",
 ## logLik
 ##--------------------------------------------------
 setMethod("logLik", "segmentation", 
-  function(object, ...) {
-    object@logLik
+  function(object, penalty="none", ...) {
+    ll   = object@logLik
+    npar = 2*(1:length(ll))
+    ndat = nrow(s@y)
+    switch(penalty,
+           none = ll,
+           AIC = ll - npar,
+           BIC = ll - log(ndat)*npar/2,
+           stop(sprintf("Invalid value '%s' for argument 'penalty'.", penalty)))
+
   })
 
