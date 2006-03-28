@@ -432,7 +432,7 @@ myPlot = function(x, tit) {
   maxval = quantile(x, probs=0.9999, na.rm=TRUE)
   minval = maxval-10.5
   mycol = colorRampPalette(brewer.pal(9, "GnBu"))(diff(rggc)+1)
-  boxplot(x[sel]~nrGC, ylim=lim, main="", col=mycol, outline=FALSE)
+  boxplot(x[sel]~nrGC, ylim=c(minval,maxval), main="", col=mycol, outline=FALSE)
   text(rggc[1]-5, maxval+1, tit, pos=2, font=2, xpd=NA)
 }
 @ 
