@@ -160,6 +160,7 @@ if(!exists("xn1"))
 %
 
 \subsection{Background correction by MM}
+\label{sec:bgPM}
 Instead of the background correction based on ``similar'' no-target
 probes that is done in \Rfunction{normalizeByReference}, we can also
 consider background correction by MM probes.
@@ -278,7 +279,7 @@ ysc[, 3:6] = c(-3,8)
 %
 Now we are ready to plot:
 % A4 is 210 x 297 mm ...8.27 x 11.7 inches
-<<alongChromPlot, fig=TRUE, include=FALSE, height=11, width=8.4>>=
+<<alongChromPlot, fig=TRUE, include=FALSE, height=11, width=8.4, eps=TRUE, pdf=FALSE>>=
 anno = data.frame(start=c(217860, 221078),
                   end  =c(220697, 222487),
                   name =I(c("RPN2", "SER33")))
@@ -317,7 +318,7 @@ produced as above, and somehow the PDF and EPS drivers of R ignore the
 replace all occurences of the string ``3.00'' by ``1.00''.
 %
 <<repairEPS, results=hide>>=
-writeLines(sub(" 3.00", " 1.00", readLines("assessNorm-alongChromPlot.eps"), fixed=TRUE),
+writeLines(sub(" 3.00", " 1.50", readLines("assessNorm-alongChromPlot.eps"), fixed=TRUE),
   con=("assessNorm-tmp.eps"))
 system("ps2pdf assessNorm-tmp.eps assessNorm-alongChromPlot.pdf")
 @ 
@@ -414,6 +415,45 @@ sn
 %Histograms of the probe intensity distribution for each of the 4 
 %control regions (rows) and the 5 methods b)-f) (columns).
 %}
+
+%-------------------------------------------------------------------------------------
+\subsection{Dependency of the signal on GC content before and after normalization}
+%------------------------------------------------------------------------------------
+We calculate the GC content of each probe,
+%
+<<calcBaseContent>>=
+bc=basecontent(seqPM)
+nrGC = bc[,"C"]+bc[,"G"]
+rggc = c(4,18)
+sel = (nrGC>=rggc[1] & nrGC<=rggc[2])
+nrGC = nrGC[sel]
+
+myPlot = function(x, tit) {
+  maxval = quantile(x, probs=0.9999, na.rm=TRUE)
+  minval = maxval-10.5
+  mycol = colorRampPalette(brewer.pal(9, "GnBu"))(diff(rggc)+1)
+  boxplot(x[sel]~nrGC, ylim=lim, main="", col=mycol, outline=FALSE)
+  text(rggc[1]-5, maxval+1, tit, pos=2, font=2, xpd=NA)
+}
+@ 
+
+Remember that we defined
+\Robject{seqPM=Scerevisiaetilingprobe\$sequence[ipm]} in
+Section~\ref{sec:bgPM}.
+
+<<GCBeforeAfter, fig=TRUE, include=FALSE, width=7, height=7>>=
+par(mfrow=c(1,2))
+dat1 = log2(exprs(davidTiling)[ipm, which(isRNA)[1]])
+dat2 = exprs(xn2)[ipm, 1] - quantile(exprs(xn2)[ipm, 1], 0.05, na.rm=TRUE)
+myPlot(dat1, "a")
+myPlot(dat2, "b")
+@ 
+%
+The result is shown in Figure~\ref{assessNorm-GCBeforeAfter}.
+%
+\myincfig{assessNorm-GCBeforeAfter}{\textwidth}{
+ECDF of $\log_2$ intensities (a) and normalized intensities (b) stratified by GC
+content.}
 
 
 %------------------------------------------------------------
