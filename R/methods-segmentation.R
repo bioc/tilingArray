@@ -124,7 +124,7 @@ setMethod("logLik", "segmentation",
   function(object, penalty="none", ...) {
     ll   = object@logLik
     npar = 2*(1:length(ll))
-    ndat = nrow(s@y)
+    ndat = length(s@y)
     switch(penalty,
            none = ll,
            AIC = ll - npar,
