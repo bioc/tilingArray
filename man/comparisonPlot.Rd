@@ -10,7 +10,7 @@
   paper and in the Huber et al. methods paper.
 }
 \usage{
-comparisonPlot(x, y, xscale=range(x), yscale, anno, ticks, pch=20, cex=1, bgcol="#efefef")
+comparisonPlot(x, y, xscale=range(x), yscale, anno, ticks, pch=20, cex=1, bgcol="#f2f2f2")
 }
 \arguments{
   \item{x}{numeric vector.}
