@@ -230,11 +230,11 @@ par(mai=c(1,1,0.1,0.01))
 tilingArray:::plotPenLL(segwi)
 @ 
 %
-\myincfig{segmentation-modelSelect}{\textwidth}{% 
+\myincfig{segmentation-modelSelect}{0.5\textwidth}{% 
 Model selection: log-likelihood and two versions of penalized
 log-likelihood (AIC and BIC) as a function of the number of segments
-$S$. Vertical green bar corresponds to optimal $\log L_{\mbs{BIC}}$,
-vertical grey bar to our ``subjective'' choice of average segment
+$S$. Vertical dashed green bar corresponds to optimal $\log L_{\mbs{BIC}}$,
+vertical dashed grey bar to our ``subjective'' choice of average segment
 length 1,500 bases.}
 
 
