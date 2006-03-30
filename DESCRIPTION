@@ -5,7 +5,7 @@ Title: Analysis of high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Joern Toedling
 Maintainer: W. Huber <huber@ebi.ac.uk>
 Depends: R (>= 2.2.0), Biobase (>= 1.9.11), RColorBrewer (>= 0.2-2),
-        grid (>= 2.0.0), strucchange (>= 1.2-12),
+        grid (>= 2.0.0), strucchange (>= 1.2-12), colorspace(>= 0.9),
         vsn (>= 1.9.0), genefilter (>= 1.9.6), geneplotter (>= 1.9.7)
 Suggests:
 Description: The package provides some functionalities that can be

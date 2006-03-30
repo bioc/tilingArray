@@ -78,13 +78,10 @@ setMethod("plot", "segmentation",
     breakp = breakp[ (breakp[, "estimate"]>=xlim[1]) & (breakp[, "estimate"]<=xlim[2]),, drop=FALSE ]
   }
   
-  if(missing(bpcol)){
-    ## bpcol=hex(polarLAB(70, 35, seq(0, 360, length=y)[-1]))
-    ## bpcol=rainbow(y-1)
+  if(missing(bpcol))
     bpcol = rep(brewer.pal(9, "Set1"), ceiling(nrow(breakp)/9))[1:nrow(breakp)]
-  }
   
-  plot(plx, ply, xlab=xlab, ylab=ylab, pch=pch, ...)
+  plot.default(plx, ply, xlab=xlab, ylab=ylab, pch=pch, ...)
   abline(v=breakp[, "estimate"]-0.5, col=bpcol, lty=bplty) ## draw segment boundaries
 
   if (x@hasConfint[y]) { ##  confidence intervals
@@ -124,7 +121,7 @@ setMethod("logLik", "segmentation",
   function(object, penalty="none", ...) {
     ll   = object@logLik
     npar = 2*(1:length(ll))
-    ndat = length(s@y)
+    ndat = length(object@y)
     switch(penalty,
            none = ll,
            AIC = ll - npar,
