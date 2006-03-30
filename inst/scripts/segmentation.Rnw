@@ -227,7 +227,7 @@ We plot them as functions of $S$, see Figure~\ref{segmentation-modelSelect}
 %
 <<modelSelect, fig=TRUE, eps=FALSE, include=FALSE, width=5, height=5>>=
 par(mai=c(1,1,0.1,0.01))
-tilingArray:::plotPenLL(segwi)
+tilingArray:::plotPenLL(segwi, extrabar=c("black"=round(segwi@x[length(segwi@x)]/1500))) 
 @ 
 %
 \myincfig{segmentation-modelSelect}{0.5\textwidth}{% 
