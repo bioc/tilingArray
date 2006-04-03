@@ -185,8 +185,9 @@ This is simply a call to the \Rfunction{confint} method of the
 %
 <<confint>>=
 nseg = round(sprb$end[nrow(sprb)]/1500)
+confintLevel = 0.99
 segwi = cache("segwi",
-  confint(segw, parm=nseg)
+  confint(segw, parm=nseg, level=confintLevel)
 )
 @ 
 
@@ -268,7 +269,7 @@ segFun = function(chrstrd, nrBasesPerSegment=1500) {
   s@x = sprb$mid
   s@flag = sprb$unique
 
-  confint(s, parm=nseg) }
+  confint(s, parm=nseg, level=confintLevel) }
 @
 %--------------------------------------------------
 \subsection{Using the \Rfunction{plotAlongChrom} function for more elaborate displays.}
@@ -386,7 +387,7 @@ grid.rect(x=0, width=w, y=h1, height = unit(1, "native")- unit(2, "mm"),
 grid.circle(x = w/2, y=h2, r=0.2, default.units="native",
             gp = gpar(col=pc, fill=pc))
 grid.lines(x=w/2, y=h3+c(-.3,+.3), default.units="native", gp=gpar(col=sc))
-grid.text(label = c(rownames(fc), names(pc), names(sc)), x = w*1.1, y = c(h1,h2,h3),
+grid.text(label = c(gsub("_", " ", rownames(fc)), names(pc), names(sc)), x = w*1.1, y = c(h1,h2,h3),
           just  = c("left", "center"), default.units="native",
           gp=gpar(cex=.7))
 popViewport(2)

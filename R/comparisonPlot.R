@@ -1,10 +1,17 @@
 comparisonPlot = function(x, y, xscale=range(x), yscale, anno, ticks, pch=20, cex=1, bgcol="#f2f2f2") {
   
-  myColorRamp = function(d, rg=range(d), phi0=-30, phi1=240) {
-    cols = colorRamp(rev(hcl(seq(phi0,phi1,by=5), 95, 70)))((d-rg[1])/(rg[2]-rg[1])) / 256
-    return(rgb(cols[,1], cols[,2], cols[,3]))
-  }
-  cols = myColorRamp(rank(y[[1]]))
+  ## myColors = function(d, rg=range(d), phi0=-30, phi1=240) {
+  ##  cols = colorRamp(rev(hcl(seq(phi0,phi1,by=5), 95, 70)))((d-rg[1])/(rg[2]-rg[1])) / 256
+  ##  cols = colorRamp(brewer.pal(6, "Set1")[c(3,2,5,1)])((d-rg[1])/(rg[2]-rg[1])) / 256
+  ##  return(rgb(cols[,1], cols[,2], cols[,3]))
+  ## }
+  ## 
+
+  myColors = function(z){
+    brewer.pal(6, "Set1")[c(1,5,3,2)][as.integer(cut(z, quantile(z, c(0, 0.05, 0.35, 0.65, 1)), include.lowest=TRUE))]
+  }  
+  cols = myColors(rank(y[[1]]))
+  
   n = length(y)
   grid.newpage()
   pushViewport(viewport(layout=grid.layout(n+2, 1, height=c(rep(1,n), 0.2, 0.2))))
