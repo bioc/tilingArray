@@ -24,8 +24,8 @@ normalizeByReference(x, reference, pm, background, nrStrata=10,
     \code{x}.
     This can be either an integer vector with values between 1 and
     \code{nrow(exprs(x))} or a logical vector.}
-  \item{nrStrata}{Integer (length 1), number of strata for estimating of
-    additive background function.}
+  \item{nrStrata}{Integer (length 1), number of strata for the estimation of
+    the background function.}
   \item{cutoffQuantile}{Numeric (length 1), the probes whose reference
     signal is below this quantile are thrown out.}
   \item{plotFileNames}{Character vector whose length is the same as the
@@ -51,9 +51,10 @@ normalizeByReference(x, reference, pm, background, nrStrata=10,
 
 \author{W. Huber \email{huber@ebi.ac.uk}}
 
-\references{...}
-
+\references{Transcript mapping with 
+  oligonucleotide high-density tiling arrays,
+  W. Huber, J. Toedling, L. Steinmetz, preprint (2006).}
 \examples{
-  ##
+  ## see vignette assessNorm.Rnw in inst/scripts directory
 }
 \keyword{manip}
