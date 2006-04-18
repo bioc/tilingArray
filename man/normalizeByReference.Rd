@@ -46,7 +46,7 @@ normalizeByReference(x, reference, pm, background, nrStrata=10,
   }
 
 \value{
-  An object of class \code{\link{eSet}}.
+  An object of class \code{eSet}.
 }
 
 \author{W. Huber \email{huber@ebi.ac.uk}}

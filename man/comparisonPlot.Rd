@@ -22,8 +22,8 @@ comparisonPlot(x, y, xscale=range(x), yscale, anno, ticks, pch=20, cex=1, bgcol=
     \code{name}, each row corresponds to one gene CDS to be plotted at the bottom.}
   \item{ticks}{numeric vector, where to plot the ticks.}
   \item{pch}{A numeric or character vector indicating what sort of
-    plotting symbol to use, see \code{\link{grid.points}}.}
-  \item{cex}{Multiplier applied to fontsize, see \code{\link{gpar}}.}
+    plotting symbol to use, see \code{\link[grid]{grid.points}}.}
+  \item{cex}{Multiplier applied to fontsize, see \code{\link[grid]{gpar}}.}
   \item{bgcol}{Color to use as background for some of the plot panels.}
 }
 \details{}
