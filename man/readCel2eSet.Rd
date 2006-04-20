@@ -8,12 +8,16 @@
   or need no CDF environment.
 }
 \usage{
-readCel2eSet(filenames, path=".", rotated=FALSE)
+readCel2eSet(filename, adf, path=".", rotated=FALSE, ...)
 }
 \arguments{
-  \item{filenames}{Character vector with CEL file names.}
+  \item{filename}{Character vector with CEL file names. Either
+    \code{filename} or \code{adf} need to be specified, but not both.}
+  \item{adf}{Object of class \code{\link{AnnotatedDataFrame}}.}
   \item{path}{Character scalar with path to CEL files.}
   \item{rotated}{Logical scalar, see details.}
+  \item{...}{Further arguments that are passed on to
+    \code{new("ExpressionSet", ...)}.}
 }
 \details{
   The \code{rotate} options allows to deal with different versions of

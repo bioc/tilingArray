@@ -1,7 +1,22 @@
-readCel2eSet = function(filenames, path=".", rotated=FALSE) {
+readCel2eSet = function(filename, adf, path=".", rotated=FALSE, ...) {
+
+  if(!missing(filename)){
+    if(!missing(adf))
+      stop("If 'filename' is specified, please do not specify 'adf'")
+    adf = new("AnnotatedDataFrame", data=data.frame(filename=I(filename)),
+        varMetadata=data.frame(labelDescription=I(c(filename="Infered from 'filename' argument of readCel2eSet"))))
+  } else {
+    if(missing(adf))
+      stop("Please specify either 'adf' or 'filename'")
+    if(!("filename" %in% varLabels(pd)))
+      stop("Please let 'adf' contain a column 'filename'")
+    filename = adf$filename
+  }
+
   
-  a = ReadAffy(filenames=filenames, celfile.path=path, verbose=TRUE)
+  a = ReadAffy(filenames=filename, celfile.path=path, verbose=TRUE)
   ex = intensity(a)
+  ex = matrix(as.integer(ex), nrow=nrow(ex), ncol=ncol(ex))
   
   if(!rotated) {
     n = a@nrow
@@ -17,10 +32,7 @@ readCel2eSet = function(filenames, path=".", rotated=FALSE) {
     }
     ex = ex[ xy2i(rotate(i2xy(1:(n*n)))),,drop=FALSE ]
   }
-  
-  e = new.env(parent = baseenv())
-  assign("exprs", ex, e)
-  
-  new("eSet", assayData=e, phenoData=phenoData(a), sampleNames=sampleNames(a))
+
+  new("ExpressionSet", exprs=ex, phenoData=adf, ...)
 }
 
