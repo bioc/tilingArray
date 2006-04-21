@@ -101,8 +101,11 @@ normalizeByReference = function(x, reference, pm, background, nrStrata=10,
 
   exprmat = matrix(as.numeric(NA), nrow=n, ncol=d)
   exprmat[pm, ] = yn
-  
-  e = new.env(parent = baseenv())
-  assign("exprs", exprmat, e)
-  new("eSet", assayData=e, phenoData=phenoData(x), sampleNames=sampleNames(x))
+
+  res = x
+  exprs(res) = exprmat
+
+ ## FIXME: annotate res to say that this was normalized by this function
+
+  return(res)  
 }
