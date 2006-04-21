@@ -22,4 +22,5 @@ Description: The package provides some functionalities that can be
 	hybridizations.
 License: LGPL
 SaveImage: Yes
+biocViews: Microarray, OneChannel, Preprocessing, Visualization
 
