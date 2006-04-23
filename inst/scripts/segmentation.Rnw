@@ -44,42 +44,44 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 
 \section{Introduction}
 This script presents a demo of the segmentation function
-on the \Rpackage{davidTiling} data.
+on the \Rpackage{davidTiling} data. 
+
+First we load the package \Rpackage{tilingArray}, which contains the
+algorithms, and the package \Rpackage{davidTiling}, which contains the
+data and the array annotation.
 
 <<setup, results=hide>>=
-options(error=recover, warn=0)
-graphics.off()
+##options(error=recover, warn=0)
+##graphics.off()
 
 library("tilingArray")
 library("davidTiling")
-if(!exists("davidTiling"))
-  data("davidTiling")
-if(!exists("probeAnno"))
-  data("probeAnno")
+data("davidTiling")
+data("probeAnno")
 @ 
 
 %--------------------------------------------------
-\section{Normalization}
+\section{Normalization of the data}
 %--------------------------------------------------
 Please see the vignette \textit{Assessing signal/noise ratio before
-and after normalization} (\texttt{assessNorm.Rnw}) for explanation.
+and after normalization} (\texttt{assessNorm.Rnw}) for an explanation 
+of the following code.
+%
 <<normalization>>=
-xn = cache("xn", {
-  nc = as.integer(2560)
-  PMind = rep(seq(as.integer(1), nc-as.integer(3), by=as.integer(2)), each=nc)*nc + (1:nc)
-  MMind = PMind + nc
+nc = as.integer(2560)
+PMind = rep(seq(as.integer(1), nc-as.integer(3), by=as.integer(2)), each=nc)*nc + (1:nc)
+MMind = PMind + nc
 
-  ispm = rep(FALSE, nc*nc)
-  ispm[PMind] = TRUE
-  isbg = (probeAnno$probeReverse$no_feature=="no" &
-          probeAnno$probeDirect$no_feature=="no" &
-          ispm)
-  isRNA = davidTiling$nucleicAcid %in% c("poly(A) RNA","total RNA")
-  isDNA = davidTiling$nucleicAcid %in% "genomic DNA"
-  stopifnot(sum(isRNA)==5, sum(isDNA)==3)
-  normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-                       pm=PMind, background=isbg)
-})
+ispm = rep(FALSE, nc*nc)
+ispm[PMind] = TRUE
+isbg = (probeAnno$probeReverse$no_feature=="no" &
+        probeAnno$probeDirect$no_feature=="no" &
+        ispm)
+isRNA = davidTiling$nucleicAcid %in% c("poly(A) RNA","total RNA")
+isDNA = davidTiling$nucleicAcid %in% "genomic DNA"
+stopifnot(sum(isRNA)==5, sum(isDNA)==3)
+xn = normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
+  pm=PMind, background=isbg)
 pData(xn)[, 2, drop=FALSE]
 @ 
 
@@ -102,7 +104,7 @@ prbs$mid = (prbs$start+prbs$end)/2
 prbs = prbs[order(prbs$mid), ]
 @ 
 
-We throw out the missing (\Robject{NA}) values:
+Throw out the missing (\Robject{NA}) values.
 <<throwOutNA>>=
 numna = rowSums(is.na(exprs(xn)[ prbs$ind, ]))
 stopifnot(all(numna %in% c(0, ncol(xn))))
@@ -111,10 +113,16 @@ prbs = prbs[numna==0,]
 
 %--------------------------------------------------
 \subsubsection{Avoid oversampling}
+Figure~\ref{segmentation-histprobs} shows that the spacing between the
+probes is not completely regular, in particular, repetitive regions
+are highly oversampled. We subsample the probes, the result of this is
+shown in the comparison between Figures~\ref{segmentation-histprobs}b
+and \ref{segmentation-histprobs}c.
+%
 <<sampleStep>>=
 sprb = prbs[ sampleStep(prbs$mid, step=7), ]
 @ 
-
+%
 <<histprobs, fig=TRUE, include=FALSE, width=6, height=7>>=
 par(mfrow=c(3,1))
 hist(prbs$mid, col="mistyrose", 100, main="(a)")
@@ -124,10 +132,10 @@ barplot(table(diff(sprb$mid)), main="(c)")
 %
 \myincfig{segmentation-histprobs}{0.7\textwidth}{% 
 (a):
-Histogram of probe midpoints along the chromosome.  There are some
+Histogram of probe midpoints along the ``+'' strand of chromosome 1.  There are some
 probe dense regions in particular around 160,000.  The sequence of
-that region is repeated multiple times in the genome, and due to the
-chip design, there are also a lot of probes (more than necessary) for that region.
+that region is repeated multiple times in the genome, and due to the way 
+the chip was designed, there are also a lot of probes (more than necessary) for that region.
 (b): histogram of differences between probe midpoints (\Robject{prbs\$mid}).
 The intention of the chip design was to have a regular spacing of 8 bases.
 In some cases, the spacing is wider, probably due to updates in the 
@@ -159,13 +167,10 @@ maxseg = round(sprb$end[nrow(sprb)]/750)
 @ 
 %
 <<segment>>=
-segw = cache("segw", {
-  y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
-  segw = segment(y, maxseg=maxseg, maxk=3000)
-  segw@x = sprb$mid
-  segw@flag = sprb$unique
-  segw
-})
+y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
+segw = segment(y, maxseg=maxseg, maxk=3000)
+segw@x = sprb$mid
+segw@flag = sprb$unique
 @ 
 %
 We also add additional information to the object that was not used for
@@ -174,8 +179,8 @@ into the slot \Robject{x}, the $x$-coordinates of the probes,
 and into the slot \Robject{flag}, the uniqueness status of the probes 
 (0 iff the probe has exactly one match in the genome).
 
-Having to access the \Robject{x} and \Robject{flag} slots directly, in the
-code above, is a bit unelegant; I will probably provide accessor
+Having to access the \Robject{x} and \Robject{flag} slots directly, 
+as in the code above, is a bit unelegant. I intend to provide accessor
 functions in subsequent versions of the package.
 
 %--------------------------------------------------
@@ -186,11 +191,9 @@ This is simply a call to the \Rfunction{confint} method of the
 <<confint>>=
 nseg = round(sprb$end[nrow(sprb)]/1500)
 confintLevel = 0.95
-segwi = cache("segwi",
-  confint(segw, parm=nseg, level=confintLevel)
-)
+segwi = confint(segw, parm=nseg, level=confintLevel)
 @ 
-
+%
 Now we are ready to have a look at the result via the \Rfunction{plot} method
 of the \Rclass{segmentation} class. The plot is shown in Figure~\ref{segmentation-plotseg}.
 %
@@ -281,15 +284,18 @@ Figure~\ref{segmentation-fig1}.
 
 For Figure~\ref{segmentation-fig1}, we call \Rfunction{segFun} on the
 ``-'' strand of chromosome 1.  For Figure~\ref{segmentation-fig2}, we
-also call it on a number of other chromosomes. This computation will
+also call it on a number of other chromosomes. 
+
+This computation will
 take a couple of hours (about 18h on mine). Note that the
 \Robject{for}--loop below can be trivially parallelized since the
 computations for different chromosome strands are independent of each
-other. 
-\Robject{segObj}.
+other. A simple synchronization mechanism through creation of a 
+\emph{lock file} is already provided in the code example below.
 %
 <<computeSegmentations>>=
-toDo = c("1.-", "2.+", "2.-", "5.+", "5.-", "9.+", "9.-", "13.+", "13.-", "14.+", "14.-","15.+", "15.-")
+toDo = c("1.-", "2.+", "2.-", "5.+", "5.-", "9.+", "9.-", "13.+", "13.-", 
+  "14.+", "14.-","15.+", "15.-")
 for(w in toDo) {
   fn = paste(w, "rda", sep=".")
   if(!file.exists(fn)) {
