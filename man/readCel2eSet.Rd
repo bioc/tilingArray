@@ -3,7 +3,7 @@
 \title{Read celfiles into an eSet object.}
 \description{
   This is a wrapper for \code{\link[affy:ReadAffy]{ReadAffy}} that
-  returns an \code{eSet-class} object rather than an
+  returns an \code{\link[ExpressionSet-class]{ExpressionSet}} object rather than an
   AffyBatch. This is particularly usefiles for arrays for which we have
   or need no CDF environment.
 }
@@ -17,7 +17,7 @@ readCel2eSet(filename, adf, path=".", rotated=FALSE, ...)
   \item{path}{Character scalar with path to CEL files.}
   \item{rotated}{Logical scalar, see details.}
   \item{...}{Further arguments that are passed on to
-    \code{new("ExpressionSet", ...)}.}
+    \code{new("ExpressionSet")}.}
 }
 \details{
   The \code{rotate} options allows to deal with different versions of

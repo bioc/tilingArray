@@ -53,8 +53,7 @@ al.~\cite{David2006} paper, which is provided in the
 <<load, results=hide>>=
 library("tilingArray")
 library("davidTiling")
-if(!exists("davidTiling"))
-  data("davidTiling")
+data("davidTiling")
 @ 
 %
 <<errorReporting, echo=FALSE>>=
@@ -70,14 +69,15 @@ dim(exprs(davidTiling))
 sampleNames(davidTiling)
 @
 %
-Some of the computations in this vignette will take a long time and
-require Gigabytes of RAM. I have sprinkled \Robject{cache()} and
-\Robject{if(exists(...))} statements around the most massive
-computations -- this is simply so that during the writing of the
-vignette I can rerun \Rfunction{Sweave} on it in an incremental
-fashion without always having to redo all computations from
-scratch. Eventually they will go away, and for the comprehension of
-the computations they are irrelevant.
+Note that some of the computations in this vignette will take a long time and
+require Gigabytes of RAM. 
+%I have sprinkled \Robject{cache()} and
+%\Robject{if(exists(...))} statements around the most massive
+%computations -- this is simply so that during the writing of the
+%vignette I can rerun \Rfunction{Sweave} on it in an incremental
+%fashion without always having to redo all computations from
+%scratch. Eventually they will go away, and for the comprehension of
+%the computations they are irrelevant.
 
 %--------------------------------------------------
 \section{Selection of PM and background features}
@@ -91,8 +91,7 @@ and the script \texttt{makeProbeAnno.R} in the \Rpackage{davidTiling}
 package for details.
 %
 <<probeAnno>>=
-if(!exists("probeAnno"))
-  data("probeAnno")
+data("probeAnno")
 @ 
 %
 We define two logical vectors: \Robject{isPM} is \Robject{TRUE} if a
@@ -138,11 +137,8 @@ stopifnot(sum(isRNA)==5, sum(isDNA)==3)
 
 <<normalizeByReference>>=
 pfn = sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA)))
-if(!exists("xn2"))
-  xn2 = cache("xn2",
-    normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-                         pm=isPM, background=isBG,
-                         plotFileNames=pfn))
+xn2 = normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
+  pm=isPM, background=isBG, plotFileNames=pfn)
 @
  
 %----------------------------------------
@@ -152,10 +148,8 @@ For comparison, we also compare to the situation in which
 we do not throw out the weakest features, by setting 
 \Robject{cutoffQuantile=0}.
 <<normalizeWithoutThrowout>>=
-if(!exists("xn1"))
-  xn1 = cache("xn1",
-    normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-                         pm=isPM, background=isBG, cutoffQuantile=0))
+xn1 = normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
+  pm=isPM, background=isBG, cutoffQuantile=0)
 @ 
 %
 
@@ -233,8 +227,7 @@ normalizeByReferenceWithMM = function(x, reference, pm, mm, cutoffQuantile=0.05)
   return(res)
 }
 
-xwmm = cache("xwmm",
-  normalizeByReferenceWithMM(davidTiling[, isRNA], davidTiling[, isDNA], PMind, MMind)) 
+xwmm = normalizeByReferenceWithMM(davidTiling[, isRNA], davidTiling[, isDNA], PMind, MMind)
 @ 
 
 %----------------------------------------

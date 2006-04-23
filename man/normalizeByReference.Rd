@@ -5,7 +5,7 @@
   Probe-specific normalization of hybridization intensities from a short-oligo microarray
 }
 \description{
-  Adjust the hybridization intensities from a short-oligo microarray
+  Adjust the hybridization intensities from a short oligo microarray
   for probe-specific response effect by using one or several reference hybridizations.
 }
 \usage{
@@ -46,7 +46,7 @@ normalizeByReference(x, reference, pm, background, nrStrata=10,
   }
 
 \value{
-  An object of class \code{eSet}.
+  A copy of \code{x} with the normalized intensities.
 }
 
 \author{W. Huber \email{huber@ebi.ac.uk}}
