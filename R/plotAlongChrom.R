@@ -89,17 +89,15 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
         lengthChr = dat$end[length(dat$end)]
         
         if("segScore" %in% ls(segObj)) {
-          if(!missing(nrSegments))
-            stop("Please do not specify 'nrSegments' when 'segObj' contains 'segScore'")
           sgs = get("segScore", segObj)
           sgs = sgs[ sgs$chr==chr & sgs$strand==strand, c("start", "end") ]
         } else {
-          if(missing(nrSegments))
-            stop("Please specify 'nrSegments' ('segScore' was not found in 'segObj')")
-          seg = get(paste(chr, strand, "seg", sep="."), segObj)
-          th  = c(1, seg$th[nrSegments+1, 1:(nrSegments+1)])
-          sgs = list(start  = dat$start[dat$ss][th[-length(th)]],
-                     end    = dat$end[dat$ss][th[-1]]-1)
+	  stop("This option is deprecated")
+	  ##nrSegments = ...
+          ##seg = get(paste(chr, strand, "seg", sep="."), segObj)
+          ##th  = c(1, seg$th[nrSegments+1, 1:(nrSegments+1)])
+          ##sgs = list(start  = dat$start[dat$ss][th[-length(th)]],
+          ##           end    = dat$end[dat$ss][th[-1]]-1)
         }
         dat$estimate = (sgs$start[-1] + sgs$end[-length(sgs$end)]) / 2
 

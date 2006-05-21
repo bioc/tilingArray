@@ -56,7 +56,7 @@ normalizeByReference = function(x, reference, pm, background, nrStrata=10,
 
   ## interpolate  
   for(j in 1:d) {
-    ybg[, j] = tapply(log(exprs(x)[background, j], 2), strata, shorth, tieLimit=0.1)
+    ybg[, j] = tapply(log(exprs(x)[background, j], 2), strata, shorth, tie.action="min")
     bgfun[[j]] = approxfun(xbg, ybg[,j], rule=2)
   }
 

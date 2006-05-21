@@ -166,19 +166,26 @@ restriction for the segments.
 maxseg = round(sprb$end[nrow(sprb)]/750)
 @ 
 %
-<<segment>>=
+<<segmentShow, eval=FALSE>>=
 y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
 segw = segment(y, maxseg=maxseg, maxk=3000)
-segw@x = sprb$mid
-segw@flag = sprb$unique
+@ 
+<<segmentDo, echo=FALSE, results=hide>>=
+y = exprs(xn)[sprb$ind, xn$nucleicAcid=="poly(A) RNA", drop=FALSE]
+cache(segw <- segment(y, maxseg=maxseg, maxk=3000))
 @ 
 %
 We also add additional information to the object that was not used for
 the actual segmentation, but will be useful for the visualization:
 into the slot \Robject{x}, the $x$-coordinates of the probes, 
 and into the slot \Robject{flag}, the uniqueness status of the probes 
-(0 iff the probe has exactly one match in the genome).
-
+(0 iff the probe has exactly one match in the genome):
+%
+<<addMidUnique>>=
+segw@x = sprb$mid
+segw@flag = sprb$unique
+@
+% 
 Having to access the \Robject{x} and \Robject{flag} slots directly, 
 as in the code above, is a bit unelegant. I intend to provide accessor
 functions in subsequent versions of the package.
@@ -204,10 +211,9 @@ plot(segwi, nseg, pch=".", xlim=c(0, 40000))
 Segmentation with confidence intervals.
 }
 
-
-
 %--------------------------------------------------
 \subsection{Model selection.}
+%--------------------------------------------------
 The log-likelihood is
 \begin{equation}
 \log L = -\frac{n}{2}\left(\log 2\pi +1 +\log\frac{\sum_i r_i}{n}\right),
@@ -241,6 +247,36 @@ $S$. Vertical dashed green bar corresponds to optimal $\log L_{\mbs{BIC}}$,
 vertical dashed grey bar to our ``subjective'' choice of average segment
 length 1,500 bases.}
 
+%--------------------------------------------------
+\subsection{Can the size of the confidence intervals 
+be used for model selection?}
+%--------------------------------------------------
+<<confintwidthscalc>>=
+segwj = confint(segw, parm=as.integer(c(112, 153, 194, 235, 276)),
+  level=confintLevel) 
+
+nBp = which(segwj@hasConfint)
+confintwidths = lapply(segwj@breakpoints[nBp], function(m) (m[,3]-m[,1]))
+@ 
+<<confintwidthsecdf, fig=TRUE, eps=FALSE, include=FALSE, width=5, height=5>>=
+maxx = 20
+
+## br = seq(0, maxx, by=2)
+## mapply(function(x, y) hist(x[x<=maxx], breaks=br, main=y, col="orange"),
+##   confintwidths, nBp)
+
+colors = brewer.pal(length(nBp), "Set1")
+multiecdf(confintwidths, xlim=c(0, maxx), 
+  main='distribution of lengths of confidence intervals', verticals=TRUE, lwd=2, col=colors)
+legend(x=0.6*maxx, y=0.5, legend=paste("S =", nBp), col=colors, lty=1, lwd=2) 
+@ 
+\myincfig{segmentation-confintwidthsecdf}{0.5\textwidth}{% 
+Can the size of the confidence intervals 
+be used for model selection?
+Cumulative distribution functions (CDFs) for the distributions of confidence 
+interval widths for $S=$\Sexpr{paste(nBp, collapse=", ")}. For larger $S$, the confidence 
+intervals also become wider. 
+}
 
 %--------------------------------------------------
 \subsection{Definition of segFun}
@@ -283,7 +319,8 @@ well and produce the along-chromosome plot shown in
 Figure~\ref{segmentation-fig1}. 
 
 For Figure~\ref{segmentation-fig1}, we call \Rfunction{segFun} on the
-``-'' strand of chromosome 1.  For Figure~\ref{segmentation-fig2}, we
+``-'' strand of chromosome 1.  For Figures~\ref{segmentation-fig2-pnas} 
+and \ref{segmentation-fig2-bioinf}, we
 also call it on a number of other chromosomes. 
 
 This computation will
@@ -328,9 +365,13 @@ first argument, which is expected to contain objects of class
 chromosome identifier.
 %
 \myincfig{segmentation-fig1}{\textwidth}{% 
-Along-chromosome plot similar to Figure 1 in the paper~\cite{David2006}.}
-\myincfig{segmentation-fig2}{\textwidth}{% 
-Along-chromosome plots similar to Figure 2 in the paper~\cite{David2006}.}
+Along-chromosome plot similar to Figure 1 in~\cite{David2006}.}
+\myincfig{segmentation-fig2-pnas}{\textwidth}{% 
+Along-chromosome plots similar to Figure 2 in~\cite{David2006}.}
+\myincfig{segmentation-fig2-bioinf}{\textwidth}{% 
+Along-chromosome plots similar to Figure 2 in~\cite{Huber2006}.}
+%
+In the following, the code to generate Figure 1 in~\cite{David2006}.
 %
 <<fig1, fig=TRUE, eps=FALSE, include=FALSE, width=16, height=6>>=
 grid.newpage()
@@ -339,16 +380,10 @@ plotAlongChrom(segObj=segObj, chr=1, coord = c(30, 130)*1e3, ylim=ylim,
                featureNoLabel = c("uORF", "binding_site", "TF_binding_site"),
                doLegend=FALSE, main="")  
 @ 
-
-<<fig2, fig=TRUE, eps=FALSE, include=FALSE, width=11, height=5.5>>=
-dx = 0.20
-dy = 0.05
-grid.newpage()
-pushViewport(viewport(x=0.01, width=0.97, height=0.97, just=c("left", "center"),
-                      layout=grid.layout(3, 8,
-                        height=c(1, dy, 1),
-                        width =c(dx, 1, dx, 1, dx, 1, dx, 1))))
-         
+%
+In the following, the code to generate Figure 2 in~\cite{David2006}.
+%
+<<fig2-pnas, fig=TRUE, eps=FALSE, include=FALSE, width=11, height=5.5>>=
 myPlot = function(row, col, ...) {
   pushViewport(viewport(layout.pos.row=row, layout.pos.col=col))
   grid.rect(x=-0.1, width=1.15, y=0.0, height=1.02, just=c("left", "bottom"),
@@ -360,7 +395,37 @@ myPlot = function(row, col, ...) {
                  doLegend=FALSE)  
   popViewport()
 }
+myLegend = function(row, col) {
+  fc = tilingArray:::featureColors(1)[c("CDS", "CDS_dubious", "uORF", "ncRNA", "TF_binding_site"), ]
+  pc = c("Watson strand probe"="#00441b", "Crick strand probe"="#081d58", "Non-unique probe"="grey")
+  sc = c("Segment boundary"="#777777")
 
+  pushViewport(dataViewport(xscale=c(0,1), yscale=c(-7,nrow(fc)+1), layout.pos.col=col, layout.pos.row=row))
+  h1  = nrow(fc):1
+  h2  = 0:(1-length(pc))
+  h3  = -length(pc)
+  
+  w   = 0.2
+  grid.rect(x=0, width=w, y=h1, height = unit(1, "native")- unit(2, "mm"), 
+            just  = c("left", "center"), default.units="native",
+            gp    = do.call("gpar", fc))
+  grid.circle(x = w/2, y=h2, r=0.2, default.units="native",
+              gp = gpar(col=pc, fill=pc))
+  grid.lines(x=w/2, y=h3+c(-.3,+.3), default.units="native", gp=gpar(col=sc))
+  grid.text(label = c(gsub("_", " ", rownames(fc)), names(pc), names(sc)), x = w*1.1, y = c(h1,h2,h3),
+            just  = c("left", "center"), default.units="native",
+            gp=gpar(cex=.7))
+  popViewport()
+}
+  
+dx = 0.20
+dy = 0.05
+grid.newpage()
+pushViewport(viewport(x=0.01, width=0.97, height=0.97, just=c("left", "center"),
+                      layout=grid.layout(3, 8,
+                        height=c(1, dy, 1),
+                        width =c(dx, 1, dx, 1, dx, 1, dx, 1))))
+         
 ## A) 13:550k splicing RPS16A, RPL13B
 myPlot(1, 2, chr=13, coord = c(550044, 553360), main="a")
 ## B) GCN4
@@ -376,30 +441,30 @@ myPlot(3, 4, chr=2, coord = c(360500, 365970), main="f")
 ## G) 9:221-227: novel antisense SPO22
 myPlot(3, 6, chr=9, coord = c(221000, 226500), main="g")
 
-## legend
-fc = tilingArray:::featureColors(1)[c("CDS", "CDS_dubious", "uORF", "ncRNA", "TF_binding_site"), ]
-pc = c("Watson strand probe"="#00441b", "Crick strand probe"="#081d58", "Non-unique probe"="grey")
-sc = c("Segment boundary"="#777777")
-
-pushViewport(dataViewport(xscale=c(0,1), yscale=c(-7,nrow(fc)+1), layout.pos.col=8, layout.pos.row=3))
-h1  = nrow(fc):1
-h2  = 0:(1-length(pc))
-h3  = -length(pc)
-
-w   = 0.2
-grid.rect(x=0, width=w, y=h1, height = unit(1, "native")- unit(2, "mm"), 
-          just  = c("left", "center"), default.units="native",
-          gp    = do.call("gpar", fc))
-grid.circle(x = w/2, y=h2, r=0.2, default.units="native",
-            gp = gpar(col=pc, fill=pc))
-grid.lines(x=w/2, y=h3+c(-.3,+.3), default.units="native", gp=gpar(col=sc))
-grid.text(label = c(gsub("_", " ", rownames(fc)), names(pc), names(sc)), x = w*1.1, y = c(h1,h2,h3),
-          just  = c("left", "center"), default.units="native",
-          gp=gpar(cex=.7))
-popViewport(2)
+myLegend(3, 8)
+popViewport()
 @ 
+%
+In the following, the code to generate Figure 2 in~\cite{Huber2006}.
+%
+<<fig2-bioinf, fig=TRUE, eps=FALSE, include=FALSE, width=11, height=5.5>>=
+dx = 0.10
+grid.newpage()
+pushViewport(viewport(x=0.01, width=0.98, height=0.97, just=c("left", "center"),
+                      layout=grid.layout(1, 7,
+                        height=c(1),
+                        width =c(1, dx, 1, dx, 1, dx, 1))))
+         
+## 13:550k splicing RPS16A, RPL13B
+myPlot(1, 1, chr=13, coord = c(550044, 553360), main="a")
+## MET7, novel architecture
+myPlot(1, 3, chr=15, coord = c(784700, 790000), main="b")
+## 9:221-227: novel antisense SPO22
+myPlot(1, 5, chr=9, coord = c(221000, 226500), main="c")
 
-
+myLegend(1, 7)
+popViewport()
+@ 
 
 \begin{thebibliography}{10}
 
@@ -409,6 +474,11 @@ Ronald W. Davis, and Lars M. Steinmetz
 \newblock A high-resolution map of transcription in the
 yeast genome.
 \newblock \textit{PNAS}, 2006.
+
+\bibitem{Huber2006}
+Wolfgang Huber, Joern Toedling and Lars M. Steinmetz
+\newblock Transcript mapping with oligonucleotide high-density tiling arrays.
+\newblock \textit{Bioinformatics}, 2006.
 
 \end{thebibliography}
 \end{document}
