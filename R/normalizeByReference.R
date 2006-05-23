@@ -34,7 +34,7 @@ normalizeByReference = function(x, reference, pm, background, nrStrata=10,
     stop("'background' must be a subset of 'pm'.")
   
   ## reference signal for the pm features
-  refSig = rowMeans(log2(exprs(reference)[pm,]))
+  refSig = rowMeans(log2(exprs(reference)[pm,,drop=FALSE]))
 
   ## quantiles of the reference intensities, to group probes into
   ## strata for the background estimations
