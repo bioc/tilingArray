@@ -381,9 +381,8 @@ myPlot = function(row, col, ...) {
   grid.rect(x=-0.1, width=1.15, y=0.0, height=1.02, just=c("left", "bottom"),
             default.units="npc", gp=gpar(lwd=0.2))
   plotAlongChrom(..., segObj=segObj, ylim=ylim,  
-                 ## probeAnno = probeAnno, 
                  gff=myGff,
-                 featureNoLabel = c("uORF", "binding_site", "TF_binding_site"),
+                 featureNoLabel = c("binding_site", "TF_binding_site"),
                  doLegend=FALSE)  
   popViewport()
 }

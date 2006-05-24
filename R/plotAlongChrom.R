@@ -5,8 +5,8 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
                           colors, 
                           doLegend=TRUE,
                           featureColorScheme=1,
-                          featureExclude=c("chromosome","gene","nucleotide_match", "insertion", "intron"),
-                          featureNoLabel=c("uORF"),
+                          featureExclude=c("chromosome", "nucleotide_match", "insertion"),
+                          featureNoLabel=c("uORF", "CDS"),
                           pointSize=unit(0.6, "mm"),
                           main, ...) {
 
@@ -303,39 +303,69 @@ plotFeatures = function(gff, chr, xlim, strand, vpr, featureColorScheme, feature
               gff[, "start"] <= xlim[2] &
               gff[, "end"]   >= xlim[1])
 
+  stopifnot(length(strand)==1, strand %in% c("+", "-"))
+  
+  ## for label, use "gene" if available, otherwise "Name"
   geneName = gff[sel, "gene"]
   featName = gff[sel, "Name"]
   featName[!is.na(geneName)] = geneName[!is.na(geneName)]
 
-  feature  = as.character(gff[sel, "feature"])
-
   ## split by feature type (e.g. CDS, ncRNA)
+  feature  = as.character(gff[sel, "feature"])
   featsp = split(seq(along=sel), feature)
 
-  ## drop the ignorable ones
+  ## There are now five different cases, and we need to deal with them:
+  ## - ignorable features, given by featureExclude
+  ## - genes: a horizontal line + name
+  ## - introns: a caret
+  ## - CDS: a box + no name
+  ## - all others: a colored box + name
+
+  ## in this vector we save those features for which we want to have names
+  whnames = integer(0)
+
+  ## 1. drop the ignorable ones
   featsp = featsp[ ! (names(featsp) %in% featureExclude) ]
   
-  ## gene: just a horizontal line
-  whnames = integer(0)
-  if("gene" %in% names(featsp)) {
+  ## 2. gene: just a horizontal line + name
+  wh = ("gene" == names(featsp))
+  if(any(wh)) {
     i = featsp[["gene"]]
     s = sel[i]
     grid.segments(x0 = gff$start[s], x1 = gff$end[s], y0 = 0, y1 = 0,
                   default.units = "native", gp = gpar(col="#a0a0a0"))
     whnames = i
+    featsp = featsp[!wh]
   }
 
-  ## colors for boxes
+  ## 3.introns
+  wh = ("intron" == names(featsp))
+  if(any(wh)) {
+    i = featsp[["intron"]]
+    s = sel[i]
+    mid = (gff$start[s]+gff$end[s])/2
+    wid = (gff$end[s]-gff$start[s])/2 
+    for(z in c(-1,1))
+      grid.segments(x0 = mid,
+                    x1 = mid+z*wid,
+                    y0 = 1.20*c("+"=1, "-"=-1)[strand],  ## istrand is 1 or 2
+                    y1 = 0.95*c("+"=1, "-"=-1)[strand],
+                    default.units = "native",
+                    gp = gpar(col="black"))
+     featsp = featsp[!wh]
+  } ## if
+  
+  ## 4. colors for boxes
+  ## check that we know how deal with all features
   featCols = featureColors(featureColorScheme)
 
-  ## check that we know how deal with all features
   whm = names(featsp) %in% rownames(featCols)
   if(!all(whm))
     stop("Don't know how to handle feature(s) '", paste(names(featsp)[!whm], collapse=", "), "'.", sep="")
 
   sfeatsp  = featsp[rownames(featCols)]
   ll       = listLen(sfeatsp)
-
+  
   if(any(ll>0)) {
     i  = unlist(sfeatsp)
     gp = gpar(col = rep(featCols$col,  ll),
@@ -409,20 +439,6 @@ plotFeatures = function(gff, chr, xlim, strand, vpr, featureColorScheme, feature
               default.units = "native")
   } ## if
   
-  ### intron ###
-  if("intron" %in% names(featsp)) {
-    i = featsp[["intron"]]
-    s = sel[i]
-    mid = (gff$start[s]+gff$end[s])/2
-    wid = (gff$end[s]-gff$start[s])/2 
-    for(z in c(-1,1))
-      grid.segments(x0 = mid,
-                    x1 = mid+z*wid,
-                    y0 = c(1, -1)[istrand]*1.2,  ## istrand is 1 or 2
-                    y1 = c(1, -1)[istrand]*0.95,
-                    default.units = "native",
-                    gp = gpar(col="black"))
-  } ## if
   popViewport()
 
 } ## plotFeatures

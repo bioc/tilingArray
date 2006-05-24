@@ -12,8 +12,8 @@ plotAlongChrom(segObj, y, probeAnno, gff,
     colors, 
     doLegend=TRUE,
     featureColorScheme=1,
-    featureExclude=c("chromosome","gene","nucleotide_match", "insertion", "intron"),
-    featureNoLabel=c("uORF"),
+    featureExclude=c("chromosome", "nucleotide_match", "insertion"),
+    featureNoLabel=c("uORF", "CDS"),
     pointSize=unit(0.6, "mm"),
     main, ...)
 }
