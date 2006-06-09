@@ -1,26 +1,58 @@
+# plotting along chromosome (extra bar/s, gff optional, legend at bottom optional)
+# thresh argument missing in plotAlongChrom (used for setting global ylim for heatmaps)
+# also need ability to change the color scheme for panel and main heatmap
 plotAlongChrom = function(segObj, y, probeAnno, gff,
                           isDirectHybe=FALSE, 
                           what = c("dots"), ## "heatmap"
-                          chr, coord, highlight, ylim, 
+                          chr, coord, highlight,  
                           colors, 
-                          doLegend=TRUE,
-                          featureColorScheme=1,
+                          doLegend=FALSE,
                           featureExclude=c("chromosome", "nucleotide_match", "insertion"),
-                          featureNoLabel=c("uORF", "CDS"),
-                          pointSize=unit(0.6, "mm"),
-                          main, ...) {
+                          featureColorScheme=1, extras, 
+                          rowNamesHeatmap, rowNamesExtras, ylab, ylabExtras, main,
+                          colHeatmap=colorRamp(brewer.pal(9, "YlGnBu")),
+                          colExtras=colorRamp(brewer.pal(9, "Reds")), 
+                          sepPlots=FALSE, reOrder=TRUE,...) {
 
   ## set up the viewports of the plot layout.
-  VP = c("title"=0.8, "expr+"=5, "gff+"=1, "coord"=1, "gff-"=1, "expr-"=5, "legend"=0.4)
+  VP = c("title"=0.4, "expr+"=5, "gff+"=1, "coord"=1, "gff-"=1, "expr-"=5, "legend"=0.4)
+
+  if(sepPlots & !missing(y)) {
+     n <- ncol(y)
+     if(reOrder)
+       ordering = seq(n,1, by=-1)
+     else
+       ordering = seq(1:n)
+     if(n<4) {
+         exprw <- exprc <- NULL
+         for(i in 1:n) {
+           exprw <- c(exprw, paste("expr", i, "+", sep=""))
+           exprc <- c(exprc, paste("expr", i, "-", sep=""))
+           }
+         VPnames <- c("title", exprw, "gff+", "coord", "gff-", exprc, "legend")
+         VP = c(0.8, rep(5, n), 1, 1, 1, rep(5, n), 0.4)
+         names(VP) <- VPnames
+      } else{
+          cat("More than 4 arrays, plotting averages.\n")
+          sepPlots=FALSE
+      }
+  }
+
+  if(!missing(extras)) {
+     indgff <-  grep("gff\\+", names(VP))
+     indlegend <-  grep("legend", names(VP)) 
+     VP <- c(VP[1:(indgff-1)], "extras+"=1, VP[indgff:(indlegend-1)], "extras-"=1, VP[indlegend:length(VP)])
+  }
   if(!doLegend)
      VP = VP[-which(names(VP)=="legend")]
-
+  if(missing(gff))
+     VP = VP[-which(names(VP)=="gff+" | names(VP)=="gff-")]
   defaultColors = c("+" = "#00441b", "-" = "#081d58", "duplicated" = "grey",
     "cp" = "#555555", "ci" = "#777777", "highlight" = "red", "threshold" = "grey")
   if(!missing(colors)) {
     mt = match(names(colors), names(defaultColors))
     if(any(is.na(mt)))
-      stop(paste("Cannot use color specification for", names(colors)[is.na(mt)]))
+    stop(paste("Cannot use color specification for", names(colors)[is.na(mt)]))
     defaultColors[mt] = colors 
   }
   colors = defaultColors
@@ -36,7 +68,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
       stop("Please specify either 'y' or 'segObj'")
   }
 
-  pushViewport(viewport(width=0.9, height=0.95)) ## plot margin
+  pushViewport(viewport(width=0.85, height=0.95)) ## plot margin
   pushViewport(viewport(layout=grid.layout(length(VP), 1, height=VP)))
   for(i in 1:2) {
     strand = c("+", "-")[i]
@@ -57,9 +89,16 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
       index = get(paste(chr, strand, "index", sep="."), envir=probeAnno)
       sta   = get(paste(chr, strand, "start", sep="."), envir=probeAnno)
       end   = get(paste(chr, strand, "end",   sep="."), envir=probeAnno)
-      dat = list(x = (sta+end)/2,
-                 y = y[index,, drop=FALSE],
-                 flag = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
+      if(!missing(extras))
+        dat = list(x = (sta+end)/2,
+                   y   = y[index,, drop=FALSE],
+                   flag = get(paste(chr, strand, "unique", sep="."), envir=probeAnno),  
+                   extras = extras[index,, drop=FALSE]) # extras not currently supported 
+							# for case 2 or 3.
+      else   
+        dat = list(x = (sta+end)/2,
+                   y = y[index,, drop=FALSE],
+                   flag = get(paste(chr, strand, "unique", sep="."), envir=probeAnno))
       stopifnot(is.numeric(dat$flag))
       lengthChr = end[length(end)]
       
@@ -110,10 +149,10 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
     ## x: x coordinate
     ## y: y coordinate
     ## flag
+    ## extras (optional, for plotting an extra panel, such as p-values for each segment)
     ## estimate (optional)
     ## lower (optional)
     ## upper (optional)
-    ##
     ## and possibly also a non-NA value for 'threshold'.
     
     if(missing(coord))
@@ -123,29 +162,63 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
     vpr=which(names(VP)==sprintf("expr%s", strand))
     switch(what,
       "dots" = {
-        if(missing(ylim))
-          ylim = quantile(dat$y[dat$x>=coord[1] & dat$x<=coord[2]], c(0.01, 0.99), na.rm=TRUE)
-   
-        plotSegmentationDots(dat, xlim=coord, ylim=ylim, 
-                             threshold=threshold, 
-                             chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
-                             vpr=vpr, colors=colors, pointSize=pointSize, ...)
+      if(sepPlots) {
+       ylimdata = quantile(as.vector(dat[["y"]][dat[["x"]]>=coord[1] & dat[["x"]]<=coord[2],]), c(0, 1), na.rm=TRUE)
+       ylim=ylimdata 
+       if(missing(ylab))
+           ylab=colnames(dat$y)
+       if(length(ylab)==1)
+           ylab=rep(ylab, n)
+       for(j in seq(1:n)) {
+         datj <- dat
+         datj$y <- dat$y[,ordering[j]]
+         if(missing(ylab))
+           ylab=colnames(dat$y)
+         ## plot the data
+         vpr=which(names(VP)==sprintf(paste("expr",j,"%s",sep=""), strand))
+  
+         plotSegmentationDots(datj, xlim=coord, ylim=ylim, ylab=ylab[ordering[j]], 
+                         chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
+                         vpr=vpr, colors=colors, sepPlots=sepPlots,...)
+         } 
+      } else
+         plotSegmentationDots(dat, xlim=coord, ylab=ylab, 
+                         chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
+                         vpr=vpr, colors=colors, sepPlots=sepPlots,...)
+ 
+       if(!missing(extras) & !missing(y)) {
+             vpr2=which(names(VP)==sprintf("extras%s", strand))
+             dat$y = dat$extras[,,drop=FALSE]
+             plotSegmentationHeatmap(dat, xlim=coord, chr=chr, 
+                     strand=ifelse(isDirectHybe, otherStrand(strand),strand),
+                     vpr=vpr2, colors=colors, colHeatmap=colExtras, 
+                     ylab=ylabExtras, rowNames=rowNamesExtras,...)
+        }
       },
       "heatmap" = {
         plotSegmentationHeatmap(dat, xlim=coord, 
-                                threshold=threshold, 
-                                chr=chr, strand=ifelse(isDirectHybe, otherStrand(strand), strand),
-                                vpr=vpr, colors=colors, ...)
+                                rowNames=rowNamesHeatmap,
+                                chr=chr, 
+                                strand=ifelse(isDirectHybe, otherStrand(strand), strand),
+                                vpr=vpr, colors=colors, ylab=ylab,
+                                colHeatmap=colHeatmap,...)
+        if(!missing(extras) & !missing(y)) {
+             vpr2=which(names(VP)==sprintf("extras%s", strand))
+             dat$y = dat$extras[,,drop=FALSE]
+             plotSegmentationHeatmap(dat, xlim=coord, chr=chr, 
+                     strand=ifelse(isDirectHybe, otherStrand(strand),strand),
+                     vpr=vpr2, colors=colors, colHeatmap=colExtras, 
+                     ylab=ylabExtras, rowNames=rowNamesExtras,...)
+        }
       },
            stop(sprintf("Invalid value '%s' for argument 'what'", what))
     ) ## switch
   
     ## plot the features
-    plotFeatures(gff=gff, chr=chr, xlim=coord, strand=strand,
-                 vpr=which(names(VP)==sprintf("gff%s", strand)), 
-                 featureColorScheme=featureColorScheme,
-                 featureExclude=featureExclude, featureNoLabel=featureNoLabel)
-  
+    if(!missing(gff))
+      plotFeatures(gff=gff, chr=chr, xlim=coord, strand=strand, 
+                   featureExclude=featureExclude, featureColorScheme=featureColorScheme,
+                   vpr=which(names(VP)==sprintf("gff%s", strand)),...) 
   }
 
   ## chromosomal coordinates
@@ -171,7 +244,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=which(names(VP)=="title")))
   grid.text(label=paste("Chr ", chr, sep=""), x=0.5, y=1, just="centre", gp=gpar(cex=1))
   if(!missing(main))
-    grid.text(label=main, x=-0.1, y=1, just="left", gp=gpar(cex=1))
+    grid.text(label=main, x=0.05, y=1, just="centre", gp=gpar(cex=1))
   popViewport()
 
   ## legend
@@ -183,116 +256,10 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
 }
 
 ## ------------------------------------------------------------
-## plot Segmentation with Dots
-## ------------------------------------------------------------
-plotSegmentationDots = function(dat, xlim, ylim, threshold, 
-  chr, strand, vpr, colors, pointSize, showConfidenceIntervals=TRUE) {
-
-  if(is.matrix(dat$y))
-    dat$y = rowMeans(dat$y) ##  if >1 samples, take mean over samples
-  stopifnot(length(dat$y)==length(dat$x), length(dat$flag)==length(dat$x))
-  
-  xorg  = dat$x
-  if(missing(xlim)) {
-    xlim=range(dat$x, na.rm=TRUE)
-  } else {
-    sel  = (dat$x>=xlim[1])&(dat$x<=xlim[2])
-    dat$x = dat$x[sel]
-    dat$y = dat$y[sel]
-    dat$flag = dat$flag[sel]
-  }
-  
-  if(!is.na(threshold)) {
-    dat$y = dat$y-threshold
-    ylim = ylim-threshold
-  }
-  
-  ## the expression data. use two viewports for different clipping behavior
-  pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
-    layout.pos.col=1, layout.pos.row=vpr))
-  grid.yaxis()
-  
-  pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="on",
-    layout.pos.col=1, layout.pos.row=vpr))
-
-  ord  = c(which(dat$flag!=0), which(dat$flag==0))
-  colo = ifelse(dat$flag[ord]==0, colors[strand], colors["duplicated"])
-
-  if(!is.na(threshold))
-    grid.lines(y=unit(0, "native"), gp=gpar(col=colors["threshold"]))
-
-  ## segment boundaries
-  sel = ((xorg[dat$estimate]>=xlim[1]) & (xorg[dat$estimate]<=xlim[2]))
-  mySeg = function(j, what)
-    grid.segments(x0 = unit(j, "native"), x1 = unit(j, "native"),
-                  y0 = unit(0.1, "npc"),  y1 = unit(0.9, "npc"),
-                  gp = gpar(col=colors[what], lty=c(cp=1, ci=2)[what]))
-    
-  if(!is.null(dat$estimate)) mySeg(xorg[dat$estimate][sel], "cp")
-  if(showConfidenceIntervals) {
-    if(!is.null(dat$upper))    mySeg(xorg[dat$upper][sel], "ci")
-    if(!is.null(dat$lower))    mySeg(xorg[dat$lower][sel], "ci")
-  }
-  
-  grid.points(dat$x[ord], dat$y[ord], pch=20, size=pointSize, gp=gpar(col=colo))
-  popViewport(2)
-
-} ## plotSegmentationDots
-
-##------------------------------------------------------------- 
-##  plotSegmentationHeatmap
-##------------------------------------------------------------- 
-plotSegmentationHeatmap = function(dat, xlim, threshold,
-  chr, strand, vpr, colors, transformation=function(z) z) {
-
-  if(missing(xlim)) {
-    xlim=range(dat$x, na.rm=TRUE)
-  } else {
-    sel = (dat$x>=xlim[1])&(dat$x<=xlim[2])
-    dat$x = dat$x[sel]
-    dat$y = dat$y[sel,, drop=FALSE ]
-    dat$flag = dat$flag[sel]
-  }
-
-  ord = order(dat$x)
-  dat$x = dat$x[ord]   ## sort by x-coordinates to simplify smoothing
-  dat$y = dat$y[ord,, drop=FALSE]
-  dat$flag = dat$flag[ord]
-  
-  ## Use two viewports for different clipping behavior
-  ylim = c(-1, 2+ncol(dat$y))
-  pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
-    layout.pos.col=1, layout.pos.row=vpr))
-
-  ylab = colnames(dat$y)
-  grid.yaxis( (1:ncol(dat$y)), ylab, gp=gpar(cex=0.5))
-
-  pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="on",
-    layout.pos.col=1, layout.pos.row=vpr))
-
-  ord  = c(which(dat$flag!=0), which(dat$flag==0))
-  colo = ifelse(dat$flag[ord]==0, colors[strand], colors["duplicated"])
-
-  grid.image(dat$x, 1:ncol(dat$y), z=matrix(transformation(dat$y), ncol=ncol(dat$y), nrow=nrow(dat$y)),
-             xlim=xlim, uniq=dat$flag)
-
-  ## segment boundaries
-  if(!is.null(dat$estimate)) {
-    grid.segments(x0 = unit(dat$estimate, "native"),
-                  x1 = unit(dat$estimate, "native"),
-                  y0 = unit(0.1, "npc"),
-                  y1 = unit(0.9, "npc"),
-                  gp = gpar(col=colors["cp"]))
-  }
-
-  popViewport(2)
-} ## end of plotSegmentationHeatmap
-
-
-## ------------------------------------------------------------
 ## plot Features
 ## ------------------------------------------------------------
-plotFeatures = function(gff, chr, xlim, strand, vpr, featureColorScheme, featureExclude, featureNoLabel) {
+
+plotFeatures = function(gff, chr, xlim, strand, vpr, featureColorScheme=1, featureExclude=c("chromosome", "nucleotide_match", "insertion"), featureNoLabel=c("uORF", "CDS"),...) {
 
   pushViewport(dataViewport(xData=xlim, yscale=c(-1.2,1.2),  extension=0, clip="on",
     layout.pos.col=1, layout.pos.row=vpr))
@@ -457,47 +424,6 @@ alongChromTicks = function(x){
   i1 = floor(rx[2]/tw)
   seq(i0, i1)*tw
 }
-
-##------------------------------------------------------------
-## legend
-##------------------------------------------------------------
-plotAlongChromLegend = function(vpr, nr=2, 
-    featureColorScheme, featureExclude){
-  
-  formatRow = function(featColsOneRow, row) {
-    ## print(featColsOneRow)
-    strWid   = convertWidth(stringWidth(rownames(featColsOneRow)), "npc", valueOnly=TRUE)
-    n        = length(strWid)
-    inbetWid = 0.2*min(strWid)
-    totWid   = sum(strWid)+(n-1)*inbetWid
-    x        = c(0, cumsum(strWid[-n])) + (0:(n-1))*inbetWid 
-    y        = numeric(length(x))
-
-    x      = x/totWid
-    strWid = strWid/totWid
-    grid.rect(x = x, width = strWid, 
-              y = unit(row, "native"), height = unit(1, "native")- unit(1, "mm"), 
-              just  = c("left", "center"), default.units="npc",
-              gp    = do.call("gpar", featColsOneRow))
-    
-    grid.text(label = rownames(featColsOneRow),
-              x = unit(x + strWid/2, "native"), y = unit(row, "native"),
-              just  = c("center", "center"), gp=gpar(cex=0.66))
-  }
-  
-
-  featCols = featureColors(featureColorScheme)
-  featCols = featCols[ !(rownames(featCols) %in% featureExclude), ]
-
-  pushViewport(viewport(layout.pos.col=1, layout.pos.row=vpr, yscale=c(0.5, nr+0.5)))
-
-  i = 1:nrow(featCols)
-  for(r in 1:nr)
-    formatRow(featCols[ceiling(i/nrow(featCols)*nr-1e-10)==r, ], row=nr-r+1)
-  
-  popViewport()
-  
-} ## plotAlongChromLegend
 
 ##------------------------------------------------------------
 ## featureColors
