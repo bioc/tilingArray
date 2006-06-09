@@ -1,21 +1,21 @@
 \name{plotAlongChrom}
 \alias{plotAlongChrom}
-\title{Plot signals and segmentation along a chromosomal region}
+\title{Plot signals and segmentation for a region of a chromosome}
 \keyword{hplot}
-\description{Plot signals and segmentation along a chromosomal region}
+\description{Plot signals and segmentation for a region of a chromosome}
 
 \usage{
 plotAlongChrom(segObj, y, probeAnno, gff,
     isDirectHybe=FALSE, 
     what = c("dots"), ## "heatmap"
-    chr, coord, highlight, ylim, 
-    colors, 
-    doLegend=TRUE,
-    featureColorScheme=1,
+    chr, coord, highlight,
+    colors, doLegend=FALSE,
     featureExclude=c("chromosome", "nucleotide_match", "insertion"),
-    featureNoLabel=c("uORF", "CDS"),
-    pointSize=unit(0.6, "mm"),
-    main, ...)
+    featureColorScheme=1, extras, 
+    rowNamesHeatmap, rowNamesExtras, ylab, ylabExtras, main, 
+    colHeatmap=colorRamp(brewer.pal(9, "YlGnBu")), 
+    colExtras=colorRamp(brewer.pal(9, "Reds")), 
+    sepPlots=FALSE, reOrder=TRUE, ...)
 }
 
 \arguments{
@@ -31,38 +31,52 @@ plotAlongChrom(segObj, y, probeAnno, gff,
   \item{isDirectHybe}{logical scalar: if TRUE, the mapping of probes to genomic 
    strands is reversed with respect to the default. This is appropriate for data 
    from a direct RNA hybridization that used no reverse transcription.} 
-  \item{what}{character scalar, choice of signal visualization, can be
-    either \code{dots} or \code{heatmap}}  
-  \item{chr}{integer of length 1 with the number of the chromosome for
-    which to produce the plot.}
-  \item{coord}{integer of length 2 with start and end coordinates (in
-    bases) for which to produce the plot.}
-  \item{highlight}{optional, list with two elements: a single numeric value
+  \item{what}{character scalar indicating which signal visualization to plot.  Can be
+    either \code{dots} to plot each probe intensity with a point, or \code{heatmap} to produce a colorscale representation of the intesities.}  
+  \item{chr}{integer of length 1 indicating the chromosome number to plot.}
+  \item{coord}{integer vector of length 2 containing the start and end coordinates (in
+    bases) for the plot.}
+  \item{highlight}{(optional) list with two elements: a single numeric value
     \code{coord} and a character \code{strand}. If present, this
-    position is marked by a vertical red bar on the coordinate axis.}
-  \item{ylim}{numeric vector of length two with y-axis limits.}
-  \item{colors}{named character vector, optional. If missing, 
+    position is marked by a vertical red bar on the coordinate axis.  The color can be changed using the \code{colors} argument below.}
+  \item{colors}{(optional) named character vector. If missing, 
     a default color scheme is used:
     \code{c("+"="#00441b", "-"="#081d58", "duplicated"="grey", "cp"="#101010", 
    "highlight"="red", "threshold"="grey")}, 
-   where the first three elements refer to colors of data points and the 
-   last three to those of lines in the plot.}
+   where the first three elements refer to the colors of data points and the 
+   last three to the colors of lines in the plot.}
   \item{doLegend}{logical: should the plot contain a legend?} 
+  \item{featureExclude}{character vector of names of feature types (in
+    \code{gff}) that should not be plotted. Default is \code{"chromosome"}, 
+    \code{"nucleotide_match"} and \code{"insertion"}.  Additional possibilities 
+    include: \code{"ARS"}, \code{"repeat\_region"}, 
+    \code{"repeat\_family"} and \code{"nc\_primary\_transcript"}.}
   \item{featureColorScheme}{numeric scalar, used to select a color scheme for the 
    boxes representing genomic features such as coding sequences, ncRNAs etc. 
-   Currently the values 1 and 2 are supported.}
-  \item{featureExclude}{character vector, names of feature types (in
-    gff) that should not be plotted.
-    Additional possible candidates include: "ARS", "repeat\_region",
-    "repeat\_family", "nc\_primary\_transcript".
-  }
-  \item{featureNoLabel}{character vector, names of feature types (in
-    gff) that should not be labeled with their names (if they are plotted).}
-  \item{pointSize}{unit object: point size used for the probe intensities scatterplot.}
+   Currently the only value supported is 1 (see \code{plotAlongChromLegend} or \code{plotFeatures} for further information).}
+  \item{extras}{a matrix containing additional values to be plotted along the 
+    chromosome in a separate panel (such as p-values).  This option is only 
+    available when \code{y} is specified.  These values should be on the scale [0,1].}
+  \item{rowNamesHeatmap}{character vector of row names for the main heatmap.}
+  \item{rowNamesExtras}{character vector of row names for the extra heatmap.}
+  \item{ylab}{character label for y-axis of main plot.}
+  \item{ylabExtras}{character label for y-axis on \code{extras} panel (if specified).}
   \item{main}{character: plot title.}
-  \item{...}{further arguments that can be passed on to the
-    the functions that implement the \code{what} option (see above),
-    \code{plotSegmentationDots} and \code{plotSegmentationHeatmap}.}
+  \item{colHeatmap}{function describing color scheme for the main heatmap plot (defaults to
+    \code{YlGnBu} from RColorBrewer package).}
+  \item{colExtras}{function describing color scheme for the extra heatmap plot (if specified)   
+    (defaults to \code{Reds} from RColorBrewer package).}
+  \item{sepPlots}{logical scalar.  If TRUE, each column of intensities in \code{segObj} or 
+    \code{y} is plotted separately (maximum of 3) in the same figure. When FALSE, the average 
+    is plotted.  This argument is only used when \code{what} is set to \code{dots}.}
+  \item{reOrder}{logical scalar (only used when sepPlots is TRUE). If TRUE, the first 
+    column of intensities is printed at the bottom of each plot, and the subsequent columns 
+    are plotted above.  If FALSE, the first appears at the top, and the subsequent columns 
+    are plotted below.}
+  \item{...}{further arguments that can be passed to the
+    functions that implement the \code{what} option above (see
+    \code{plotSegmentationDots} and 
+    \code{plotSegmentationHeatmap}) or \code{gff} plotting (see \code{plotFeatures} and \code{plotAlongChromLegend}).}
 }
 
 \details{
