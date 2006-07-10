@@ -9,21 +9,25 @@
   for probe-specific response effect by using one or several reference hybridizations.
 }
 \usage{
-normalizeByReference(x, reference, pm, background, nrStrata=10,
+normalizeByReference(x, reference, probeAnno, pm, background, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames, verbose=FALSE)
 }
 \arguments{
   \item{x}{eSet containing the data to be normalized.}
   \item{reference}{eSet with the same number of features as \code{x},
     containing the reference signal.}
+  \item{probeAnno}{environment with probe annotations. See
+    package \code{davidTiling} for an example.}
   \item{pm}{indices specifying the perfect match features in
     \code{reference}.
     This can be either an integer vector with values between 1 and
-    \code{nrow(exprs(reference))} or a logical vector.}
+    \code{nrow(exprs(reference))} or a logical vector.
+    If missing, this information is extracted from \code{probeAnno}.}
   \item{background}{indices specifying a set of background features in
     \code{x}.
     This can be either an integer vector with values between 1 and
-    \code{nrow(exprs(x))} or a logical vector.}
+    \code{nrow(exprs(x))} or a logical vector.
+    If missing, this information is extracted from \code{probeAnno}.}
   \item{nrStrata}{Integer (length 1), number of strata for the estimation of
     the background function.}
   \item{cutoffQuantile}{Numeric (length 1), the probes whose reference
@@ -53,7 +57,7 @@ normalizeByReference(x, reference, pm, background, nrStrata=10,
 
 \references{Transcript mapping with 
   oligonucleotide high-density tiling arrays,
-  W. Huber, J. Toedling, L. Steinmetz, preprint (2006).}
+  W. Huber, J. Toedling, L. Steinmetz, Bioinformatics, 2006 (June 20 Epub ahead of print).}
 \examples{
   ## see vignette assessNorm.Rnw in inst/scripts directory
 }

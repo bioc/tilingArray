@@ -1,12 +1,12 @@
 Package: tilingArray
-Version: 1.11.4
-Date: 9 June 2006
+Version: 1.11.5
+Date: 10 July 2006
 Title: Analysis of high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Matt Ritchie, Joern Toedling
 Maintainer: W. Huber <huber@ebi.ac.uk>
 Depends: R (>= 2.3.0), Biobase (>= 1.11.11), affy (>= 1.9.17), RColorBrewer (>= 0.2-2),
         grid (>= 2.0.0), strucchange (>= 1.2-12), colorspace(>= 0.9),
-        vsn (>= 1.9.0), genefilter (>= 1.11.4), geneplotter (>= 1.9.7)
+        vsn (>= 1.9.0), genefilter (>= 1.11.4), geneplotter (>= 1.9.7), pixmap (>= 0.4-4)
 Suggests:
 Description: The package provides some functionalities that can be
 	useful for the analysis of high-density tiling microarray data (such

@@ -1,4 +1,4 @@
-normalizeByReference = function(x, reference, pm, background, nrStrata=10,
+normalizeByReference = function(x, reference, probeAnno, pm, background, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames, verbose=FALSE) {
 
   if(!is(x, "eSet"))
@@ -26,7 +26,11 @@ normalizeByReference = function(x, reference, pm, background, nrStrata=10,
     return(v)
   }
   
+  if(!missing(probeAnno) & missing(pm))
+     pm = PMindex(probeAnno)
   pm = checkindex(pm, "pm")
+  if(!missing(probeAnno) & missing(background))
+     background = BGindex(probeAnno)
   background = checkindex(background, "background")
 
   mtb = match(background, pm)

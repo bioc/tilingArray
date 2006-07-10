@@ -76,8 +76,8 @@ plotSegmentationDots = function(dat, xlim, ylim, ylab, threshold=NA,
                   y0 = unit(0.1, "npc"),  y1 = unit(0.9, "npc"),
                   gp = gpar(col=colors[what], lty=c(cp=1, ci=2)[what]))
     
-  if(!is.null(dat$estimate)) mySeg(xorg[dat$estimate][sel], "cp")
-  if(showConfidenceIntervals) {
+  if(!is.null(dat$estimate) & sum(sel)>0) mySeg(xorg[dat$estimate][sel], "cp")
+  if(showConfidenceIntervals & sum(sel)>0) {
     if(!is.null(dat$upper))    mySeg(xorg[dat$upper][sel], "ci")
     if(!is.null(dat$lower))    mySeg(xorg[dat$lower][sel], "ci")
   }

@@ -30,7 +30,7 @@ plotFeatures(gff, chr, xlim, strand, vpr, featureColorScheme=1,
 }
 
 \details{
-  This function is called by \code{plotAlongChrom} when the \code{gff} argument has been sepcified.  It should not be called directly by the user.}
+  This function is called by \code{plotAlongChrom} when the \code{gff} argument has been specified.  It should not be called directly by the user.}
       
 \author{Wolfgang Huber <huber@ebi.ac.uk>}
 \examples{}
