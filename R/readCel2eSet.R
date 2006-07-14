@@ -8,7 +8,7 @@ readCel2eSet = function(filename, adf, path=".", rotated=FALSE, ...) {
   } else {
     if(missing(adf))
       stop("Please specify either 'adf' or 'filename'")
-    if(!("filename" %in% varLabels(pd)))
+    if(!("filename" %in% varLabels(adf)))
       stop("Please let 'adf' contain a column 'filename'")
     filename = adf$filename
   }
