@@ -19,7 +19,7 @@ BGindex(probeAnno)
 These indices can be used to select the relevant rows of intensity data from the eSet object (read in from the cel files) for plotting and normalization.
 }
 
-\value{Numeric vector returning of indicies.
+\value{Numeric vector of indicies.
 }
 
 \author{Matt Ritchie <ritchie@ebi.ac.uk>}

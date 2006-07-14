@@ -12,13 +12,19 @@ segChrom = function(y, probeAnno, chr=1, nsegs, nrBasesPerSegment = 1500, step=7
          colnames(prbs) = what
          prbs$mid = (prbs$start + prbs$end)/2
          prbs = prbs[order(prbs$mid), ]
-         numna = rowSums(is.na(exprs(y)[prbs$ind, ]))
-         stopifnot(all(numna %in% c(0, ncol(y))))
+         if(is.matrix(y))
+           numna = rowSums(is.na(y[prbs$ind, ]))
+         else
+           numna = rowSums(is.na(exprs(y)[prbs$ind, ]))
+#         stopifnot(all(numna %in% c(0, ncol(y))))
          prbs = prbs[numna == 0, ]
          sprb = prbs[sampleStep(prbs$mid, step = 7), ]         
          if(is.na(nsegs[j]))
            nsegs[j] = round(sprb$end[nrow(sprb)]/nrBasesPerSegment)
-         ychr = exprs(y)[sprb$ind, ,drop = FALSE]
+         if(is.matrix(y))
+           ychr = y[sprb$ind, ,drop = FALSE]
+         else
+           ychr = exprs(y)[sprb$ind, ,drop = FALSE]
          s = segment(ychr, maxseg = nsegs[j], maxk = 3000)
          s@x = sprb$mid
          s@flag = sprb$unique

@@ -12,7 +12,7 @@ segChrom(y, probeAnno, chr=1, nsegs, nrBasesPerSegment = 1500,
              step=7, confint=FALSE, confintLevel=0.95, save=FALSE, savedir=NULL)
 }
 \arguments{  
-  \item{y}{eSet containing the data to be segmented.}
+  \item{y}{eSet or matrix containing the data to be segmented.}
   \item{probeAnno}{environment with probe annotations. See
     package \code{davidTiling} for an example (?probeAnno).}
   \item{chr}{integer scalar or vector specifying which chromosome(s) to segment.}

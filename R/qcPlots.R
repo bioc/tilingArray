@@ -43,10 +43,15 @@ qcPlots <- function(x, html=TRUE, plotdir=NULL, probeAnno, gff,
 
     # boxplots of log2 intensities for PM probes
     cat("\tBoxplots of PM intensities")
-    if(missing(nucleicAcid) & is.null(x$nucleicAcid))
-      nucleicAcid = rep("RNA", nrow(x))
-    else
-      nucleicAcid = x$nucleicAcid
+    if(missing(nucleicAcid)) {
+        nucleicAcid = NULL
+      if(!is.null(x$nucleicAcid))
+        nucleicAcid = x$nucleicAcid
+      if(!is.null(x$NucleicAcid))
+        nucleicAcid = x$NucleicAcid
+      if(is.null(nucleicAcid))
+        nucleicAcid = rep("RNA", narrays)    
+      }
     if(missing(pmindex))
       pmindex = PMindex(probeAnno)
     l2xPM = l2x[pmindex,, drop=FALSE]
@@ -77,9 +82,17 @@ qcPlots <- function(x, html=TRUE, plotdir=NULL, probeAnno, gff,
     rlx = range(l2x)
     lx  = (l2x-rlx[1])/diff(rlx)
 
+    files <- NULL
+    if(!is.null(x$file))
+      files = x$file
+    if(!is.null(x$File))
+      files = x$File
+    if(is.null(files))
+      files = paste("array", seq(1:narrays), ext, sep="")
+
     for(i in 1:narrays) {
-      cat(x$file[i], ":\nimageplot\t")
-      filename = gsub(" ", "_", x$file[i])
+      cat(files[i], ":\nimageplot\t")
+      filename = gsub(" ", "_", files[i])
       if(ranks)
       myWrite(myPixmap(rank(exprs(x)[,i])), sub(ext, ".rank", filename),
               imgdir=plotdir, pgm=pgm)
@@ -87,16 +100,20 @@ qcPlots <- function(x, html=TRUE, plotdir=NULL, probeAnno, gff,
       myWrite(myPixmap(lx[,i]),  sub(ext, ".log", filename),
               imgdir=plotdir, pgm=pgm)
       cat("density plot\t")     
-      filename = file.path(ifelse(is.null(plotdir), ".", plotdir), paste(sub(ext, ".density", x$file[i]), ".png", sep=""))
+      filename = file.path(ifelse(is.null(plotdir), ".", plotdir), 
+                  paste(sub(ext, ".density", files[i]), ".png", sep=""))
       png(filename)
-      if(length(x$file)>1)
-         matplot(dens.x$X[,i], dens.x$Y[,i], xlab=expression(log[2](Intensity)),            ylab = "Density", col=colors[i], main = "Histogram of PM intensities", type = "l", lwd = 2, lty = 1)
+      if(narrays>1)
+         matplot(dens.x$X[,i], dens.x$Y[,i], xlab=expression(log[2](Intensity)),            
+                  ylab = "Density", col=colors[i], main = "Histogram of PM intensities", 
+                  type = "l", lwd = 2, lty = 1)
       else
          matplot(dens.x$X, dens.x$Y, xlab=expression(log[2](Intensity)), ylab = "Density",
-            col=colors[i], main = "Histogram of PM intensities", type = "l", lwd = 2, lty = 1)
+                  col=colors[i], main = "Histogram of PM intensities", type = "l", 
+                  lwd = 2, lty = 1)
       dev.off()
       cat("along chromosome plot")     
-      filename = file.path(ifelse(is.null(plotdir), ".", plotdir), paste(sub(ext, ".gencoord", x$file[i]), ".jpg", sep=""))
+      filename = file.path(ifelse(is.null(plotdir), ".", plotdir), paste(sub(ext, ".gencoord", files[i]), ".jpg", sep=""))
       jpeg(filename, width=960, height=480)
       plotAlongChrom(what="dots", chr=chr, coord=coord, y=matrix(l2x[,i], nc*nr,1),
            probeAnno=probeAnno, gff=gff, ylim=ylimchrom, ...)
@@ -126,11 +143,11 @@ qcPlots <- function(x, html=TRUE, plotdir=NULL, probeAnno, gff,
         html[[8]] = "<table border=1>\n<tr bgcolor=\"lightgray\"><td><center><strong>Array</strong></center></td><td><center><strong>Filename</strong></center></td><td><center><strong>Plots</strong></center></td></tr>\n"
      for(i in 1:narrays) {
         if(!is.null(x$SampleID) & !is.null(x$Strain)) 
-          html[[i+8]] = paste("<tr><td><center>", i, "</center></td><td>", x$file[i], "</td><td>", x$Strain[i], "</td><td>", x$SampleID[i], "</td><td>
-        <a href=\"", sub(ext, ".log", x$file[i]), ".jpg\">image</a>,", "<a href=\"", sub(ext, ".density", x$file[i]), ".png\">", "density</a>,", "<a href=\"", sub      (ext, ".gencoord", x$file[i]), ".jpg\">", "genomic</a></td></tr>\n", sep="")
+          html[[i+8]] = paste("<tr><td><center>", i, "</center></td><td>", files[i], "</td><td>", x$Strain[i], "</td><td>", x$SampleID[i], "</td><td>
+        <a href=\"", sub(ext, ".log", files[i]), ".jpg\">image</a>,", "<a href=\"", sub(ext, ".density", files[i]), ".png\">", "density</a>,", "<a href=\"", sub      (ext, ".gencoord", files[i]), ".jpg\">", "alongchrom</a></td></tr>\n", sep="")
           
         else 
-          html[[i+8]] = paste("<tr><td><center>", i, "</center></td><td>", x$file[i], "</td><td> <a href=\"", sub(ext, ".log", x$file[i]), ".jpg\">image</a>,", "<a href=\"", sub(ext, ".density", x$file[i]), ".png\">", "density</a>,", "<a href=\"", sub      (ext, ".gencoord", x$file[i]), ".jpg\">", "genomic</a></td></tr>\n", sep="")
+          html[[i+8]] = paste("<tr><td><center>", i, "</center></td><td>", files[i], "</td><td> <a href=\"", sub(ext, ".log", files[i]), ".jpg\">image</a>,", "<a href=\"", sub(ext, ".density", files[i]), ".png\">", "density</a>,", "<a href=\"", sub      (ext, ".gencoord", files[i]), ".jpg\">", "alongchrom</a></td></tr>\n", sep="")
         }
      html[[i+9]] = "</table>\n</body>\n</html>"
 
