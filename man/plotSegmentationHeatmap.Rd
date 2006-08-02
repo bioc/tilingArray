@@ -5,8 +5,10 @@
 \description{Plot a heatmap diagram for a region along a chromosome}
 
 \usage{
-plotSegmentationHeatmap(dat, xlim, ylab, rowNames, chr=1, strand="+", vpr, colors, 		
-                        colHeatmap=colorRamp(brewer.pal(9, "YlGnBu")), main, ...)
+plotSegmentationHeatmap(dat, xlim, ylab, rowNames, 
+                        chr=1, strand="+", vpr, colors, 		
+                        colHeatmap=colorRamp(brewer.pal(9, "YlGnBu")), 
+                        showConfidenceIntervals=TRUE, main, ...)
 }
 
 \arguments{
@@ -26,7 +28,8 @@ plotSegmentationHeatmap(dat, xlim, ylab, rowNames, chr=1, strand="+", vpr, color
    where the first three elements refer to colors of data points and the 
    last three to those of lines in the plot.}
   \item{colHeatmap}{function describing color scheme for the heatmap plot (defaults to
-    \code{YlGnBu} from RColorBrewer package).}
+    \code{YlGnBu} from RColorBrewer package).}  
+  \item{showConfidenceIntervals}{logical scalar indicating whether confidence intervals for each change-point are to be plotted (only available once segmentation has occurred).}
   \item{main}{character vector specifying plot title.}
   \item{...}{additional arguments.}
 }

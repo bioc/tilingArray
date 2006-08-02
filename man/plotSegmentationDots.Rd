@@ -5,9 +5,11 @@
 \description{Plot points for a region along a chromosome}
 
 \usage{
-plotSegmentationDots(dat, xlim, ylim, ylab, threshold=NA, chr=1, strand="+", vpr, colors, main, 			pointSize=unit(0.6, "mm"), showConfidenceIntervals=TRUE, 				sepPlots=FALSE, cexAxisLabel=1, cexAxis=1,...)
+plotSegmentationDots(dat, xlim, ylim, ylab, threshold=NA, 
+                     chr=1, strand="+", vpr, colors, main, 
+                     pointSize=unit(0.6, "mm"), showConfidenceIntervals=TRUE, 
+                     sepPlots=FALSE, cexAxisLabel=1, cexAxis=1,...)
 }
-
 
 \arguments{
   \item{dat}{list containing data to be plotted (see \emph{Details} section below for particulars).}

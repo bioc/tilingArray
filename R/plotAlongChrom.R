@@ -17,8 +17,22 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
   ## set up the viewports of the plot layout.
   VP = c("title"=0.4, "expr+"=5, "gff+"=1, "coord"=1, "gff-"=1, "expr-"=5, "legend"=0.4)
 
-  if(sepPlots & !missing(y)) {
-     n <- ncol(y)
+  if(sepPlots) { # matrix
+     if(!missing(y))
+        n <- ncol(y)
+     if(!missing(segObj)) { # S4
+        if(is.environment(segObj)) {
+          segmentationObjectName = paste(chr, "+", sep=".")
+          if(segmentationObjectName %in% ls(segObj)) {
+            s <- get(segmentationObjectName, segObj)
+            n <- ncol(s@y)
+          }
+          else { # old style list
+            dat = get(paste(chr, strand, "dat", sep="."), segObj)
+            n <- ncol(dat$y)
+          }
+        }
+     }
      if(reOrder)
        ordering = seq(n,1, by=-1)
      else

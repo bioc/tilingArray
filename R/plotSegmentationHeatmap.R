@@ -3,7 +3,7 @@
 ##------------------------------------------------------------- 
 plotSegmentationHeatmap = function(dat, xlim, ylab, rowNames, 
   chr=1, strand="+", vpr, colors, colHeatmap=colorRamp(brewer.pal(9, "YlGnBu")),
-  main,...) {
+  showConfidenceIntervals=TRUE, main, ...) {
 
   endVP = FALSE
   if(missing(vpr)) {
@@ -19,6 +19,7 @@ plotSegmentationHeatmap = function(dat, xlim, ylab, rowNames,
     dat$y = (ymod - min(ymod, na.rm=TRUE))/(max(ymod, na.rm=TRUE)-min(ymod, na.rm=TRUE))
   }
 
+  xorg  = dat$x
   if(missing(xlim)) {
     xlim=range(dat$x, na.rm=TRUE)
   } else {
@@ -43,7 +44,7 @@ plotSegmentationHeatmap = function(dat, xlim, ylab, rowNames,
   dat$x = dat$x[ord]   ## sort by x-coordinates to simplify smoothing
   dat$y = dat$y[ord,, drop=FALSE]
   dat$flag = dat$flag[ord]
-  
+ 
   ## Use two viewports for different clipping behavior
   ylim = c(-1, 2+ncol(dat$y))
   pushViewport(dataViewport(xData=xlim, yData=ylim, extension=0, clip="off",
@@ -52,7 +53,7 @@ plotSegmentationHeatmap = function(dat, xlim, ylab, rowNames,
   if(missing(rowNames))
     rowNames = colnames(dat$y)
   if(!is.null(rowNames))
-    grid.yaxis( (1:ncol(dat$y)), rowNames, gp=gpar(cex=0.5))
+    grid.yaxis((1:ncol(dat$y)), rowNames, gp=gpar(cex=0.5))
 
   if(!missing(ylab))
     grid.text(ylab, x=-0.075, y=0.5, rot=90)
@@ -65,13 +66,19 @@ plotSegmentationHeatmap = function(dat, xlim, ylab, rowNames,
 
   grid.image(dat$x, 1:ncol(dat$y), z=dat$y, xlim=xlim, uniq=dat$flag, colRamp=colHeatmap)
 
-  ## segment boundaries
-  if(!is.null(dat$estimate)) {
-    grid.segments(x0 = unit(dat$estimate, "native"),
-                  x1 = unit(dat$estimate, "native"),
-                  y0 = unit(0.1, "npc"),
-                  y1 = unit(0.9, "npc"),
-                  gp = gpar(col=colors["cp"]))
+  ## segment boundaries    
+  if(!is.null(dat$estimate) & showConfidenceIntervals) {
+     sel = ((xorg[dat$estimate]>=xlim[1]) & (xorg[dat$estimate]<=xlim[2]))
+     mySeg = function(j, what)
+      grid.segments(x0 = unit(j, "native"), x1 = unit(j, "native"),
+                    y0 = unit(0.1, "npc"),  y1 = unit(0.9, "npc"),
+                    gp = gpar(col=colors[what], lty=c(cp=1, ci=2)[what]))
+    
+    if(!is.null(dat$estimate) & sum(sel)>0) {
+      mySeg(xorg[dat$estimate][sel], "cp")
+      if(!is.null(dat$upper))    mySeg(xorg[dat$upper][sel], "ci")
+      if(!is.null(dat$lower))    mySeg(xorg[dat$lower][sel], "ci")
+    }
   }
 
   popViewport(2)  
