@@ -55,7 +55,7 @@ setMethod("confint", "segmentation",
                nreg = NULL, datatsp = NULL)
     class(bpp) = "breakpointsPretend"
     
-    ci = confint.breakpointsfull(bpp, level=level, het.reg=het.reg, het.err=het.err, ...)
+    ci =  strucchange:::confint.breakpointsfull(bpp, level=level, het.reg=het.reg, het.err=het.err, ...)
 
     ## extract the confidence intervals and add back 1 to be consistent with our ways
     m = ci$confint
