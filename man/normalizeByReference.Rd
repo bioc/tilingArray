@@ -55,9 +55,8 @@ normalizeByReference(x, reference, probeAnno, pm, background, nrStrata=10,
 
 \author{W. Huber \email{huber@ebi.ac.uk}}
 
-\references{Transcript mapping with 
-  oligonucleotide high-density tiling arrays,
-  W. Huber, J. Toedling, L. Steinmetz, Bioinformatics, 2006 (June 20 Epub ahead of print).}
+\references{Huber W, Toedling J, Steinmetz, L. Transcript mapping with high-density 
+	oligonucleotide tiling arrays. Bioinformatics 22, 1963-1970 (2006).}
 \examples{
   ## see vignette assessNorm.Rnw in inst/scripts directory
 }

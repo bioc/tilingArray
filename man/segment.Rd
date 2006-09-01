@@ -33,16 +33,16 @@ segment(y, maxseg, maxk)
 
 \author{W. Huber \email{huber@ebi.ac.uk}}
 
-\references{A statistical approach for CGH microarray data analysis.
+\references{
+  [1] Transcript mapping with high-density oligonucleotide tiling
+  arrays. Huber W, Toedling J, Steinmetz, L.
+  Bioinformatics 22, 1963-1970 (2006).
+  
+  [2] A statistical approach for CGH microarray data analysis.
   Franck Picard, Stephane Robin, Marc Lavielle, Christian Vaisse,
-  Gilles Celeux, Jean-Jacques Daudin,
-  Rapport de recherche No. 5139, Mars 2004,
-  Institut National de Recherche en Informatique et en Automatique (INRIA),
-  ISSN 0249-6399.
-  The code of this function is based on the Matlab
-  implementation presented at  
-  \url{http://www.inapg.fr/ens_rech/mathinfo/recherche/mathematique/outil.html},
-  but it has evolved.}
+  Gilles Celeux, Jean-Jacques Daudin.
+  BMC Bioinformatics. 2005 Feb 11; 6:27.
+}
 
 \examples{
   x = rep( sin((0:4)/2*pi), each=3) + rnorm(3*5, sd=0.1)

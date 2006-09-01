@@ -20,6 +20,8 @@ Description: The package provides some functionalities that can be
 	plots. The function 'normalizeByReference' for probe-sequence
 	dependent response adjustment from a (set of) reference
 	hybridizations.
+Reference: Huber W, Toedling J, Steinmetz, L. Transcript mapping with high-density 
+	oligonucleotide tiling arrays. Bioinformatics 22, 1963-1970 (2006).
 License: Artistic License 2.0
 SaveImage: Yes
 biocViews: Microarray, OneChannel, Preprocessing, Visualization
