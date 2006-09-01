@@ -29,11 +29,13 @@ normalizeByReference = function(x, reference, probeAnno, pm, background, nrStrat
   if(!missing(probeAnno) & missing(pm))
      pm = PMindex(probeAnno)
   pm = checkindex(pm, "pm")
+  
   if(!missing(probeAnno) & missing(background))
-     background = BGindex(probeAnno)
+     background = intersect(BGindex(probeAnno),pm)
+       
   background = checkindex(background, "background")
 
-  mtb = intersect(background, pm)
+  mtb = match(background, pm)
   if(any(is.na(mtb)))
     stop("'background' must be a subset of 'pm'.")
   
@@ -60,7 +62,7 @@ normalizeByReference = function(x, reference, probeAnno, pm, background, nrStrat
 
   ## interpolate  
   for(j in 1:d) {
-    ybg[, j] = tapply(log(exprs(x)[mtb, j], 2), strata, shorth, tie.action="min")
+    ybg[, j] = tapply(log(exprs(x)[background, j], 2), strata, shorth, tie.action="min")
     bgfun[[j]] = approxfun(xbg, ybg[,j], rule=2)
   }
 
