@@ -13,8 +13,8 @@ normalizeByReference(x, reference, probeAnno, pm, background, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames, verbose=FALSE)
 }
 \arguments{
-  \item{x}{eSet containing the data to be normalized.}
-  \item{reference}{eSet with the same number of features as \code{x},
+  \item{x}{ExpressionSet containing the data to be normalized.}
+  \item{reference}{ExpressionSet with the same number of features as \code{x},
     containing the reference signal.}
   \item{probeAnno}{environment with probe annotations. See
     package \code{davidTiling} for an example.}

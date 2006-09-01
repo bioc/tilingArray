@@ -13,7 +13,7 @@ qcPlots(x, html=TRUE, plotdir=NULL, probeAnno, gff,
 }
 
 \arguments{
-  \item{x}{eSet containing the data to be plotted.}
+  \item{x}{ExpressionSet containing the data to be plotted.}
   \item{html}{logical scalar.  If \code{TRUE} an html summary page 
               'qcsummary.htm' is generated.  If \code{FALSE}, no summary page is generated.}
   \item{plotdir}{optional character string specifying the filepath where the plots will be saved.  Defaults to current working directory.}

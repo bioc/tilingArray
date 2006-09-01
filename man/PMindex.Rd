@@ -16,7 +16,7 @@ BGindex(probeAnno)
 }
 \details{
   These functions extract the perfect match (PM), mismatch (MM) or background probe (from intergenic regions outside of known annotations) indicies from the probeAnno.  
-These indices can be used to select the relevant rows of intensity data from the eSet object (read in from the cel files) for plotting and normalization.
+These indices can be used to select the relevant rows of intensity data from the ExpressionSet object (read in from the cel files) for plotting and normalization.
 }
 
 \value{Numeric vector of indicies.

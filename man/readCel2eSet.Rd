@@ -1,6 +1,6 @@
 \name{readCel2eSet}
 \alias{readCel2eSet}
-\title{Read celfiles into an eSet object.}
+\title{Read celfiles into an ExpressionSet object.}
 \description{
   This is a wrapper for \code{\link[affy:ReadAffy]{ReadAffy}} that
   returns an \code{\link[ExpressionSet-class]{ExpressionSet}} object rather than an
@@ -28,7 +28,7 @@ readCel2eSet(filename, adf, path=".", rotated=FALSE, ...)
 }
 
 \value{
-  Matrix with \code{maxk} rows and \code{length(x)} columns.
+  \code{\link[ExpressionSet-class]{ExpressionSet}} object.
 }
 
 \author{W. Huber}
