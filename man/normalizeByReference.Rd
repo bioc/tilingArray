@@ -2,10 +2,10 @@
 \alias{normalizeByReference}
 
 \title{
-  Probe-specific normalization of hybridization intensities from a short-oligo microarray
+  Probe-specific normalization of hybridization intensities from an oligonucleotide microarray
 }
 \description{
-  Adjust the hybridization intensities from a short oligo microarray
+  Adjust the hybridization intensities from an oligonucleotide microarray
   for probe-specific response effect by using one or several reference hybridizations.
 }
 \usage{
@@ -16,11 +16,11 @@ normalizeByReference(x, reference, pm, background, nrStrata=10,
   \item{x}{ExpressionSet containing the data to be normalized.}
   \item{reference}{ExpressionSet with the same number of features as \code{x},
     containing the reference signal.}
-  \item{pm}{indices specifying the perfect match features in
+  \item{pm}{Indices specifying the perfect match features in
     \code{reference} (see Details).
     This can be either an integer vector with values between 1 and
     \code{nrow(exprs(reference))} or a logical vector.}
-  \item{background}{indices specifying a set of background features in
+  \item{background}{Indices specifying a set of background features in
     \code{x} (see Details).
     This can be either an integer vector with values between 1 and
     \code{nrow(exprs(x))} or a logical vector.}
@@ -47,13 +47,13 @@ normalizeByReference(x, reference, pm, background, nrStrata=10,
 
   The background signal is estimated from the probes indicated by the
   argument \code{background}. They need to be a strict subset of the
-  \code{reference} probes. I.e., they need to probes that uniquely
+  \code{reference} probes. I.e., they need to uniquely
   match the target organism's DNA, but are not expected to match any of its transcripts. A
   robust estimation method is used, so a small fraction of
   \code{background} probes that do hit transcripts is not harmful.
 
   A limitation of this normalization method is that it only makes sense
-  for the data from reference probes, NA values be returned for all other probes.
+  for the data from reference probes, NA values are returned for all other probes.
 
   The functions \code{PMindex} and \code{BGindex} can be used to produce
   the \code{pm} and \code{background} arguments from a \code{probeAnno}
