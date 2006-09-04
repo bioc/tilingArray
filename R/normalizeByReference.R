@@ -1,4 +1,4 @@
-normalizeByReference = function(x, reference, probeAnno, pm, background, nrStrata=10,
+normalizeByReference = function(x, reference, pm, background, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames, verbose=FALSE) {
 
   if(!is(x, "eSet"))
@@ -12,7 +12,8 @@ normalizeByReference = function(x, reference, probeAnno, pm, background, nrStrat
   if(d<1)
     stop("There is nothing to normalize in 'x'.")
 
-  checkindex = function(v, nm) {
+  checkindex = function(v) {
+    nm = deparse(substitute(v))
     if(is.logical(v)) {
       if(length(v)!=n)
         stop(sprintf("%d must be logical vector of length %d with no NA.", nm, n))
@@ -25,15 +26,9 @@ normalizeByReference = function(x, reference, probeAnno, pm, background, nrStrat
       stop(sprintf("'%s' must not contain NA.", nm))
     return(v)
   }
-  
-  if(!missing(probeAnno) & missing(pm))
-     pm = PMindex(probeAnno)
-  pm = checkindex(pm, "pm")
-  
-  if(!missing(probeAnno) & missing(background))
-     background = intersect(BGindex(probeAnno),pm)
-       
-  background = checkindex(background, "background")
+
+  pm = checkindex(pm)
+  background = checkindex(background)
 
   mtb = match(background, pm)
   if(any(is.na(mtb)))

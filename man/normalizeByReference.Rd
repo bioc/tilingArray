@@ -9,25 +9,21 @@
   for probe-specific response effect by using one or several reference hybridizations.
 }
 \usage{
-normalizeByReference(x, reference, probeAnno, pm, background, nrStrata=10,
+normalizeByReference(x, reference, pm, background, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames, verbose=FALSE)
 }
 \arguments{
   \item{x}{ExpressionSet containing the data to be normalized.}
   \item{reference}{ExpressionSet with the same number of features as \code{x},
     containing the reference signal.}
-  \item{probeAnno}{environment with probe annotations. See
-    package \code{davidTiling} for an example.}
   \item{pm}{indices specifying the perfect match features in
-    \code{reference}.
+    \code{reference} (see Details).
     This can be either an integer vector with values between 1 and
-    \code{nrow(exprs(reference))} or a logical vector.
-    If missing, this information is extracted from \code{probeAnno}.}
+    \code{nrow(exprs(reference))} or a logical vector.}
   \item{background}{indices specifying a set of background features in
-    \code{x}.
+    \code{x} (see Details).
     This can be either an integer vector with values between 1 and
-    \code{nrow(exprs(x))} or a logical vector.
-    If missing, this information is extracted from \code{probeAnno}.}
+    \code{nrow(exprs(x))} or a logical vector.}
   \item{nrStrata}{Integer (length 1), number of strata for the estimation of
     the background function.}
   \item{cutoffQuantile}{Numeric (length 1), the probes whose reference
@@ -39,15 +35,39 @@ normalizeByReference(x, reference, probeAnno, pm, background, nrStrata=10,
     progress are printed.}
 }
 \details{The intensities in \code{x} are adjusted according to the
-  reference values. For example, the reference values could be obtained
-  by hybridizing a DNA sample to the array. The abundance of target is
-  thus the same for all PM probes, and the intensities that are actually
-  observed can be used for estimating the adjustment parameters. Since
-  this only makes sense for the PM probes, NA values be returned for all
-  other probes. The set of indices for background probes,
-  \code{background}, is used for the
-  estimation of the background correction.
-  }
+  reference values.
+  Typically, the reference values are obtained by hybridizing a DNA
+  sample to the array, so that the abundance of target is
+  the same for all reference probes, and their signal can be used to estimate
+  the probe sequence effect. A reference probe is a probe that
+  perfectly matches the target genome exactly once.
+  Usually, not all probes on a chip are reference
+  probes, hence the subset of those that are is specified by the
+  argument \code{pm}.
+
+  The background signal is estimated from the probes indicated by the
+  argument \code{background}. They need to be a strict subset of the
+  \code{reference} probes. I.e., they need to probes that uniquely
+  match the target organism's DNA, but are not expected to match any of its transcripts. A
+  robust estimation method is used, so a small fraction of
+  \code{background} probes that do hit transcripts is not harmful.
+
+  A limitation of this normalization method is that it only makes sense
+  for the data from reference probes, NA values be returned for all other probes.
+
+  The functions \code{PMindex} and \code{BGindex} can be used to produce
+  the \code{pm} and \code{background} arguments from a \code{probeAnno}
+  environment such as provided in the davidTiling package.
+  
+  To summarize, a reference probe (indicated by argument \code{pm}) is a
+  probe that perfectly matches the target genome exactly once, a
+  background probe (indicated by argument \code{background})
+  is a reference probe which we expect not to be transcribed. These
+  should not be confused with what is called 'perfect match' and
+  'mismatch' probes in Affymetrix annotation.
+}
+
+\seealso{\code{PMindex}, \code{BGindex}}
 
 \value{
   A copy of \code{x} with the normalized intensities.
