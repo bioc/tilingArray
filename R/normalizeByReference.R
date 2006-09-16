@@ -1,29 +1,33 @@
-normalizeByReference = function(x, reference, pm, background, nrStrata=10,
+normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames, verbose=FALSE) {
 
+  ##--------------- process and check the input arguments ---------------------------
+
+  ## process 'x'
   if(!is(x, "eSet"))
     stop("'x' must be an object of class 'eSet'")
-  if(!is(reference, "eSet"))
-    stop("'reference' must be an object of class 'eSet'")
   n = nrow(exprs(x))
   d = ncol(exprs(x))
-  if(n!=nrow(exprs(reference)))
-    stop("'x' and 'reference' must have 'exprs' elements in their 'assayData' slot with the same number of rows.")
   if(d<1)
     stop("There is nothing to normalize in 'x'.")
 
+  ## process 'pm' and 'background'
   checkindex = function(v) {
     nm = deparse(substitute(v))
+    
+    if(any(is.na(v)))
+      stop(sprintf("'%s' must not contain NA.", nm))
+
     if(is.logical(v)) {
       if(length(v)!=n)
-        stop(sprintf("%d must be logical vector of length %d with no NA.", nm, n))
+        stop(sprintf("%d must be logical vector of length %d.", nm, n))
       v = which(v)
     } else {
       if(!(is.integer(v)&&(length(v)>1)&&(min(v)>=1)&&(max(v)<=n)))
         stop(sprintf("'%s' must be an integer vector with values between 1 and %d.", nm, n))
+      if(any(duplicated(v)))
+        stop(sprintf("'%s' must not contain duplicated indices.", nm))
     }
-    if(any(is.na(v)))
-      stop(sprintf("'%s' must not contain NA.", nm))
     return(v)
   }
 
@@ -34,9 +38,23 @@ normalizeByReference = function(x, reference, pm, background, nrStrata=10,
   if(any(is.na(mtb)))
     stop("'background' must be a subset of 'pm'.")
   
-  ## reference signal for the pm features
-  refSig = rowMeans(log2(exprs(reference)[pm,,drop=FALSE]))
+  ## process 'reference' and 'refSig'
+  if(!xor(missing(refSig), missing(reference)))
+    stop("Please specify either the argument 'refSig' or 'reference' (but not both, or none of them).")
+  
+  if(missing(refSig)) {
+    if(!is(reference, "eSet"))
+      stop("'reference' must be an object of class 'eSet'")
+    if(n!=nrow(exprs(reference)))
+      stop("'x' and 'reference' must have 'exprs' elements in their 'assayData' slot with the same number of rows.")
+    refSig = rowMeans(log2(exprs(reference)[pm,,drop=FALSE]))
+  } else {
+    if(!(is.numeric(refSig)&&(length(refSig)==length(pm))))
+      stop("'refSig' must be a numeric vector whose length is the same as that of 'pm'.")
+  }
 
+  ##--------------- now the number crucnching starts ---------------------------
+  
   ## quantiles of the reference intensities, to group probes into
   ## strata for the background estimations
   quants    = quantile(refSig, probs=seq(0, 1, length=nrStrata+1))

@@ -9,13 +9,16 @@
   for probe-specific response effect by using one or several reference hybridizations.
 }
 \usage{
-normalizeByReference(x, reference, pm, background, nrStrata=10,
+normalizeByReference(x, reference, pm, background, refSig, nrStrata=10,
   cutoffQuantile=0.05, plotFileNames, verbose=FALSE)
 }
 \arguments{
   \item{x}{ExpressionSet containing the data to be normalized.}
   \item{reference}{ExpressionSet with the same number of features as \code{x},
-    containing the reference signal.}
+    containing the reference signal, on the raw scale (non-logarithmic).
+    This argument can be used to directly input the data from a set of
+    replicate DNA hybridizations.
+    Alternatively, the argument \code{refSig} can be specified.}
   \item{pm}{Indices specifying the perfect match features in
     \code{reference} (see Details).
     This can be either an integer vector with values between 1 and
@@ -24,6 +27,9 @@ normalizeByReference(x, reference, pm, background, nrStrata=10,
     \code{x} (see Details).
     This can be either an integer vector with values between 1 and
     \code{nrow(exprs(x))} or a logical vector.}
+  \item{refSig}{A numeric vector of the same length as \code{pm} with
+    estimates of probe response effects, on a logarithm-like scale.
+    This argument can be specified alternatively to \code{reference}.}
   \item{nrStrata}{Integer (length 1), number of strata for the estimation of
     the background function.}
   \item{cutoffQuantile}{Numeric (length 1), the probes whose reference
