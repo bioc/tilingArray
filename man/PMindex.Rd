@@ -1,13 +1,11 @@
-\name{PMindex, MMindex, BGindex}
+\name{PMindex}
 \alias{PMindex}
-\alias{MMindex}
 \alias{BGindex}
 
-\title{Find the index of the PM, MM or background probes from a probeAnno environment}
-\description{Find the index of the PM, MM or background probes from a probeAnno environment}
+\title{Find the index of the exact match (PM) or background probes from a probeAnno environment}
+\description{Find the index of the exact match (PM) or background probes from a probeAnno environment}
 \usage{
 PMindex(probeAnno)
-MMindex(probeAnno)
 BGindex(probeAnno)
 }
 \arguments{
@@ -15,16 +13,18 @@ BGindex(probeAnno)
     package \code{davidTiling} for an example (?probeAnno).}
 }
 \details{
-  These functions extract the perfect match (PM), mismatch (MM) or background probe (from intergenic regions outside of known annotations) indicies from the probeAnno.  
-These indices can be used to select the relevant rows of intensity data from the ExpressionSet object (read in from the cel files) for plotting and normalization.
+  These functions extract the exact match probes (PM) or background
+  probes (from intergenic regions outside of known annotations) indices from \code{probeAnno}.  
+  These indices can be used to select the relevant rows of intensity
+  data from the \code{ExpressionSet} object for plotting and normalization.
 }
 
-\value{Numeric vector of indicies.
-}
+\value{Numeric vector of indices.}
 
 \author{Matt Ritchie <ritchie@ebi.ac.uk>}
 
-\examples{## library(davidTiling)
+\examples{
+## library(davidTiling)
 ## data(davidTiling)
 ## data(probeAnno)
 ## pmind <- PMindex(probeAnno)

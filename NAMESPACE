@@ -11,7 +11,7 @@ export("normalizeByReference", "segment", "costMatrix",
        "posMin", "otherStrand",
        "plotAlongChrom", "plotAlongChromLegend", "plotSegmentationHeatmap",
        "plotSegmentationDots", "plotFeatures", "comparisonPlot", 
-       "qcPlots", "PMindex", "MMindex", "BGindex", "segChrom")
+       "qcPlots", "PMindex", "BGindex", "segChrom")
 
 S3method("residuals", "breakpointsPretend")
 S3method("breakpoints", "breakpointsPretend")

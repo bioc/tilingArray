@@ -1,17 +1,10 @@
 PMindex <- function(probeAnno) {
-#  as.integer(probeAnno$matchInfo[,"PMindex"])
-  nprobes <- length(probeAnno$probeReverse$no_feature)
-  isPM = logical(nprobes)
-  for (j in probeAnno$probeReverse) isPM[as.character(j) != ""] = TRUE
-  seq(1:nprobes)[isPM]
-  }
-
-MMindex <- function(probeAnno) {
-  as.integer(probeAnno$matchInfo[,"MMindex"])
-  }
+  isPM = logical(length(probeAnno$probeReverse$no_feature))
+  for (j in probeAnno$probeReverse)
+    isPM[as.character(j) != ""] = TRUE
+  which(isPM)
+}
 
 BGindex <- function(probeAnno) {
-  nprobes <- length(probeAnno$probeReverse$no_feature)
-  seq(1:nprobes)[(probeAnno$probeReverse$no_feature == "no"
-   & probeAnno$probeDirect$no_feature == "no")]
- }
+  which(probeAnno$probeReverse$no_feature == "no" & probeAnno$probeDirect$no_feature == "no")
+}
