@@ -1,5 +1,5 @@
 /*
- * Copyright W. Huber 2005, all rights reserved
+ * Copyright W. Huber 2005-2006, all rights reserved
  */
  
 #include <R.h>
@@ -101,7 +101,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
 	  for (k=0; k<k0; k++) { 
               /* Best segmentation from 0 to j-k-1 */
 	      z = MAT_ELT(mI, j-k-1, cp-1, n);
-              if (isfinite(z))
+              if (R_FINITE(z))
 		  z += MAT_ELT(G, k, j-k, maxk);
                   /* Cost of segment from j-k to j */
 	      if(z<zmin) {
@@ -125,7 +125,7 @@ void findsegments_dp(double* J, int* th, int maxcp) {
     for(cp=0;  cp<maxcp; cp++) {
         /* Calculate J, the log-likelihood. */
         z = MAT_ELT(mI, n-1, cp, n);
-	J[cp] = isfinite(z) ? -(double)n/2.0*(1+log(2*M_PI)+log(z/n)) : R_NegInf;
+	J[cp] = R_FINITE(z) ? -(double)n/2.0*(1+log(2*M_PI)+log(z/n)) : R_NegInf;
 
 	for(j=cp+1; j<maxcp; j++)
 	    MAT_ELT(th, cp, j, maxcp) = -1;
