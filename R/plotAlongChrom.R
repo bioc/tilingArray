@@ -483,14 +483,17 @@ featureColors = function(scheme=1){
   
   ## calculate hex string for a color that is a little bit darker than the
   ## hex string in the argument
-  darken = function(x) {
-    sel = !is.na(x)
-    xRGB = hex2RGB(x[sel])
-    xRGB@coords = 0.5 * coords(xRGB) ## unfortunately there is no coords<- method
+  darken = function(x, factor=0.5) {
+    wh = which(!is.na(x))
+
+    hex = sapply(x[wh], substring, first=c(2,4,6), last=c(3,5,7))
+    hex = apply(hex, 2, function(h) as.integer(factor*as.integer(paste("0x", h, sep=""))))
+
     res = rep(as.character(NA), length(x))
-    res[sel] = hex(xRGB)
+    res[wh] = apply(hex, 2, function(h) sprintf("#%02x%02x%02x", h[1], h[2], h[3]))
     return(res)
   }
+  
   border = ifelse(darkenborder, darken(fill), fill)
   
   res = data.frame(fill=I(fill),
