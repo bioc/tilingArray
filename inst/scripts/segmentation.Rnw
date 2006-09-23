@@ -3,7 +3,7 @@
 %\VignetteKeywords{segmentation}
 %\VignettePackage{tilingArray}
 
-\documentclass[11pt]{article}
+\documentclass[11pt,a4wide]{article}
 \usepackage{geometry}\usepackage{color}
 \definecolor{darkblue}{rgb}{0.0,0.0,0.75}
 \usepackage[%

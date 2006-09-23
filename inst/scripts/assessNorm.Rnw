@@ -3,7 +3,7 @@
 %\VignetteKeywords{normalization}
 %\VignettePackage{tilingArray}
 
-\documentclass[11pt]{article}
+\documentclass[11pt,a4wide]{article}
 \usepackage{geometry}\usepackage{color}
 \definecolor{darkblue}{rgb}{0.0,0.0,0.75}
 \usepackage[%
@@ -117,7 +117,8 @@ all(whBG %in% whPM)
 %
 There are \Sexpr{nrow(exprs(davidTiling))} $-$
 \Sexpr{length(whPM)} $=$
-\Sexpr{nrow(exprs(davidTiling))-length(whPM)} mismatch probes. We will not try
+\Sexpr{nrow(exprs(davidTiling))-length(whPM)} probes that are not in
+\Robject{whPM}. We will not try
 to normalize their signal, since we only have meaningful reference
 intensities for the perfect match probes.  
 For the background estimation, we will use the \Sexpr{length(whBG)}
