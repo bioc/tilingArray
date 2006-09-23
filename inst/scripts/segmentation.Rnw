@@ -68,20 +68,11 @@ and after normalization} (\texttt{assessNorm.Rnw}) for an explanation
 of the following code.
 %
 <<normalization>>=
-nc = as.integer(2560)
-PMind = rep(seq(as.integer(1), nc-as.integer(3), by=as.integer(2)), each=nc)*nc + (1:nc)
-MMind = PMind + nc
-
-ispm = rep(FALSE, nc*nc)
-ispm[PMind] = TRUE
-isbg = (probeAnno$probeReverse$no_feature=="no" &
-        probeAnno$probeDirect$no_feature=="no" &
-        ispm)
 isRNA = davidTiling$nucleicAcid %in% c("poly(A) RNA","total RNA")
 isDNA = davidTiling$nucleicAcid %in% "genomic DNA"
 stopifnot(sum(isRNA)==5, sum(isDNA)==3)
 xn = normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-  pm=PMind, background=isbg)
+  pm=PMindex(probeAnno), background=BGindex(probeAnno))
 pData(xn)[, 2, drop=FALSE]
 @ 
 
