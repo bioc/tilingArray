@@ -80,7 +80,7 @@ require Gigabytes of RAM.
 %the computations they are irrelevant.
 
 %--------------------------------------------------
-\section{Selection of PM and background features}
+\section{Selection of \emph{perfect match} and \emph{background} features}
 %---------------------------------------------------
 The design of the chip includes about 3 Mio \emph{perfect match
 probes}, about 3 Mio \emph{mismatch probes}, and a few thousand
@@ -94,27 +94,33 @@ package for details.
 data("probeAnno")
 @ 
 %
-We define two logical vectors: \Robject{isPM} is \Robject{TRUE} if a
-probe has a perfect match anywhere in the genome, \Robject{isBG} is
-\Robject{TRUE} if that match is outside any annotated feature on 
-either strand.
+We define two vectors: \Robject{whPM} contains indices of probes that
+have a unique perfect match anywhere in the genome, \Robject{whBG}
+contains a subset of \Robject{whPM} with probes whose match is outside
+any annotated feature on either strand.  In the package
+\Rpackage{davidTiling}, we have already provided two functions
+\Rfunction{PMindex} and \Rfunction{BGindex} that extract these index
+vectors from the \Robject{probeAnno} environment. If you would like to
+transfer this analysis to another array type, you will need to compute
+these sets yourself, essentially by aligning the microarray probes to
+the target genome and transcriptome.
 %
-<<isPM>>=
-isPM = logical(nrow(exprs(davidTiling)))
-for(j in probeAnno$probeReverse)
-  isPM[ as.character(j) != ""] = TRUE
-isBG = (probeAnno$probeReverse$no_feature=="no" &
-        probeAnno$probeDirect$no_feature=="no")
+<<whPM>>=
+whPM = PMindex(probeAnno)
+whBG = BGindex(probeAnno)
 @
-<<table, print=TRUE>>=
-sum(isPM)
-tab=table(isPM, isBG)
+<<table>>=
+length(whPM)
+length(whBG)
+all(whBG %in% whPM)
 @ 
 %
-There are \Sexpr{tab["FALSE", "FALSE"]} mismatch probes, whose signal
-we will not try to normalize, since we only have meaningful reference
-intensities for the \Sexpr{sum(isPM)} perfect match probes.  For the
-background estimation, we will use the \Sexpr{tab["TRUE", "TRUE"]}
+There are \Sexpr{nrow(exprs(davidTiling))} $-$
+\Sexpr{length(whPM)} $=$
+\Sexpr{nrow(exprs(davidTiling))-length(whPM)} mismatch probes. We will not try
+to normalize their signal, since we only have meaningful reference
+intensities for the perfect match probes.  
+For the background estimation, we will use the \Sexpr{length(whBG)}
 features for which we expect no specific signal. Some of them will
 indeed have specific signal, due to new transcripts that were not yet
 annotated in SGD in August 2005; but this is not a concern, since we
@@ -138,7 +144,7 @@ stopifnot(sum(isRNA)==5, sum(isDNA)==3)
 <<normalizeByReference>>=
 pfn = sprintf("assessNorm-normalize%d.pdf", seq(along=which(isRNA)))
 xn2 = normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-  pm=isPM, background=isBG, plotFileNames=pfn)
+  pm=whPM, background=whBG, plotFileNames=pfn)
 @
  
 %----------------------------------------
@@ -149,7 +155,7 @@ we do not throw out the weakest features, by setting
 \Robject{cutoffQuantile=0}.
 <<normalizeWithoutThrowout>>=
 xn1 = normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-  pm=isPM, background=isBG, cutoffQuantile=0)
+  pm=whPM, background=whBG, cutoffQuantile=0)
 @ 
 %
 
