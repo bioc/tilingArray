@@ -203,12 +203,15 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
        if(!missing(extras) & !missing(y)) {
              vpr2=which(names(VP)==sprintf("extras%s", strand))
              dat$y = dat$extras[,,drop=FALSE]
-             plotSegmentationHeatmap(dat, xlim=coord, chr=chr, 
+             plotSegmentationDots(dat, xlim=coord, chr=chr, 
                      strand=ifelse(isDirectHybe, otherStrand(strand),strand),
                      vpr=vpr2, colors=colors, colHeatmap=colExtras, 
                      ylab=ylabExtras, rowNames=rowNamesExtras,...)
         }
       },
+
+      ## FIXME: Matt's spaghetti code needs cleanup
+           
       "heatmap" = {
         plotSegmentationHeatmap(dat, xlim=coord, 
                                 rowNames=rowNamesHeatmap,
