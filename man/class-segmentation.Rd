@@ -6,7 +6,7 @@
 \alias{logLik}
 \alias{confint,segmentation-method}
 \alias{logLik,segmentation-method}
-\alias{plot,segmentation-method}
+\alias{plot,segmentation,ANY-method}
 \alias{show,segmentation-method}
 
 \concept{plot}
