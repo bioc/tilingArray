@@ -1,8 +1,7 @@
 useDynLib("tilingArray")
 
-import("method") 
+import("methods") 
 importFrom("graphics", "plot")
-importFrom("methods", "show")
 importFrom("stats", "confint", "logLik", "residuals")
 importFrom("strucchange", "breakpoints")
 

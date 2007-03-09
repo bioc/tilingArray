@@ -1,5 +1,5 @@
-%\VignetteIndexEntry{I - How to use the segment function to fit a piecewise constant curve}
-%\VignetteDepends{Biobase}
+%\VignetteIndexEntry{Introduction to using the segment function to fit a piecewise constant curve}
+%\VignetteDepends{tilingArray}
 %\VignetteKeywords{Expression Analysis}
 %\VignettePackage{tilingArray}
 

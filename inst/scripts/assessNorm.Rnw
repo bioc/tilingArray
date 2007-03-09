@@ -1,4 +1,4 @@
-%\VignetteIndexEntry{tilingArray - assess normalization}
+%\VignetteIndexEntry{Normalization overview and assessment of signal/noise ratio.}
 %\VignetteDepends{tilingArray}
 %\VignetteKeywords{normalization}
 %\VignettePackage{tilingArray}

@@ -1,10 +1,14 @@
+%\VignetteIndexEntry{Supplement. Calculation of the cost matrix}
+%\VignetteDepends{tilingArray}
+%\VignetteKeywords{Expression Analysis}
+%\VignettePackage{tilingArray}
+
 \documentclass[11pt]{article}
 
 \newcommand{\Robject}[1]{\texttt{#1}}
 \newcommand{\Rpackage}[1]{\textit{#1}}
 \newcommand{\Rfunction}[1]{\textit{#1}}
 \newcommand{\Rclass}[1]{\textit{#1}}
-\usepackage{/home/huber/R-devel/share/texmf/Sweave}
 
 \begin{document}
 

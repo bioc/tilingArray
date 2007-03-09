@@ -1,4 +1,4 @@
-%\VignetteIndexEntry{tilingArray - demo segmentation}
+%\VignetteIndexEntry{Segmentation demo}
 %\VignetteDepends{tilingArray}
 %\VignetteKeywords{segmentation}
 %\VignettePackage{tilingArray}
