@@ -1,5 +1,6 @@
 useDynLib("tilingArray")
 
+import("method") 
 importFrom("graphics", "plot")
 importFrom("methods", "show")
 importFrom("stats", "confint", "logLik", "residuals")
@@ -10,7 +11,7 @@ export("normalizeByReference", "segment", "costMatrix",
        "sampleStep", "readCel2eSet",
        "posMin", "otherStrand",
        "plotAlongChrom", "plotAlongChromLegend", "plotSegmentationHeatmap",
-       "plotSegmentationDots", "plotFeatures", "comparisonPlot", 
+       "plotSegmentationDots", "plotFeatures", "comparisonPlot", "plotPenLL",
        "qcPlots", "PMindex", "BGindex", "segChrom")
 
 S3method("residuals", "breakpointsPretend")

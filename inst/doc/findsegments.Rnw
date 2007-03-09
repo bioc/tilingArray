@@ -1,4 +1,4 @@
-%\VignetteIndexEntry{How to use the segment function to fit a piecewise constant curve}
+%\VignetteIndexEntry{I - How to use the segment function to fit a piecewise constant curve}
 %\VignetteDepends{Biobase}
 %\VignetteKeywords{Expression Analysis}
 %\VignettePackage{tilingArray}
@@ -34,8 +34,8 @@
 \section{A simple example}
 %--------------------------------------------------
 
-The problem of segmenting a series of numbers into piecewise constant segments
-occurs in multiple application areas. Two examples are
+The problem of segmenting a series of numbers into piecewise constant 
+segments occurs in multiple application areas. Two examples are
 \begin{itemize}
 \item arrayCGH data, where the segments correspond to regions of copy number
   gain, loss, or no change.
@@ -43,11 +43,10 @@ occurs in multiple application areas. Two examples are
   correspond to transcripts. Here we assume that the probe effects (which lead
   to different fluorescence intensities even for the same mRNA abundance) have
   been normalized away, so that all probes for the same unique target sequence
-  have the same fluorescence (in expectation).
+  have approximately, and in expectation, the same fluorescence.
 \end{itemize}
 
-To demonstrate and verify the correctness of the algorithm, let's generate
-simulated data:
+To demonstrate the algorithm, let us generate simulated data:
 %
 <<defGenData>>=
 genData = function(lenx, nrSeg, nrRep=1, stddev=0.1) {
@@ -68,16 +67,16 @@ lenx = 1000
 nrSeg = 10
 gd = genData(lenx, nrSeg)
 plot(gd$x, pch=".")
-abline(v=gd$cp, col="red")
+abline(v=gd$cp, col="blue")
 @ 
 %
 \myincfig{findsegments-plotData}{0.6\textwidth}{%
 A simulated data example with \Sexpr{nrSeg} segments.
-Their estimated locations are shown with red vertical lines}
+Their estimated locations are shown with blue vertical lines}
 %
 The result is shown in Figure~\ref{findsegments-plotData}.
 We can use the function \Rfunction{segment} to reconstruct the
-change-points from the \Robject{x} data alone.
+change-points from the data in \Robject{gd\$x} alone.
 %
 <<loadlib, results=hide>>=
 library("tilingArray")
@@ -89,6 +88,10 @@ seg  = segment(gd$x, maxk=maxk, maxseg=maxseg)
 seg
 seg@breakpoints[nrSeg+(-1:1)]
 gd$cp
+@ 
+%
+<<checkClaim, echo=FALSE>>=
+stopifnot(all(gd$cp==seg@breakpoints[[nrSeg]]))
 @ 
 %
 We see that the \Sexpr{nrSeg}-th element of the list \Robject{seg\@breakpoints} 
@@ -151,7 +154,7 @@ This is similar to what is done in the segmentation.Rnw vignette for \emph{real}
 and call it it:
 <<penLLsim,fig=TRUE,include=FALSE,width=5,height=5>>=
 par(mai=c(1,1,0.1,0.01))
-tilingArray:::plotPenLL(s)
+plotPenLL(s)
 @ 
 %
 The result is shown in Figure~\ref{fig:penLLsim}b.

@@ -1,5 +1,5 @@
 Package: tilingArray
-Version: 1.13.4
+Version: 1.13.5
 Title: Analysis of high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Matt Ritchie, Joern Toedling
 Maintainer: W. Huber <huber@ebi.ac.uk>
@@ -21,7 +21,16 @@ Description: The package provides some functionalities that can be
 	hybridizations.
 Reference: Huber W, Toedling J, Steinmetz, L. Transcript mapping with high-density 
 	oligonucleotide tiling arrays. Bioinformatics 22, 1963-1970 (2006).
-License: Artistic License 2.0
+License: The Artistic License, Version 2.0
+Collate: AllClasses.R AllGeneric.R
+	 normalizeByReference.R posMin.R otherStrand.R qcPlots.R
+	 comparisonPlot.R plotAlongChromLegend.R readCel2eSet.R
+	 confint.segmentation.R plotAlongChrom.R sampleStep.R
+	 costMatrix.R plotPenLL.R segChrom.R
+	 findsegments.R  grid.image.R 
+	 plotSegmentationDots.R plotSegmentationHeatmap.R
+	 PMindex.R methods-segmentation.R
+	 zzz.R
 SaveImage: Yes
 biocViews: Microarray, OneChannel, Preprocessing, Visualization
 
