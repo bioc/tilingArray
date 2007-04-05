@@ -29,17 +29,24 @@ segChrom = function(y, probeAnno, chr=1:17, strands=c("+", "-"),
       what = c("start", "end", "index", "unique")
       prbs = do.call("data.frame", mget(paste(chrstrd[j], what, sep = "."), probeAnno))
       colnames(prbs) = what
+      
+      ### sort probes by chromosomal midpoint position:
       prbs$mid = (prbs$start + prbs$end)/2
       prbs = prbs[order(prbs$mid), ]
-      
+
+      ### remove missing (NA) values:
       if(is.matrix(y))
         numna = rowSums(is.na(y[prbs$index, ]))
       else
         numna = rowSums(is.na(exprs(y)[prbs$index, ]))
-      stopifnot(all(numna %in% c(0, ncol(y))))
-    
+      stopifnot(all(numna %in% c(0, ncol(y))))    
       prbs = prbs[numna == 0, ]
-      sprb = prbs[sampleStep(prbs$mid, step = 7), ]         
+
+      ### subsample probes to overcome irregular probe spacing
+      ###  esp. dense spacing in repetitive regions:
+      sprb = prbs[sampleStep(prbs$mid, step = step), ]
+
+      ### determine number of segments
       nsegs = as.integer(round(sprb$end[nrow(sprb)]/nrBasesPerSegment))
     
       if(is.matrix(y))

@@ -4,8 +4,8 @@ normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=1
   ##--------------- process and check the input arguments ---------------------------
 
   ## process 'x'
-  if(!is(x, "eSet"))
-    stop("'x' must be an object of class 'eSet'")
+  if(!is(x, "ExpressionSet"))
+    stop("'x' must be an object of class 'ExpressionSet'")
   n = nrow(exprs(x))
   d = ncol(exprs(x))
   if(d<1)
@@ -14,10 +14,8 @@ normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=1
   ## process 'pm' and 'background'
   checkindex = function(v) {
     nm = deparse(substitute(v))
-    
     if(any(is.na(v)))
       stop(sprintf("'%s' must not contain NA.", nm))
-
     if(is.logical(v)) {
       if(length(v)!=n)
         stop(sprintf("%d must be logical vector of length %d.", nm, n))
@@ -105,9 +103,7 @@ normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=1
   ## call vsn, if there are >= 2 arrays
   if(d>=2) {
     if(verbose) cat("Between array normalization and variance stabilizing transformation\n")
-    vsnres = vsn(xn, lts.quantile=0.95, subsample=2e5, verbose=verbose)
-    yn = exprs(vsnres)/log(2)
-    rm(vsnres)
+    yn = exprs(vsnMatrix(xn, lts.quantile=0.95, subsample=as.integer(2e5), verbose=verbose)) # since vsnMatrix returns object of class 'vsn'
   } else {
     yn = xn
     warning("'x' has only one column, cannot do between array normalization and variance stabilizing transformation")
