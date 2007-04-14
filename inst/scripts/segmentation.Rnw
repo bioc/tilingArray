@@ -16,6 +16,8 @@ pagebackref,bookmarks,colorlinks,linkcolor=darkblue,citecolor=darkblue,%
 pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 \usepackage{subfigure}
 
+\SweaveOpts{keep.source=TRUE,eps=FALSE,include=FALSE,width=5,height=5} 
+
 %------------------------------------------------------------
 % newcommand
 %------------------------------------------------------------
@@ -87,6 +89,7 @@ pData(xn)[, 2, drop=FALSE]
 %--------------------------------------------------
 
 \subsection{Prerequisites: Avoid oversampling}
+\label{sec:sampleStep}
 
 The spacing between probe-matched positions is not completely regular, 
 as Figure~\ref{segmentation-histprobs} exemplarily shows for the probes
@@ -101,8 +104,8 @@ shown in the comparison between Figures~\ref{segmentation-histprobs}b
 and \ref{segmentation-histprobs}c.
 
 <<avoidOversampling>>=
-chr1p.probeStarts <- sort(get("1.+.start",env=probeAnno))
-sampled.probeStarts <- chr1p.probeStarts[sampleStep(chr1p.probeStarts,7)]
+chr1p.probeStarts = sort(probeAnno$"1.+.start")
+sampled.probeStarts = chr1p.probeStarts[sampleStep(chr1p.probeStarts, 7)]
 @ 
 
 <<histprobs, fig=TRUE, include=FALSE, width=7, height=8>>=
@@ -132,14 +135,14 @@ in the regions of duplicated sequence.
 %--------------------------------------------------
 \subsection{Call the segmentation algorithm}
 
-The segmentation algorithm needs two parameters, 
-\Robject{nrBasesPerSegment}, a lower bound for the expected
-length of individual segments,
-and \Robject{maxk}, the maximum length of individual segments. 
-From the supplied \Robject{nrBasesPerSegment}, 
-the maximum number of segments that the algorithm is going to consider,
-\Robject{maxseg}, are computed by dividing the length of the
-chromosome by \Robject{nrBasesPerSegment}.
+The segmentation algorithm needs two parameters.  \Robject{maxk} is
+the maximum length of any individual segment.
+\Robject{nrBasesPerSegment} is used to calculate \Robject{maxseg}, the
+maximum number of segments that the algorithm is going to consider by
+dividing the length of the region to be segmented (in the current
+case, a chromosome) by \Robject{nrBasesPerSegment}.
+The \Robject{nrBasesPerSegment} does not enforce
+a minimum length restriction for individual segments.
 
 We choose \Robject{nrBasesPerSegment} to be quite low, 
 an \emph{average} length per segment of 750 bases, such that
@@ -151,35 +154,36 @@ preferred one.
 Note that \Robject{maxk} is measured in number of data points,
 not in genomic coordinates.  Our choice of the parameter 
 \Robject{maxk} corresponds to a maximum segment length of about $7.5
-\times 3,000 = 22,500$ bases. Note that there setting the lower
-bound for the \emph{average} segment length, does not enforce
-a minimum length restriction for individual segments.
+\times 3,000 = 22,500$ bases. 
 
-For demonstration purpose, we first perform the segmentation
-for the Watson strand of chromosome 1 solely.
+To demonstrate the algorithm, we run the segmentation
+on the Watson strand of chromosome 1.
 %
 <<useSegChrom, eval=TRUE, results=hide>>=
-segEnv <- segChrom(xn[,xn$nucleicAcid=="poly(A) RNA"], 
-                   probeAnno=probeAnno, chr="1", strands="+",
-                   nrBasesPerSegment = 750)
+segEnv = segChrom(xn[,xn$nucleicAcid=="poly(A) RNA"], 
+                  probeAnno=probeAnno, chr="1", strands="+",
+                  nrBasesPerSegment = 750)
 @ 
-
-The resulting object is environment holding the segmentation
-results for each chromosome and strand as individual
-objects of \Rclass{segmentation}.
-
+%
+The function \Rfunction{segChrom} already contains code similar
+to that shown in Section~\ref{sec:sampleStep} to prevent oversampling,
+see the function argument \Robject{step}.  The resulting object
+\Robject{segEnv} is an environment holding the segmentation results
+for each chromosome and strand as individual objects of class
+\Rclass{segmentation}.
+%
 <<showSegEnv>>=
 ls(segEnv)
-segChr1p <-get("1.+",env=segEnv)
+segChr1p <- get("1.+", env=segEnv)
 segChr1p
 @ 
 
 %--------------------------------------------------
 \subsection{Calculate confidence intervals}
 
-For individual segmentations, we can compute confidence
-intervals for each segment border.
-This is simply a call to the \Rfunction{confint} method of the 
+We can compute confidence
+intervals for each segment boundary.
+This is simply a call to the \Rfunction{confint} method for the 
 \Rclass{segmentation} class.
 %
 <<confint>>=
@@ -195,11 +199,11 @@ shows a small section of the probe levels mapped to the Watson strand of chromos
 the fitted segment borders. The confidence interval for each border is indicated
 by the parentheses around it on the bottom side. 
 %
-<<plotseg, fig=TRUE, include=FALSE, width=8, height=4, eps=FALSE>>=
+<<plotseg, fig=TRUE, include=FALSE, width=8, results=hide>>=
 plot(segChr1p, nseg, pch=16, cex=0.2, xlim=c(30000, 40000))
 @ 
 \myincfig{segmentation-plotseg}{\textwidth}{% 
-Segmentation with confidence intervals.
+Segmentation with confidence intervals, shown by little brackets at the bottom.
 }
 
 %--------------------------------------------------
@@ -226,9 +230,11 @@ also consider the penalized likelihoods
 %
 We plot them as functions of $S$, see Figure~\ref{segmentation-modelSelect}.
 %
-<<modelSelect, fig=TRUE, eps=FALSE, include=FALSE, width=5, height=5>>=
+<<modelSelect, fig=TRUE>>=
 par(mai=c(1,1,0.1,0.01))
-tilingArray:::plotPenLL(segChr1p, extrabar=c("black"=round(segChr1p@x[length(segChr1p@x)]/1500)), type="l", lwd=2) 
+plotPenLL(segChr1p, 
+  extrabar =c("black"=round(segChr1p@x[length(segChr1p@x)]/1500)), 
+  type="l", lwd=2) 
 @ 
 %\myincfig{segmentation-modelSelect}{0.6\textwidth}{% 
 %Model selection: log-likelihood and two versions of penalized
@@ -265,19 +271,23 @@ For larger $S$, the confidence intervals are wider.}
 \subsection{Size of the confidence intervals as a function of $S$}
 %--------------------------------------------------
 <<confintwidthscalc>>=
-segMultiCI = confint(segChr1p, parm=as.integer(c(112, 153, 194, 235, 276)),
-  level=confintLevel) 
+segMultiCI = confint(segChr1p, 
+  parm = c(112L, 153L, 194L, 235L, 276L),
+  level = confintLevel) 
 
 nBp = which(segMultiCI@hasConfint)
 confintwidths = lapply(segMultiCI@breakpoints[nBp], function(m) (m[,3]-m[,1]))
 @ 
+
 <<confintwidthsecdf, fig=TRUE, eps=FALSE, include=FALSE, width=5, height=5>>=
 par(mai=c(0.9,0.9,0.8,0.01))
 maxx = 20
 colors = brewer.pal(length(nBp), "Set1")
 multiecdf(confintwidths, xlim=c(0, maxx), 
-  main='distribution of lengths of confidence intervals', verticals=TRUE, lwd=2, col=colors)
-legend(x=0.6*maxx, y=0.5, legend=paste("S =", nBp), col=colors, lty=1, lwd=2) 
+  main='distribution of lengths of confidence intervals', 
+  verticals=TRUE, lwd=2, col=colors)
+legend(x=0.6*maxx, y=0.5, legend=paste("S =", nBp), 
+  col=colors, lty=1, lwd=2) 
 @ 
 
 The result is shown in Figure \ref{segmentation-confintwidthsecdf}.
@@ -306,9 +316,11 @@ since the computations for different chromosome strands are
 independent of each other. 
 %
 <<computeSegmentations, eval=FALSE>>=
-segEnv <- segChrom(xn[,xn$nucleicAcid=="poly(A) RNA"], 
-                   probeAnno=probeAnno, chr=c(1,2,5,9,13,14,15), 
-                   strands=c("+","-"), nrBasesPerSegment = 1500)
+segEnv = segChrom(xn[,xn$nucleicAcid=="poly(A) RNA"], 
+           probeAnno = probeAnno, 
+           chr = c(1, 2, 5, 9, 13, 14, 15), 
+           strands = c("+","-"), 
+           nrBasesPerSegment = 1500)
 @ 
 <<computeSegmentationsDo, echo=FALSE, results=hide>>=
 cache(segEnv <- segChrom(xn[,xn$nucleicAcid=="poly(A) RNA"], 
@@ -353,7 +365,7 @@ plotAlongChrom(segObj=segEnv, chr=1, coord = c(30, 130)*1e3, ylim=ylim,
                doLegend=FALSE, main="")  
 @ 
 %
-The folowing source code was used to generate Figure 2 of~\cite{David2006}.
+The folowing code was used to generate Figure 2 of~\cite{David2006}.
 %
 <<fig2-pnas, fig=TRUE, eps=FALSE, include=FALSE, width=11, height=5.5>>=
 myPlot = function(row, col, ...) {
