@@ -236,13 +236,19 @@ plotPenLL(segChr1p,
   extrabar =c("black"=round(segChr1p@x[length(segChr1p@x)]/1500)), 
   type="l", lwd=2) 
 @ 
-%\myincfig{segmentation-modelSelect}{0.6\textwidth}{% 
-%Model selection: log-likelihood and two versions of penalized
-%log-likelihood (AIC and BIC) as a function of the number of segments
-%$S$. Vertical dashed green bar corresponds to optimal $\log L_{\mbs{BIC}}$,
-%vertical dashed grey bar to our ``subjective'' choice of average segment
-%length 1,500 bases.}
+%
+%--------------------------------------------------
+\subsection{Size of the confidence intervals as a function of $S$}
+%--------------------------------------------------
+<<confintwidthscalc>>=
+segMultiCI = confint(segChr1p, 
+  parm = c(112L, 153L, 194L, 235L, 276L),
+  level = confintLevel) 
 
+nBp = which(segMultiCI@hasConfint)
+confintwidths = lapply(segMultiCI@breakpoints[nBp], function(m) (m[,3]-m[,1]))
+@ 
+%
 \begin{figure}[t!hpb]%figure1
 \centering
 \subfigure[ ]{
@@ -265,20 +271,7 @@ Cumulative distribution functions (CDFs) for the distributions of confidence
 interval widths for $S=$\Sexpr{paste(nBp, collapse=", ")}. 
 For larger $S$, the confidence intervals are wider.}
 \end{figure}
-
-
-%--------------------------------------------------
-\subsection{Size of the confidence intervals as a function of $S$}
-%--------------------------------------------------
-<<confintwidthscalc>>=
-segMultiCI = confint(segChr1p, 
-  parm = c(112L, 153L, 194L, 235L, 276L),
-  level = confintLevel) 
-
-nBp = which(segMultiCI@hasConfint)
-confintwidths = lapply(segMultiCI@breakpoints[nBp], function(m) (m[,3]-m[,1]))
-@ 
-
+%
 <<confintwidthsecdf, fig=TRUE, eps=FALSE, include=FALSE, width=5, height=5>>=
 par(mai=c(0.9,0.9,0.8,0.01))
 maxx = 20
