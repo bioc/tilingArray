@@ -47,8 +47,8 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 
 \section{Introduction}
 
-This script demonstrates how to run \Rpackage{tilingArray}'s
-main segmentation function on the \Rpackage{davidTiling} data. 
+This vignetter demonstrates how to run \Rpackage{tilingArray}'s
+segmentation function on the \Rpackage{davidTiling} data. 
 
 First we load the package \Rpackage{tilingArray}, which contains the
 algorithms, and the package \Rpackage{davidTiling}, which contains the
@@ -96,7 +96,7 @@ as Figure~\ref{segmentation-histprobs} exemplarily shows for the probes
 mapped to the Watson strand of chromosome 1.
 In particular, repetitive regions are highly oversampled. 
 To have these repetitive, rather uninformative regions
-not dominating the segmentation algorithm,
+not dominate the segmentation algorithm,
 the probe positions are subsampled in the segmentation function
 to have a regular spacing.
 The result of this subsampling is
@@ -285,12 +285,6 @@ legend(x=0.6*maxx, y=0.5, legend=paste("S =", nBp),
 
 The result is shown in Figure \ref{segmentation-confintwidthsecdf}.
 
-\myincfig{segmentation-confintwidthsecdf}{0.6\textwidth}{% 
-Size of the confidence intervals as a function of $S$.
-Cumulative distribution functions (CDFs) for the distributions of confidence 
-interval widths for $S=$\Sexpr{paste(nBp, collapse=", ")}. 
-For larger $S$, the confidence intervals are wider.}
-
 %--------------------------------------------------
 \subsection{Computing the segmentation for both strands on 7 chromosomes}
 
@@ -303,8 +297,8 @@ and \ref{segmentation-fig2-bioinf}, we
 also call it on six other chromosomes. 
 
 This computation will
-take a couple of hours (about 18h on mine). Note that the
-\Robject{for}--loop below could easily be parallelized if needed
+take a couple of hours (about 18h on mine). Note that it 
+could easily be parallelized if needed,
 since the computations for different chromosome strands are 
 independent of each other. 
 %
@@ -321,7 +315,7 @@ cache(segEnv <- segChrom(xn[,xn$nucleicAcid=="poly(A) RNA"],
                          strands=c("+","-"), nrBasesPerSegment = 1500))
 @ 
 %
-\Robject{segEnv} is an environment holding the 14 
+\Robject{segEnv} is an environment holding the \Sexpr{length(ls(segEnv))}
 individual segmentation results.
 %
 
@@ -377,10 +371,12 @@ myLegend = function(row, col, what) {
     fc[c("CDS", "CDS_dubious", "uORF", "ncRNA", "TF_binding_site"), ],
     fc[c("CDS", "CDS_dubious", "TF_binding_site"), ])
 
-  pc = c("Watson strand probe"="#00441b", "Crick strand probe"="#081d58", "Non-unique probe"="grey")
+  pc = c("Watson strand probe"="#00441b", "Crick strand probe"="#081d58", 
+         "Non-unique probe"="grey")
   sc = c("Segment boundary"="#777777")
 
-  pushViewport(dataViewport(xscale=c(0,1), yscale=c(-7,nrow(fc)+1), layout.pos.col=col, layout.pos.row=row))
+  pushViewport(dataViewport(xscale=c(0,1), yscale=c(-7,nrow(fc)+1), 
+               layout.pos.col=col, layout.pos.row=row))
   h1  = nrow(fc):1
   h2  = 0:(1-length(pc))
   h3  = -length(pc)
@@ -392,7 +388,8 @@ myLegend = function(row, col, what) {
   grid.circle(x = w/2, y=h2, r=0.2, default.units="native",
               gp = gpar(col=pc, fill=pc))
   grid.lines(x=w/2, y=h3+c(-.3,+.3), default.units="native", gp=gpar(col=sc))
-  grid.text(label = c(gsub("_", " ", rownames(fc)), names(pc), names(sc)), x = w*1.1, y = c(h1,h2,h3),
+  grid.text(label = c(gsub("_", " ", rownames(fc)), names(pc), names(sc)), 
+            x = w*1.1, y = c(h1,h2,h3),
             just  = c("left", "center"), default.units="native",
             gp=gpar(cex=.7))
   popViewport()
