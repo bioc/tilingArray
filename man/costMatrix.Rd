@@ -14,8 +14,7 @@ costMatrix(x, maxk)
   \item{maxk}{Positive integer.}
 }
 \details{
-  See the vignette costMatrix.tex (.pdf) in the \code{inst/doc} directory of
-  the package.
+  See the package vignette \emph{Calculation of the cost matrix}.
 }
 
 \value{

@@ -47,7 +47,7 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 
 \section{Introduction}
 
-This vignetter demonstrates how to run \Rpackage{tilingArray}'s
+This vignette demonstrates how to run \Rpackage{tilingArray}'s
 segmentation function on the \Rpackage{davidTiling} data. 
 
 First we load the package \Rpackage{tilingArray}, which contains the
