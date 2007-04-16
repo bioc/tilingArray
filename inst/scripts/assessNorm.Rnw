@@ -3,8 +3,9 @@
 %\VignetteKeywords{normalization}
 %\VignettePackage{tilingArray}
 
-\documentclass[11pt,a4wide]{article}
-\usepackage{geometry}\usepackage{color}
+\documentclass[11pt]{article}
+\usepackage[margin=2cm,nohead]{geometry}
+\usepackage{color}
 \definecolor{darkblue}{rgb}{0.0,0.0,0.75}
 \usepackage[%
 baseurl={http://www.bioconductor.org},%
@@ -14,6 +15,8 @@ pdfsubject={tilingArray},%
 pdfkeywords={Bioconductor},%
 pagebackref,bookmarks,colorlinks,linkcolor=darkblue,citecolor=darkblue,%
 pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
+
+\SweaveOpts{keep.source=TRUE,eps=FALSE,include=FALSE,width=5,height=5} 
 
 %------------------------------------------------------------
 % newcommand
@@ -189,7 +192,8 @@ stopifnot(nc*nc==nrow(davidTiling))
 ipm = rep(as.integer(seq(1, nc-3, by=2)), each=nc) * nc + (1:nc)
 seqPM = Scerevisiaetilingprobe$sequence[ipm]
 seqMM = Scerevisiaetilingprobe$sequence[ipm+nc]
-ispair = (!is.na(seqPM) & !is.na(seqMM) & (seqPM==complementSeq(seqMM, start=13, stop=13)))
+ispair = (!is.na(seqPM) & !is.na(seqMM) & 
+    (seqPM==complementSeq(seqMM, start=13, stop=13)))
 
 @ 
 %
@@ -219,11 +223,11 @@ estimator that is used in \Rfunction{normalizeByReference}.
 %
 <<PMMMnormalize>>=
 normalizeByReferenceWithMM = function(x, reference, pm, mm, cutoffQuantile=0.05) {
-  refSig = 2^rowMeans(log2(exprs(reference)[pm,]))
+
+  refSig = 2^rowMeans(log2(exprs(reference)[pm,,drop=FALSE]))
 
   xn = (exprs(x)[pm,] - exprs(x)[mm,]) / refSig
-  vsnres = vsn(xn, lts.quantile=0.95, subsample=2e5, verbose=FALSE)
-  yn = exprs(vsnres)/log(2)
+  yn = exprs(vsn2(xn, lts.quantile=0.95, subsample=20000L, verbose=FALSE))
   
   throwOut = (refSig < quantile(refSig, probs=cutoffQuantile))
   yn[throwOut, ] = NA
@@ -234,7 +238,8 @@ normalizeByReferenceWithMM = function(x, reference, pm, mm, cutoffQuantile=0.05)
   return(res)
 }
 
-xwmm = normalizeByReferenceWithMM(davidTiling[, isRNA], davidTiling[, isDNA], PMind, MMind)
+xwmm = normalizeByReferenceWithMM(davidTiling[,isRNA], davidTiling[,isDNA], 
+              PMind, MMind)
 @ 
 
 %----------------------------------------
@@ -279,7 +284,7 @@ ysc[, 3:6] = c(-3,8)
 %
 Now we are ready to plot:
 % A4 is 210 x 297 mm ...8.27 x 11.7 inches
-<<alongChromPlot, fig=TRUE, include=FALSE, height=11, width=8.4, eps=TRUE, pdf=FALSE>>=
+<<alongChromPlot, fig=TRUE, height=11, width=8.4, eps=TRUE, pdf=FALSE>>=
 anno = data.frame(start=c(217860, 221078),
                   end  =c(220697, 222487),
                   name =I(c("RPN2", "SER33")))
@@ -318,8 +323,9 @@ produced as above, and somehow the PDF and EPS drivers of R ignore the
 replace all occurences of the string ``3.00'' by ``1.00''.
 %
 <<repairEPS, results=hide>>=
-writeLines(sub(" 3.00", " 1.50", readLines("assessNorm-alongChromPlot.eps"), fixed=TRUE),
-  con=("assessNorm-tmp.eps"))
+writeLines(sub(" 3.00", " 1.50", 
+    readLines("assessNorm-alongChromPlot.eps"), fixed=TRUE),
+ con=("assessNorm-tmp.eps"))
 system("ps2pdf assessNorm-tmp.eps assessNorm-alongChromPlot.pdf")
 @ 
 
@@ -402,7 +408,7 @@ withinAndBetween = function(x, ...) {
 <<applyWithinAndBetween, print=TRUE>>=
 sn = sapply(dat[2:6], withinAndBetween, dohist=TRUE)
 @ 
-<<applyWithinAndBetween, eval=FALSE, echo=FALSE, eps=FALSE, fig=TRUE, include=FALSE>>=
+<<applyWithinAndBetween, eval=FALSE, echo=FALSE, fig=TRUE>>=
 par(mfcol=c(4,5))
 sn = sapply(dat[2:6], withinAndBetween, dohist=TRUE)
 sn
@@ -441,7 +447,7 @@ Remember that we defined
 \Robject{seqPM=Scerevisiaetilingprobe\$sequence[ipm]} in
 Section~\ref{sec:bgPM}.
 
-<<GCBeforeAfter, fig=TRUE, include=FALSE, width=7, height=7>>=
+<<GCBeforeAfter, fig=TRUE, width=7, height=7>>=
 par(mfrow=c(1,2))
 dat1 = log2(exprs(davidTiling)[ipm, which(isRNA)[1]])
 dat2 = exprs(xn2)[ipm, 1] - quantile(exprs(xn2)[ipm, 1], 0.05, na.rm=TRUE)

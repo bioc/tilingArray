@@ -120,7 +120,5 @@ normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=1
   res = x
   exprs(res) = exprmat
 
- ## FIXME: annotate res to say that this was normalized by this function
-
   return(res)  
 }
