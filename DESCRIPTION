@@ -31,6 +31,6 @@ Collate: AllClasses.R AllGeneric.R
 	 plotSegmentationDots.R plotSegmentationHeatmap.R
 	 PMindex.R methods-segmentation.R
 	 zzz.R
-SaveImage: Yes
+LazyLoad: Yes
 biocViews: Microarray, OneChannel, Preprocessing, Visualization
 
