@@ -56,7 +56,7 @@ which I need to get the algorithm from complexity $O(N^2)$ to $O(N)$.
 %
 &=& \sum_{n,j} y_{nj}^2 - \frac{1}{Jk} \left(\sum_{n',j'} y_{n'j'}\right)^2 \\
 %
-&=& \sum_n q_n - \frac{1}{Jk}\left(\sum_n r_n\right)^2 \label{Gbyqr}
+&=& \sum_n q_n - \frac{1}{Jk}\left(\sum_{n'} r_{n'}\right)^2 \label{Gbyqr}
 \end{eqnarray}
 with
 \begin{eqnarray}
@@ -82,7 +82,7 @@ d = cumsum(q)
 then (\ref{Gbyqr}) becomes
 \begin{equation}
 (d_{m+k-1}-d_{m-1}) - 
-\frac{1}{Jk}(c_{m+k-1}^2-c_{m-1}^2)
+\frac{1}{Jk}(c_{m+k-1}-c_{m-1})^2
 \end{equation}
 
 
