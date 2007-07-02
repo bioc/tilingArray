@@ -35,10 +35,7 @@ segChrom = function(y, probeAnno, chr=1:17, strands=c("+", "-"),
       prbs = prbs[order(prbs$mid), ]
 
       ### remove missing (NA) values:
-      if(is.matrix(y))
-        numna = rowSums(is.na(y[prbs$index, ]))
-      else
-        numna = rowSums(is.na(exprs(y)[prbs$index, ]))
+      numna = rowSums(is.na((if(is.matrix(y)) y else exprs(y))[prbs$index,,drop = FALSE]))
       stopifnot(all(numna %in% c(0, ncol(y))))    
       prbs = prbs[numna == 0, ]
 
@@ -57,7 +54,7 @@ segChrom = function(y, probeAnno, chr=1:17, strands=c("+", "-"),
       s = segment(ychr, maxseg = nsegs, maxk = maxk)
       
       s@x = sprb$mid
-      s@flag = sprb$unique
+      s@flag = as.integer(sprb$unique)
       if(confint)
         assign(chrstrd[j], confint(s, parm = nsegs, level = confintLevel), segObj)
       else {
