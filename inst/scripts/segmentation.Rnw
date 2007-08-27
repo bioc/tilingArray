@@ -442,14 +442,17 @@ myLegend(1, 8, 2)
 popViewport()
 @ 
 \clearpage
-\section{Version information}
 
+%------------------------------------------------------------
+% sessionInfo
+%------------------------------------------------------------
+\section{Version information}
 This vignette was generated using the following package versions:
-@ 
 <<sessionInfo, results=tex>>=
 toLatex(sessionInfo())
 @
 
+%------------------------------------------------------------
 \begin{thebibliography}{10}
 
 \bibitem{David2006}
@@ -465,6 +468,8 @@ Wolfgang Huber, Joern Toedling and Lars M. Steinmetz
 \newblock \textit{Bioinformatics}, 2006.
 
 \end{thebibliography}
+%------------------------------------------------------------
+
 \end{document}
 
 

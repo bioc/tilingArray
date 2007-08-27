@@ -460,7 +460,16 @@ The result is shown in Figure~\ref{assessNorm-GCBeforeAfter}.
 \myincfig{assessNorm-GCBeforeAfter}{\textwidth}{
 ECDF of $\log_2$ intensities (a) and normalized intensities (b) stratified by GC
 content.}
+\clearpage
 
+%------------------------------------------------------------
+% sessionInfo
+%------------------------------------------------------------
+\section{Version Information}
+This vignette was generated using the following package versions:
+<<sessionInfo, results=tex, print=TRUE>>=
+toLatex(sessionInfo())
+@ 
 
 %------------------------------------------------------------
 \begin{thebibliography}{10}
@@ -471,5 +480,9 @@ W. Davis, and Lars M. Steinmetz \newblock A high-resolution map of
 transcription in the yeast genome.  \newblock \textit{PNAS}, 2006.
 
 \end{thebibliography}
+%------------------------------------------------------------
+
+
+
 
 \end{document}
