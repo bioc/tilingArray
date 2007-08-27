@@ -74,13 +74,6 @@ sampleNames(davidTiling)
 %
 Note that some of the computations in this vignette will take a long time and
 require Gigabytes of RAM. 
-%I have sprinkled \Robject{cache()} and
-%\Robject{if(exists(...))} statements around the most massive
-%computations -- this is simply so that during the writing of the
-%vignette I can rerun \Rfunction{Sweave} on it in an incremental
-%fashion without always having to redo all computations from
-%scratch. Eventually they will go away, and for the comprehension of
-%the computations they are irrelevant.
 
 %--------------------------------------------------
 \section{Selection of \emph{perfect match} and \emph{background} features}
