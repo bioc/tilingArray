@@ -23,6 +23,7 @@
 
 \begin{document}
 
+
 %------------------------------------------------------------
 \title{The \Rfunction{segment} function to fit a piecewise constant curve}
 %------------------------------------------------------------
@@ -63,6 +64,7 @@ genData = function(lenx, nrSeg, nrRep=1, stddev=0.1) {
 }
 @ 
 <<plotData,fig=TRUE,include=FALSE>>=
+set.seed(4711)
 lenx = 1000
 nrSeg = 10
 gd = genData(lenx, nrSeg)
@@ -120,7 +122,6 @@ Here is a little for-loop that generates data using random parameters
 and checks whether \Rfunction{segment} can reconstruct them. 
 %
 <<testCP>>=
-set.seed(4711)
 for(i in 1:20){
   gd  = genData(lenx, nrSeg)
   seg = segment(gd$x, maxk=maxk, maxseg=maxseg)
