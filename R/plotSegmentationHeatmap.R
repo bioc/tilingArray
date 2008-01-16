@@ -3,7 +3,7 @@
 ##------------------------------------------------------------- 
 plotSegmentationHeatmap = function(dat, xlim, ylab, rowNames, 
   chr=1, strand="+", vpr, colors, colHeatmap=colorRamp(brewer.pal(9, "YlGnBu")),
-  showConfidenceIntervals=TRUE, main, ...) {
+  showConfidenceIntervals=TRUE, just=c("left","centre"), main, ...) {
 
   endVP = FALSE
   if(missing(vpr)) {
@@ -64,7 +64,8 @@ plotSegmentationHeatmap = function(dat, xlim, ylab, rowNames,
   ord  = c(which(dat$flag!=0), which(dat$flag==0))
   colo = ifelse(dat$flag[ord]==0, colors[strand], colors["duplicated"])
 
-  grid.image(dat$x, 1:ncol(dat$y), z=dat$y, xlim=xlim, uniq=dat$flag, colRamp=colHeatmap)
+  grid.image(dat$x, 1:ncol(dat$y), z=dat$y, xlim=xlim, uniq=dat$flag,
+             colRamp=colHeatmap, just=just)
 
   ## segment boundaries    
   if(!is.null(dat$estimate) & showConfidenceIntervals) {

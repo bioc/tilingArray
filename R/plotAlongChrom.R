@@ -247,13 +247,15 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
             just = c("centre", "bottom"), gp = gpar(cex=.6), default.units = "native")
   grid.segments(x0 = tck, x1 = tck, y0 = -0.17, y1 = 0.17,  default.units = "native")
 
+  
   if(!missing(highlight)){
+    ## this part was modified to draw arrows for transcripts rather than bars
     mt = (match(highlight$strand, c("-", "+"))-1.5)*2
     co = highlight$coord
     if(is.na(mt) || !is.numeric(co))
       stop("Invalid parameter 'highlight'.")
-    grid.segments(x0=co, x1=co, y0=c(0,0), y1=c(0.4,0.4)*mt, default.units = "native",
-                  gp=gpar(col=colors["highlight"], lwd=2))
+    strand.num <- ifelse(highlight$strand=="-",-1,1)
+    grid.segments(x0=co, x1=co+(500*strand.num), y0=c(0.4,0.4)*mt, y1=c(0.4,0.4)*mt, default.units = "native", arrow=arrow(), gp=gpar(col="violetred4", lwd=4))
   }
   popViewport()
 

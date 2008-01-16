@@ -8,7 +8,9 @@
 plotSegmentationHeatmap(dat, xlim, ylab, rowNames, 
                         chr=1, strand="+", vpr, colors, 		
                         colHeatmap=colorRamp(brewer.pal(9, "YlGnBu")), 
-                        showConfidenceIntervals=TRUE, main, ...)
+                        showConfidenceIntervals=TRUE,
+                        just=c("left","centre"),
+                        main, ...)
 }
 
 \arguments{
@@ -29,21 +31,30 @@ plotSegmentationHeatmap(dat, xlim, ylab, rowNames,
    last three to those of lines in the plot.}
   \item{colHeatmap}{function describing color scheme for the heatmap plot (defaults to
     \code{YlGnBu} from RColorBrewer package).}  
-  \item{showConfidenceIntervals}{logical scalar indicating whether confidence intervals for each change-point are to be plotted (only available once segmentation has occurred).}
+  \item{showConfidenceIntervals}{logical scalar indicating whether
+    confidence intervals for each change-point are to be plotted (only
+    available once segmentation has occurred).}
+  \item{just}{character vector specifying the justification of the
+    supplied values to the given coordinates; setting the first entry to
+    "left" indicates that the supplied x-coordinates are the start
+    positions of the probes, change this to "centre" if the
+    x-coordinates are the probe middle positions. Usually the second
+    entry should be "centre" (see \code{\link[grid]{grid.rect}})}
   \item{main}{character vector specifying plot title.}
   \item{...}{additional arguments.}
 }
 
 \details{
- This function is called by \code{plotAlongChrom} when the argument \code{what} is set to \code{heatmap}.  Although this function can be called directly by the user, this is not recommended.
- The \code{dat} list contains the following items:
-items \code{x}: x-coordinates (in bases) along chromosome, 
-\enumerate{
-    \item \code{y}: intensity matrix of probes along chromosome,
-    \item \code{flag}: indicates probe uniqueness in the genome.  Possibilities are 3: multiple perfect matches, 2: has no PM but one or more near-matches, 1: has exactly one PM and some near-matches in the genome, 0: has exactly one PM and no near-matches.
-    \item \code{extras}: (optional) matrix of additional values (such as test-statistics/p-values) to be plotted.
-    }
+  This function is called by \code{plotAlongChrom} if the argument
+  \code{what} is set to \code{heatmap}.
+  Although this function can be called directly by the user, this is not recommended.
+  The \code{dat} list contains the following items:
+  \describe{
+    \item{\code{x}}{x-coordinates (in bases) along chromosome}
+    \item{\code{y}}{intensity matrix of probes along chromosome}
+    \item{\code{flag}}{indicates probe uniqueness in the genome.  Possibilities are 3: multiple perfect matches, 2: has no PM but one or more near-matches, 1: has exactly one PM and some near-matches in the genome, 0: has exactly one PM and no near-matches.}
+    \item{\code{extras}}{(optional) matrix of additional values (such as test-statistics/p-values) to be plotted}
+  }
 }
-      
 \author{Wolfgang Huber <huber@ebi.ac.uk>}
 \examples{}
