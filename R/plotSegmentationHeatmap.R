@@ -72,8 +72,8 @@ plotSegmentationHeatmap = function(dat, xlim, ylab, rowNames,
      sel = ((xorg[dat$estimate]>=xlim[1]) & (xorg[dat$estimate]<=xlim[2]))
      mySeg = function(j, what)
       grid.segments(x0 = unit(j, "native"), x1 = unit(j, "native"),
-                    y0 = unit(0.1, "npc"),  y1 = unit(0.9, "npc"),
-                    gp = gpar(col=colors[what], lty=c(cp=1, ci=2)[what]))
+                    y0 = unit(-0.1, "npc"),  y1 = unit(1.1, "npc"),
+                    gp = gpar(col=colors[what],lty=c(cp=1, ci=2)[what],lwd=2))
     
     if(!is.null(dat$estimate) & sum(sel)>0) {
       mySeg(xorg[dat$estimate][sel], "cp")

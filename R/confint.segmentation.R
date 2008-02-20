@@ -44,7 +44,8 @@ setMethod("confint", "segmentation",
       rg = (bp[k-1]+1):bp[k]
       res[rg] = res[rg]-mean(res[rg])
     }
-
+    browser()
+    
     ## Assemble a pretend "breakpointsfull" object, with which we can call 
     ## "confint.breakpointsfull" from the strucchange package
     bpp = list(X = matrix(as.integer(1), nrow=length(toy), ncol=1),
