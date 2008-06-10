@@ -16,6 +16,6 @@ segmentation: segmentation.tex
 
 clean:
 	rm -f *.out *.bbl *.log *.aux *.blg *.brf *.toc *.tex
-	rm -f *.dvi *.ps findsegments-* costMatrix-* 
+	rm -f *.dvi *.ps findsegments-* costMatrix-* Rplots.pdf
 
 
