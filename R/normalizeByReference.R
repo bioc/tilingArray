@@ -103,7 +103,10 @@ normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=1
   ## call vsn, if there are >= 2 arrays
   if(d>=2) {
     if(verbose) cat("Between array normalization and variance stabilizing transformation\n")
-    yn = exprs(vsnMatrix(xn, lts.quantile=0.95, subsample=as.integer(2e5), verbose=verbose)) # since vsnMatrix returns object of class 'vsn'
+    yn = exprs(vsnMatrix(xn, lts.quantile=0.95,
+                         subsample=min(as.integer(2e5), nrow(xn)),
+                         verbose=verbose))
+    # use 'exprs' method as vsnMatrix returns object of class 'vsn'
   } else {
     yn = xn
     warning("'x' has only one column, cannot do between array normalization and variance stabilizing transformation")
