@@ -57,4 +57,3 @@ plotSegmentationHeatmap(dat, xlim, ylab, rowNames,
   }
 }
 \author{Wolfgang Huber <huber@ebi.ac.uk>}
-\examples{}

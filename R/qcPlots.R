@@ -3,7 +3,7 @@ myWrite = function(x, nm, imgdir=NULL, pgm=FALSE) {
     f1 = file.path(ifelse(is.null(imgdir), ".", imgdir), paste(nm, ".pgm", sep=""))
     write.pnm(x, file=f1, maxval=255)
   }
-  else { # convert from pgm to .jpg
+  else { ## convert from pgm to .jpg
     f1 = paste(tempfile(), ".pgm", sep="")
     f2 = file.path(ifelse(is.null(imgdir), ".", imgdir), paste(nm, ".jpg", sep=""))
     write.pnm(x, file=f1, maxval=255)

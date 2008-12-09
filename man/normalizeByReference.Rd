@@ -6,7 +6,10 @@
 }
 \description{
   Adjust the hybridization intensities from an oligonucleotide microarray
-  for probe-specific response effect by using one or several reference hybridizations.
+  for probe-specific response effect by using one or several reference
+  hybridizations.
+  If \code{x} contains more than one array, \code{\link[vsn:vsn2]{vsnMatrix}} from
+  the \code{vsn} package is called for between array normalization.
 }
 \usage{
 normalizeByReference(x, reference, pm, background, refSig, nrStrata=10,

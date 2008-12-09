@@ -73,7 +73,7 @@ normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=1
 
   ## interpolate  
   for(j in 1:d) {
-    ybg[, j] = tapply(log(exprs(x)[background, j], 2), strata, shorth, tie.action="min")
+    ybg[, j] = tapply(log(exprs(x)[background, j], 2), strata, genefilter::shorth, tie.action="min")
     bgfun[[j]] = approxfun(xbg, ybg[,j], rule=2)
   }
 
@@ -85,7 +85,7 @@ normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=1
     px  = seq(rgx[1], rgx[2], length=120)
     for(j in 1:d) {
       pdf(file=plotFileNames[j], width=8, height=6)
-      smoothScatter(refSigBg, log(exprs(x)[background, j],2),
+      geneplotter::smoothScatter(refSigBg, log(exprs(x)[background, j],2),
             xlab = "Reference intensity",
             ylab = "Background intensity", nrpoints=0)
       lines(px, bgfun[[j]](px), col="darkred")
@@ -100,13 +100,12 @@ normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=1
   for(j in 1:d)
     xn[, j] = (exprs(x)[pm, j] - 2^bgfun[[j]](refSig)) / ttrefsig
 
-  ## call vsn, if there are >= 2 arrays
+  ## call vsn2 if there are >= 2 arrays
   if(d>=2) {
-    if(verbose) cat("Between array normalization and variance stabilizing transformation\n")
-    yn = exprs(vsnMatrix(xn, lts.quantile=0.95,
+    if(verbose) cat("Calling 'vsn::vsnMatrix' for between array normalization and variance stabilizing transformation.\n")
+    yn = exprs(vsn::vsnMatrix(xn, lts.quantile=0.95,
                          subsample=min(as.integer(2e5), nrow(xn)),
                          verbose=verbose))
-    # use 'exprs' method as vsnMatrix returns object of class 'vsn'
   } else {
     yn = xn
     warning("'x' has only one column, cannot do between array normalization and variance stabilizing transformation")

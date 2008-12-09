@@ -51,4 +51,3 @@ items \code{x}: x-coordinates (in bases) along chromosome,
 }
       
 \author{Wolfgang Huber <huber@ebi.ac.uk>}
-\examples{}

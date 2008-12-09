@@ -14,8 +14,8 @@ readCel2eSet = function(filename, adf, path=".", rotated=FALSE, ...) {
   }
 
   
-  a = ReadAffy(filenames=filename, celfile.path=path, verbose=TRUE)
-  ex = intensity(a)
+  a = affy::ReadAffy(filenames=filename, celfile.path=path, verbose=TRUE)
+  ex = affy::intensity(a)
   ex = matrix(as.integer(ex), nrow=nrow(ex), ncol=ncol(ex))
   
   if(!rotated) {
