@@ -39,23 +39,27 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 \begin{document}
 
 %------------------------------------------------------------
-\title{Assessing signal/noise ratio before and after normalization}
+\title{Normalisation with the \Rfunction{normalizeByReference} function
+in the \Rpackage{tilingArray} packageAssessing signal/noise ratio before and after normalization}
 %------------------------------------------------------------
 \author{Wolfgang Huber}
 \maketitle
 \tableofcontents
 
 \section{Introduction}
-The purpose of this document is to assess the performance of the
-probe-response normalization by the function
+The purpose of this vignette is to demonstrate the 
+probe-response normalization provided by the function
 \Rfunction{normalizeByReference} in the \Rpackage{tilingArray}
-package. We use the example data from the David et
-al.~\cite{David2006} paper, which is provided in the
-\Rpackage{davidTiling} package.
+package, and to assess its performance.
+We use the example data from our paper \cite{David2006};
+the data are provided in the \Rpackage{davidTiling} package.
 %
 <<load, results=hide>>=
 library("tilingArray")
+library("vsn")
 library("davidTiling")
+library("Scerevisiaetilingprobe")
+
 data("davidTiling")
 @ 
 %
@@ -177,12 +181,10 @@ probe sequences that are provided in the
 \Rpackage{Scerevisiaetilingprobe} package.
 %
 <<PMMMpairs>>=
-library("Scerevisiaetilingprobe")
-
 nc = as.integer(2560)
 stopifnot(nc*nc==nrow(davidTiling))
 
-ipm = rep(as.integer(seq(1, nc-3, by=2)), each=nc) * nc + (1:nc)
+ipm = rep(as.integer(seq(1, nc-3, by=2)), each=nc) * nc + seq_len(nc)
 seqPM = Scerevisiaetilingprobe$sequence[ipm]
 seqMM = Scerevisiaetilingprobe$sequence[ipm+nc]
 ispair = (!is.na(seqPM) & !is.na(seqMM) & 
