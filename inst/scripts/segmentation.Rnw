@@ -1,10 +1,10 @@
 %\VignetteIndexEntry{Segmentation demo}
-%\VignetteDepends{tilingArray}
-%\VignetteKeywords{segmentation}
+%\VignetteDepends{tilingArray,davidTiling,RColorBrewer}
 %\VignettePackage{tilingArray}
 
 \documentclass[11pt,a4wide]{article}
-\usepackage{geometry}\usepackage{color}
+\usepackage[margin=2cm,nohead]{geometry}
+\usepackage{color}
 \definecolor{darkblue}{rgb}{0.0,0.0,0.75}
 \usepackage[%
 baseurl={http://www.bioconductor.org},%
@@ -59,6 +59,7 @@ library("tilingArray")
 library("davidTiling")
 data("davidTiling")
 data("probeAnno")
+library("RColorBrewer")
 @ 
 
 <<convertDavidTiling, echo=FALSE, results=hide>>=

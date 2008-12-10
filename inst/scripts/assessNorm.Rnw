@@ -1,9 +1,8 @@
-%\VignetteIndexEntry{Normalization overview and assessment of signal/noise ratio.}
-%\VignetteDepends{tilingArray}
-%\VignetteKeywords{normalization}
+%\VignetteIndexEntry{Normalisation with the normalizeByReference function in the tilingArray package}
+%\VignetteDepends{tilingArray,vsn,davidTiling,Scerevisiaetilingprobe,RColorBrewer}
 %\VignettePackage{tilingArray}
 
-\documentclass[11pt]{article}
+\documentclass[11pt,a4wide]{article}
 \usepackage[margin=2cm,nohead]{geometry}
 \usepackage{color}
 \definecolor{darkblue}{rgb}{0.0,0.0,0.75}
@@ -40,7 +39,7 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 
 %------------------------------------------------------------
 \title{Normalisation with the \Rfunction{normalizeByReference} function
-in the \Rpackage{tilingArray} packageAssessing signal/noise ratio before and after normalization}
+in the \Rpackage{tilingArray} package}
 %------------------------------------------------------------
 \author{Wolfgang Huber}
 \maketitle
@@ -56,11 +55,13 @@ the data are provided in the \Rpackage{davidTiling} package.
 %
 <<load, results=hide>>=
 library("tilingArray")
-library("vsn")
-library("davidTiling")
-library("Scerevisiaetilingprobe")
 
+library("Scerevisiaetilingprobe")
+library("davidTiling")
 data("davidTiling")
+
+library("vsn")
+library("RColorBrewer")
 @ 
 %
 <<errorReporting, echo=FALSE>>=
