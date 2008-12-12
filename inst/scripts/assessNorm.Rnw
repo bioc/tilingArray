@@ -38,51 +38,49 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 \begin{document}
 
 %------------------------------------------------------------
-\title{Normalisation with the \Rfunction{normalizeByReference} function
-in the \Rpackage{tilingArray} package}
+\title{Normalisation with the normalizeByReference function
+in the tilingArray package}
 %------------------------------------------------------------
 \author{Wolfgang Huber}
 \maketitle
 \tableofcontents
 
+%----------------------------------------
 \section{Introduction}
-The purpose of this vignette is to demonstrate the 
-probe-response normalization provided by the function
+%----------------------------------------
+The purpose of this vignette is to demonstrate the probe-response
+normalization provided by the function
 \Rfunction{normalizeByReference} in the \Rpackage{tilingArray}
-package, and to assess its performance.
-We use the example data from our paper \cite{David2006};
-the data are provided in the \Rpackage{davidTiling} package.
+package, and to assess its performance.  We use the example data from
+our paper \cite{David2006}; the data are provided in the
+\Rpackage{davidTiling} package.  Note that some of the computations in
+this vignette will take several minutes and require Gigabytes of RAM.
 %
 <<load, results=hide>>=
 library("tilingArray")
-
 library("Scerevisiaetilingprobe")
 library("davidTiling")
-data("davidTiling")
-
 library("vsn")
 library("RColorBrewer")
 @ 
-%
 <<errorReporting, echo=FALSE>>=
 options(error=recover, warn=0, digits=3)
 @ 
-%
-It contains \Sexpr{nrow(pData(davidTiling))} arrays with
-\Sexpr{nrow(exprs(davidTiling))} features each. Three of them were hybridized to
-genomic DNA, which will use as a reference for the normalization, and
-five to RNA.
 <<showDavidTilingData>>=
+data("davidTiling")
+class(davidTiling)
 dim(exprs(davidTiling))
 sampleNames(davidTiling)
 @
 %
-Note that some of the computations in this vignette will take a long time and
-require Gigabytes of RAM. 
-
-%--------------------------------------------------
-\section{Selection of \emph{perfect match} and \emph{background} features}
-%---------------------------------------------------
+\Robject{davidTiling} contains \Sexpr{nrow(pData(davidTiling))} arrays with
+\Sexpr{nrow(exprs(davidTiling))} features each. Three of them were hybridized to
+genomic DNA, which will use as a reference for the normalization, and
+five to RNA.
+%
+%-----------------------------------------------------------
+\section{Selection of perfect match and background features}
+%-----------------------------------------------------------
 The design of the chip includes about 3 Mio \emph{perfect match
 probes}, about 3 Mio \emph{mismatch probes}, and a few thousand
 controls. The \Robject{probeAnno} object contains annotations for each
@@ -443,7 +441,7 @@ Remember that we defined
 \Robject{seqPM=Scerevisiaetilingprobe\$sequence[ipm]} in
 Section~\ref{sec:bgPM}.
 
-<<GCBeforeAfter, fig=TRUE, width=7, height=7>>=
+<<GCBeforeAfter, fig=TRUE, width=7, height=4>>=
 par(mfrow=c(1,2))
 dat1 = log2(exprs(davidTiling)[ipm, which(isRNA)[1]])
 dat2 = exprs(xn2)[ipm, 1] - quantile(exprs(xn2)[ipm, 1], 0.05, na.rm=TRUE)
@@ -456,7 +454,6 @@ The result is shown in Figure~\ref{assessNorm-GCBeforeAfter}.
 \myincfig{assessNorm-GCBeforeAfter}{\textwidth}{
 ECDF of $\log_2$ intensities (a) and normalized intensities (b) stratified by GC
 content.}
-\clearpage
 
 %------------------------------------------------------------
 % sessionInfo

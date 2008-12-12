@@ -1,5 +1,5 @@
 %\VignetteIndexEntry{Segmentation demo}
-%\VignetteDepends{tilingArray,davidTiling,RColorBrewer}
+%\VignetteDepends{tilingArray,davidTiling,RColorBrewer,geneplotter,grid}
 %\VignettePackage{tilingArray}
 
 \documentclass[11pt,a4wide]{article}
@@ -60,28 +60,32 @@ library("davidTiling")
 data("davidTiling")
 data("probeAnno")
 library("RColorBrewer")
+library("geneplotter")
+library("grid")
 @ 
 
-<<convertDavidTiling, echo=FALSE, results=hide>>=
-options(length=60)
-davidTiling <- as(davidTiling,"ExpressionSet")
-@ 
 
 %--------------------------------------------------
 \section{Normalization of the data}
 %--------------------------------------------------
-For an explanation of the following code, please see the vignette\\ 
-\textit{Assessing signal/noise ratio before and after normalization}
- (\texttt{assessNorm.Rnw}). 
+For an explanation of the following code, please see the vignette
+\emph{Normalisation with the normalizeByReference function
+in the tilingArray package} (in the file \texttt{assessNorm.Rnw}). 
 
 %
 <<normalization>>=
 isRNA = davidTiling$nucleicAcid %in% c("poly(A) RNA","total RNA")
 isDNA = davidTiling$nucleicAcid %in% "genomic DNA"
 stopifnot(sum(isRNA)==5, sum(isDNA)==3)
-xn = normalizeByReference(davidTiling[,isRNA], davidTiling[,isDNA], 
-  pm=PMindex(probeAnno), background=BGindex(probeAnno))
+xn = normalizeByReference(
+  x = davidTiling[,isRNA], 
+  reference = davidTiling[,isDNA], 
+  pm = PMindex(probeAnno), 
+  background=BGindex(probeAnno))
 pData(xn)[, 2, drop=FALSE]
+@ 
+<<errorReporting, echo=FALSE>>=
+options(error=recover, warn=0, digits=3)
 @ 
 
 
@@ -283,11 +287,12 @@ multiecdf(confintwidths, xlim=c(0, maxx),
 legend(x=0.6*maxx, y=0.5, legend=paste("S =", nBp), 
   col=colors, lty=1, lwd=2) 
 @ 
-
+%
 The result is shown in Figure \ref{segmentation-confintwidthsecdf}.
 
-%--------------------------------------------------
+%------------------------------------------------------------------------
 \subsection{Computing the segmentation for both strands on 7 chromosomes}
+%------------------------------------------------------------------------
 
 Since the data in the \Rpackage{davidTiling} package are
 strand-specific, we can do the segmentation for the ``-'' strand 
@@ -297,23 +302,16 @@ For Figures~\ref{segmentation-fig2-pnas}
 and \ref{segmentation-fig2-bioinf}, we
 also call it on six other chromosomes. 
 
-This computation will
-take a couple of hours (about 18h on mine). Note that it 
-could easily be parallelized if needed,
-since the computations for different chromosome strands are 
-independent of each other. 
+This computation will take a couple of hours (about 18h on mine). Note
+that it could easily be parallelized if needed, since the computations
+for different chromosome strands are independent of each other.
 %
-<<computeSegmentations, eval=FALSE>>=
-segEnv = segChrom(xn[,xn$nucleicAcid=="poly(A) RNA"], 
+<<computeSegmentations, results=hide>>=
+segEnv = segChrom(xn[, xn$nucleicAcid=="poly(A) RNA"], 
            probeAnno = probeAnno, 
            chr = c(1, 2, 5, 9, 13, 14, 15), 
            strands = c("+","-"), 
            nrBasesPerSegment = 1500)
-@ 
-<<computeSegmentationsDo, echo=FALSE, results=hide>>=
-cache(segEnv <- segChrom(xn[,xn$nucleicAcid=="poly(A) RNA"], 
-                         probeAnno=probeAnno, chr=c(1,2,5,9,13,14,15), 
-                         strands=c("+","-"), nrBasesPerSegment = 1500))
 @ 
 %
 \Robject{segEnv} is an environment holding the \Sexpr{length(ls(segEnv))}
