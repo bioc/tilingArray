@@ -1,3 +1,6 @@
+% To compile the .Rnw file into a .tex file and figures:
+% library("weaver");Sweave("segmentation.Rnw", driver=weaver()) 
+
 %\VignetteIndexEntry{Segmentation demo}
 %\VignetteDepends{tilingArray,davidTiling,RColorBrewer,geneplotter,grid}
 %\VignettePackage{tilingArray}
@@ -120,9 +123,8 @@ barplot(table(diff(chr1p.probeStarts)), col="sienna", main="(b)")
 barplot(table(diff(sampled.probeStarts)), col="palegreen", main="(c)")
 @ 
 
-\myincfig{segmentation-histprobs}{0.8\textwidth}{% 
-(a):
-Histogram of probe midpoints along the ``+'' strand of chromosome 1.  There are some
+\myincfig{segmentation-histprobs}{0.6\textwidth}{% 
+(a): Histogram of probe midpoints along the ``+'' strand of chromosome 1.  There are some
 probe dense regions in particular around 160,000.  The sequence of
 that region is repeated multiple times in the genome, and due to the way 
 the chip was designed, there are also a lot of probes (more than necessary) for that region.
@@ -164,7 +166,7 @@ not in genomic coordinates.  Our choice of the parameter
 To demonstrate the algorithm, we run the segmentation
 on the Watson strand of chromosome 1.
 %
-<<useSegChrom, eval=TRUE, results=hide>>=
+<<useSegChrom, results=hide>>=
 segEnv = segChrom(xn[,xn$nucleicAcid=="poly(A) RNA"], 
                   probeAnno=probeAnno, chr="1", strands="+",
                   nrBasesPerSegment = 750)
@@ -205,9 +207,9 @@ the fitted segment borders. The confidence interval for each border is indicated
 by the parentheses around it on the bottom side. 
 %
 <<plotseg, fig=TRUE, include=FALSE, width=8, results=hide>>=
-plot(segChr1p, nseg, pch=16, cex=0.2, xlim=c(30000, 40000))
+plot(segChr1p, nseg, pch=16, cex=0.4, xlim=c(30000, 40000))
 @ 
-\myincfig{segmentation-plotseg}{\textwidth}{% 
+\myincfig{segmentation-plotseg}{0.8\textwidth}{% 
 Segmentation with confidence intervals, shown by little brackets at the bottom.
 }
 
@@ -306,7 +308,7 @@ This computation will take a couple of hours (about 18h on mine). Note
 that it could easily be parallelized if needed, since the computations
 for different chromosome strands are independent of each other.
 %
-<<computeSegmentations, results=hide>>=
+<<computeSegmentations, results=hide, cache=TRUE>>=
 segEnv = segChrom(xn[, xn$nucleicAcid=="poly(A) RNA"], 
            probeAnno = probeAnno, 
            chr = c(1, 2, 5, 9, 13, 14, 15), 
@@ -318,8 +320,9 @@ segEnv = segChrom(xn[, xn$nucleicAcid=="poly(A) RNA"],
 individual segmentation results.
 %
 
-\section{Visualizing segmentations with \Rfunction{plotAlongChrom}} 
-
+%------------------------------------------------------------------------
+\section{Visualizing segmentations with the plotAlongChrom function} 
+%------------------------------------------------------------------------
 <<prepareGFF>>=
 data("gff")
 myGff = gff[ gff$Name!="tR(UCU)E", ]
