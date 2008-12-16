@@ -27,7 +27,7 @@ segChrom = function(y, probeAnno, chr=1:17, strands=c("+", "-"),
         cat(sprintf("Running 'segment' on chromosome %s", chrstrd[j]))
 
       what = c("start", "end", "index", "unique")
-      prbs = do.call("data.frame", mget(paste(chrstrd[j], what, sep = "."), probeAnno))
+      prbs = do.call(data.frame, mget(paste(chrstrd[j], what, sep = "."), probeAnno))
       colnames(prbs) = what
       
       ### sort probes by chromosomal midpoint position:

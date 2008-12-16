@@ -26,7 +26,7 @@ plotAlongChromLegend = function(vpr, nr=2,
     grid.rect(x = x, width = strWid, 
               y = unit(row, "native"), height = unit(1, "native")- unit(1, "mm"), 
               just  = c("left", "center"), default.units="npc",
-              gp    = do.call("gpar", featColsOneRow))
+              gp    = do.call(gpar, featColsOneRow))
     
     grid.text(label = rownames(featColsOneRow),
               x = unit(x + strWid/2, "native"), y = unit(row, "native"),
