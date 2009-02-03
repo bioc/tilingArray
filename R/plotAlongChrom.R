@@ -132,6 +132,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
         dat = list(x=s@x, y=s@y, flag=s@flag, estimate = bp[, "estimate"])
         if("upper" %in% colnames(bp)) dat$upper = bp[, "upper"]
         if("lower" %in% colnames(bp)) dat$lower = bp[, "lower"]
+        lengthChr <- max(s@x, na.rm=TRUE)
 
       } else {
         ## case 3: list 'dat' and other stuff
@@ -168,7 +169,8 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
     ## lower (optional)
     ## upper (optional)
     ## and possibly also a non-NA value for 'threshold'.
-    
+
+    ## if no region is specified, plot the whole chromosome
     if(missing(coord))
       coord = c(1, lengthChr)
     
@@ -347,7 +349,7 @@ plotFeatures = function(gff, chr, xlim, strand, vpr, featureColorScheme=1, featu
 
   whm = names(featsp) %in% rownames(featCols)
   if(!all(whm))
-    stop("Don't know how to handle feature(s) '", paste(names(featsp)[!whm], collapse=", "), "'.", sep="")
+    warning("Don't know how to handle feature of type(s) '", paste(names(featsp)[!whm], collapse=", "), "' in gff.", sep="")
 
   sfeatsp  = featsp[rownames(featCols)]
   ll       = listLen(sfeatsp)
