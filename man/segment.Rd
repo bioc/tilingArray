@@ -25,7 +25,7 @@ segment(y, maxseg, maxk)
 }
 \details{The complexity of the algorithm is 
 \code{length(x)*maxk} in memory and
-\code{length(x)*maxk*maxcp} in time.}
+\code{length(x)*maxk*maxseg} in time.}
 
 \value{
   An object of class \code{\link[segmentation-class]{segmentation}}.
