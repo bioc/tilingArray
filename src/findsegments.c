@@ -1,5 +1,5 @@
 /*
- * Copyright W. Huber 2005-2006, all rights reserved
+ * Copyright W. Huber 2005-2009, all rights reserved
  */
  
 #include <R.h>
@@ -47,11 +47,10 @@ void print_matrix_int(int* x, int nrow, int ncol, char *s) {
     }
 }
 
-R_len_t safe_mult(int i, int j){
+R_len_t matrix_length(int i, int j){
   double x;
   if ((i<0) || (j<0))
-    error("Negative values not allowed in 'safe_mult'.");
-
+    error("Negative values not allowed in 'matrix_length'.");
   x = (double) i * (double) j;
   if(x >  R_LEN_T_MAX)
     error("Please do not try to allocate a vector whose length is greater than R_LEN_T_MAX.");
@@ -66,7 +65,6 @@ R_len_t safe_mult(int i, int j){
 -----------------------------------------------------------------*/
 void findsegments_dp(double* J, int* th, int maxcp) {
     int i, imin, cp, j, k, k0;
-    R_len_t vl1, vl2;
     double z, zmin;
     double *mI;
     int * mt;
@@ -84,12 +82,10 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
 
-    vl1 = safe_mult(maxcp, n);
-    PROTECT(v1 = allocVector(REALSXP, vl1)); 
+    PROTECT(v1 = allocVector(REALSXP, matrix_length(maxcp, n))); 
     mI = REAL(v1);
 
-    vl2 = safe_mult(maxcp-1, n);
-    PROTECT(v2 = allocVector(INTSXP, vl2)); 
+    PROTECT(v2 = allocVector(INTSXP, matrix_length(maxcp-1, n))); 
     mt = INTEGER(v2);
 
     /* initialize for cp=0: mI[k, 0] is simply G[k, 0] */
@@ -176,7 +172,6 @@ SEXP findsegments(SEXP aG, SEXP amaxcp, SEXP averbose)
   SEXP res;   /* return value    */
   SEXP J, th, dimth, namesres;  /* for the return value */
   int maxcp;
-  R_len_t thl;
 
   /* check input arguments */
   PROTECT(dimG = getAttrib(aG, R_DimSymbol));
@@ -200,8 +195,7 @@ SEXP findsegments(SEXP aG, SEXP amaxcp, SEXP averbose)
   PROTECT(J   = allocVector(REALSXP, maxcp));
 
   /* th */
-  thl = safe_mult(maxcp, maxcp);
-  PROTECT(th    = allocVector(INTSXP, thl));
+  PROTECT(th    = allocVector(INTSXP, matrix_length(maxcp, maxcp)));
   PROTECT(dimth = allocVector(INTSXP, 2));
   INTEGER(dimth)[0] = INTEGER(dimth)[1] = maxcp;
   setAttrib(th, R_DimSymbol, dimth);
