@@ -35,6 +35,7 @@ void print_matrix_double(double* x, int nrow, int ncol, char *s) {
         Rprintf("\n");
     }
 }
+
 void print_matrix_int(int* x, int nrow, int ncol, char *s) {
     int i, j;
     Rprintf("%s:\n", s);
@@ -46,6 +47,17 @@ void print_matrix_int(int* x, int nrow, int ncol, char *s) {
     }
 }
 
+R_len_t safe_mult(int i, int j){
+  double x;
+  if ((i<0) || (j<0))
+    error("Negative values not allowed in 'safe_mult'.");
+
+  x = (double) i * (double) j;
+  if(x >  R_LEN_T_MAX)
+    error("Please do not try to allocate a vector whose length is greater than R_LEN_T_MAX.");
+  return((R_len_t) x);
+}
+
 /*-----------------------------------------------------------------
    Find segments using the dynamic programming algorithm of Picard
    et al.  This is the workhorse routine with C interface.
@@ -54,7 +66,7 @@ void print_matrix_int(int* x, int nrow, int ncol, char *s) {
 -----------------------------------------------------------------*/
 void findsegments_dp(double* J, int* th, int maxcp) {
     int i, imin, cp, j, k, k0;
-    long vs;
+    R_len_t vl1, vl2;
     double z, zmin;
     double *mI;
     int * mt;
@@ -72,13 +84,12 @@ void findsegments_dp(double* J, int* th, int maxcp) {
        the whole segmentation can then be reconstructed from recursing 
        through this matrix */
 
-    /* currently R_alloc will not work for vs*sizeof() > 2 GB */
-    vs = (long) maxcp * (long) n;
-    PROTECT(v1 = allocVector(REALSXP, vs)); 
+    vl1 = safe_mult(maxcp, n);
+    PROTECT(v1 = allocVector(REALSXP, vl1)); 
     mI = REAL(v1);
 
-    vs = (long) (maxcp-1) * (long) n;
-    PROTECT(v2 = allocVector(INTSXP, vs)); 
+    vl2 = safe_mult(maxcp-1, n);
+    PROTECT(v2 = allocVector(INTSXP, vl2)); 
     mt = INTEGER(v2);
 
     /* initialize for cp=0: mI[k, 0] is simply G[k, 0] */
@@ -165,6 +176,7 @@ SEXP findsegments(SEXP aG, SEXP amaxcp, SEXP averbose)
   SEXP res;   /* return value    */
   SEXP J, th, dimth, namesres;  /* for the return value */
   int maxcp;
+  R_len_t thl;
 
   /* check input arguments */
   PROTECT(dimG = getAttrib(aG, R_DimSymbol));
@@ -188,7 +200,8 @@ SEXP findsegments(SEXP aG, SEXP amaxcp, SEXP averbose)
   PROTECT(J   = allocVector(REALSXP, maxcp));
 
   /* th */
-  PROTECT(th    = allocVector(INTSXP, maxcp*maxcp));
+  thl = safe_mult(maxcp, maxcp);
+  PROTECT(th    = allocVector(INTSXP, thl));
   PROTECT(dimth = allocVector(INTSXP, 2));
   INTEGER(dimth)[0] = INTEGER(dimth)[1] = maxcp;
   setAttrib(th, R_DimSymbol, dimth);
