@@ -85,7 +85,7 @@ normalizeByReference = function(x, reference, pm, background, refSig, nrStrata=1
     px  = seq(rgx[1], rgx[2], length=120)
     for(j in 1:d) {
       pdf(file=plotFileNames[j], width=8, height=6)
-      geneplotter::smoothScatter(refSigBg, log(exprs(x)[background, j],2),
+      smoothScatter(refSigBg, log(exprs(x)[background, j],2),
             xlab = "Reference intensity",
             ylab = "Background intensity", nrpoints=0)
       lines(px, bgfun[[j]](px), col="darkred")

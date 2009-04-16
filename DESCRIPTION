@@ -1,10 +1,10 @@
 Package: tilingArray
-Version: 1.21.11
+Version: 1.21.12
 Title: Transcript mapping with high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Zhenyu Xu, Joern Toedling with contributions from Matt Ritchie
 Maintainer: Zhenyu Xu <zhenyu@ebi.ac.uk>
 Depends: Biobase, methods, pixmap
-Imports: strucchange, affy, geneplotter, vsn, genefilter, RColorBrewer, grid
+Imports: strucchange, affy, vsn, genefilter, RColorBrewer, grid
 Suggests:
 Description: The package provides functionality that can be
 	useful for the analysis of high-density tiling microarray data (such

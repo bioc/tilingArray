@@ -46,7 +46,6 @@ readCel2eSet(filename, adf, path=".", rotated=FALSE, ...)
 ##
 \dontrun{
 library("affy")
-library("geneplotter")
 options(error=recover)
 
 e1 = readCel2eSet("041120_S96genDNA_re-hybe.cel", rotated=TRUE)
