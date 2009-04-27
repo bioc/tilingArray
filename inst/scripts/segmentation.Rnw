@@ -2,7 +2,7 @@
 % library("weaver");Sweave("segmentation.Rnw", driver=weaver()) 
 
 %\VignetteIndexEntry{Segmentation demo}
-%\VignetteDepends{tilingArray,davidTiling,RColorBrewer,grid}
+%\VignetteDepends{tilingArray,davidTiling,RColorBrewer,geneplotter,grid}
 %\VignettePackage{tilingArray}
 
 \documentclass[11pt,a4wide]{article}
@@ -63,6 +63,7 @@ library("davidTiling")
 data("davidTiling")
 data("probeAnno")
 library("RColorBrewer")
+library("geneplotter")
 library("grid")
 @ 
 
