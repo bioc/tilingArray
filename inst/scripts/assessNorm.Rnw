@@ -1,5 +1,5 @@
 %\VignetteIndexEntry{Normalisation with the normalizeByReference function in the tilingArray package}
-%\VignetteDepends{tilingArray,vsn,davidTiling,Scerevisiaetilingprobe,RColorBrewer}
+%\VignetteDepends{tilingArray,vsn,davidTiling,Scerevisiaetilingprobe,RColorBrewer,Biostrings}
 %\VignettePackage{tilingArray}
 
 \documentclass[11pt,a4wide]{article}
@@ -62,6 +62,7 @@ library("Scerevisiaetilingprobe")
 library("davidTiling")
 library("vsn")
 library("RColorBrewer")
+library("Biostrings")
 @ 
 <<errorReporting, echo=FALSE>>=
 options(error=recover, warn=0, digits=3)
@@ -181,14 +182,19 @@ probe sequences that are provided in the
 %
 <<PMMMpairs>>=
 nc = as.integer(2560)
-stopifnot(nc*nc==nrow(davidTiling))
+stopifnot(nc*nc==nrow(davidTiling), nc*nc==length(Scerevisiaetilingprobe$sequence))
 
 ipm = rep(as.integer(seq(1, nc-3, by=2)), each=nc) * nc + seq_len(nc)
 seqPM = Scerevisiaetilingprobe$sequence[ipm]
 seqMM = Scerevisiaetilingprobe$sequence[ipm+nc]
-ispair = (!is.na(seqPM) & !is.na(seqMM) & 
-    (seqPM==complementSeq(seqMM, start=13, stop=13)))
+haveSeq = which(! (is.na(seqPM) | is.na(seqMM)) ) 
+seqPM = DNAStringSet( seqPM[haveSeq] )  ## DNAStringSet does not like NAs
+seqMM = DNAStringSet( seqMM[haveSeq] )
+ipm   = ipm[haveSeq]
 
+parts = threebands(seqPM, start=13, end=13)
+seqPMcomp = xscat(parts$left, complement(parts$middle), parts$right)
+ispair =  (as(seqMM, "character") == as(seqPMcomp, "character" ))
 @ 
 %
 We see that out of the \Sexpr{length(ipm)} probes in odd-numbered
@@ -197,7 +203,6 @@ mismatch probe in the row below.
 %
 @
 <<ispair,print=TRUE>>=
-length(ispair)
 table(ispair)
 @ 
 %
@@ -347,7 +352,6 @@ negativeCtrls = cbind(c(216800, 217700),
 @ 
 %
 Noise $\sigma$ is calculated as the 
-% weighted 
 average of the differences between 97.5\% and 2.5\% quantiles of the
 data within each of the control regions. The range between the 97.5\%
 and 2.5\% quantiles contains 95\% of the data, while 5\% is outside
@@ -357,24 +361,18 @@ the range.
 \cdot\frac%
 {\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}Q^{0.975}_r-Q^{0.025}_r}
 {\displaystyle|\{\mbs{pos},\mbs{neg}\}|}.
-%{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}n_r\left(Q^{0.975}_r-Q^{0.025}_r\right)}
-%{\displaystyle\sum_{r\in\{\mbs{pos},\mbs{neg}\}}n_r}.
 \end{equation}
 Here, the symbol $r$ counts over the different regions.
-% and $n_r$ is the number of probes representing that region. 
 The constant in the denominator is the differences between 95\% and
 5\% quantiles for the standard Normal distribution, hence $\sigma$ is
 equal to 1 if the data come from the standard Normal distribution.
 
 Signal $\Delta\mu$ is calculated as the difference between the 
-% weighted 
 averages of the means of positive and negative control regions.
 \begin{equation}
 \Delta\mu =
 \frac{\displaystyle\sum_{r\in\{\mbs{pos}\}}\mu_r}{\displaystyle|\{\mbs{pos}\}|} -
 \frac{\displaystyle\sum_{r\in\{\mbs{neg}\}}\mu_r}{\displaystyle|\{\mbs{neg}\}|}.
-%\frac{\displaystyle\sum_{r\in\{\mbs{pos}\}} n_r \mu_r}{\displaystyle\sum_{r\in\{\mbs{pos}\}}n_r} -
-%\frac{\displaystyle\sum_{r\in\{\mbs{neg}\}} n_r \mu_r}{\displaystyle\sum_{r\in\{\mbs{neg}\}}n_r}.
 \end{equation}
 
 I have explored many variations of this calculation, using different
@@ -422,7 +420,7 @@ sn
 We calculate the GC content of each probe,
 %
 <<calcBaseContent>>=
-bc=basecontent(seqPM)
+bc = alphabetFrequency(seqPM, baseOnly=TRUE)
 nrGC = bc[,"C"]+bc[,"G"]
 rggc = c(4,18)
 sel = (nrGC>=rggc[1] & nrGC<=rggc[2])
@@ -437,9 +435,7 @@ myPlot = function(x, tit) {
 }
 @ 
 
-Remember that we defined
-\Robject{seqPM=Scerevisiaetilingprobe\$sequence[ipm]} in
-Section~\ref{sec:bgPM}.
+Remember that we defined \Robject{seqPM} in Section~\ref{sec:bgPM}.
 
 <<GCBeforeAfter, fig=TRUE, width=7, height=4>>=
 par(mfrow=c(1,2))
