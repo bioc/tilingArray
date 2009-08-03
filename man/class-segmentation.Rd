@@ -49,9 +49,8 @@
       is from row \code{1} to \code{z[1, "estimate"]-1},
       the second from row \code{z[1, "estimate"]} to
       \code{z[2, "estimate"]-1}, and so on.}
-    \item{\code{negloglik}:}{Numeric vector of the same length as
-      \code{breakpoints}. The
-      negative log-likelihood of the piecewise
+    \item{\code{logLik}:}{Numeric vector of the same length as
+      \code{breakpoints}, containing the log-likelihood of the piecewise
       constant models under the data \code{y}.}
     \item{\code{hasConfint}:}{Logical vector of the same length as
       \code{breakpoints}. TRUE if the confidence interval estimates

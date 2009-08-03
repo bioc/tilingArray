@@ -16,12 +16,15 @@ segChrom(y, probeAnno, chr=1:17, strands=c("+", "-"),
 
 \arguments{  
   \item{y}{ExpressionSet or matrix containing the data to be segmented.}
-  \item{probeAnno}{environment with probe annotations. See
-    package \code{davidTiling} for an example (?probeAnno).}
+  \item{probeAnno}{an object of class \code{probeAnno} (defined in the
+  Ringo package) or an environment with probe annotations. For the
+  latter, see the package \code{davidTiling} for an example (?probeAnno).}
   \item{chr}{integer scalar or vector specifying which chromosome(s) to segment.}
-  \item{strands}{character scalar or vector specifying which strands to segment.}
+  \item{strands}{character scalar or vector specifying which strands to
+  segment; can also be \code{NA}.}
   \item{nrBasesPerSegment}{integer (length 1): the parameter
-    \code{maxseg} of the \code{\link{segment}} function is calculated as the length of the chromosome divided
+    \code{maxseg} of the \code{\link{segment}} function is calculated as
+    the length of the chromosome divided
     by \code{nrBasesPerSegment}. Thus, it determines the average segment
     length in the finest segmentation.}
   \item{maxk}{passed on to  the function \code{\link{segment}}.}
@@ -43,7 +46,9 @@ segChrom(y, probeAnno, chr=1:17, strands=c("+", "-"),
 
 \details{
   This function is a wrapper for the \code{\link{segment}} function.
-  Refer to its help page for further details.
+  It is provided in this package for illustration. For applications to
+  different datasets, you will likely need to adapt it to some extent,
+  please refer to its source code.
 }
 
 \value{
@@ -55,7 +60,7 @@ segChrom(y, probeAnno, chr=1:17, strands=c("+", "-"),
   If \code{savedir} is specified, there is also the side-effect that
   a series of files "1.+.rda", "1.-.rda", etc. is saved in that directory.}
 
-\author{Matt Ritchie <ritchie@ebi.ac.uk> and Wolfgang Huber <huber@ebi.ac.uk>}
+\author{Wolfgang Huber <whuber@embl.de>}
 
 \examples{
 \dontrun{
