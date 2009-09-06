@@ -1,5 +1,5 @@
 Package: tilingArray
-Version: 1.23.2
+Version: 1.23.3
 Title: Transcript mapping with high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Zhenyu Xu, Joern Toedling with contributions from Matt Ritchie
 Maintainer: Zhenyu Xu <zhenyu@ebi.ac.uk>
@@ -20,7 +20,7 @@ Description: The package provides functionality that can be
 	hybridizations.
 Reference: Huber W, Toedling J, Steinmetz, L. Transcript mapping with high-density 
 	oligonucleotide tiling arrays. Bioinformatics 22, 1963-1970 (2006).
-License: The Artistic License, Version 2.0
+License: Artistic-2.0
 Collate: AllClasses.R AllGeneric.R
 	 normalizeByReference.R posMin.R otherStrand.R qcPlots.R
 	 comparisonPlot.R plotAlongChromLegend.R readCel2eSet.R
