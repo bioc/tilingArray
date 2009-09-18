@@ -28,7 +28,7 @@ segment(y, maxseg, maxk)
 \code{length(x)*maxk*maxseg} in time.}
 
 \value{
-  An object of class \code{\link[segmentation-class]{segmentation}}.
+  An object of class \code{\link[tilingArray:class-segmentation]{segmentation}}.
 }
 
 \author{W. Huber \email{huber@ebi.ac.uk}}

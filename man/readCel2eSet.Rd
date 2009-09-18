@@ -2,8 +2,9 @@
 \alias{readCel2eSet}
 \title{Read celfiles into an ExpressionSet object.}
 \description{
-  This is a wrapper for \code{\link[affy:ReadAffy]{ReadAffy}} that
-  returns an \code{\link[ExpressionSet-class]{ExpressionSet}} object rather than an
+  This is a wrapper for \code{\link[affy:read.affybatch]{ReadAffy}} that
+  returns an \code{\link[Biobase:class.ExpressionSet]{ExpressionSet}}
+  object rather than an 
   AffyBatch. This is particularly usefiles for arrays for which we have
   or need no CDF environment.
 }
