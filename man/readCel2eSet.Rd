@@ -15,7 +15,7 @@ readCel2eSet(filename, adf, path=".", rotated=FALSE, ...)
   \item{filename}{Character vector with CEL file names. Either
     \code{filename} or \code{adf} need to be specified, but not both.}
   \item{adf}{Object of class
-    \code{\link[Biobase:AnnotatedDataFrame-class]{AnnotatedDataFrame}}.}
+    \code{\link[Biobase:class.AnnotatedDataFrame]{AnnotatedDataFrame}}.}
   \item{path}{Character scalar with path to CEL files.}
   \item{rotated}{Logical scalar, see details.}
   \item{...}{Further arguments that are passed on to
@@ -29,7 +29,7 @@ readCel2eSet(filename, adf, path=".", rotated=FALSE, ...)
 }
 
 \value{
-  \code{\link[ExpressionSet-class]{ExpressionSet}} object.
+  \code{\link[Biobase:class.ExpressionSet]{ExpressionSet}} object.
 }
 
 \author{W. Huber}

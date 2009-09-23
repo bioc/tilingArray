@@ -19,9 +19,8 @@
    \item The function \code{\link{segment}}
      for fitting piecewise constant models using a dynamic programming
      algorithm that is both fast and exact,
-     and \code{\link[segmentation-class]{confint}} for
-     calculating confidence intervals using the
-     strucchange package.
+     and \code{\link[tilingArray:class-segmentation]{confint}} for
+     calculating confidence intervals using the strucchange package.
      Please see the vignette \emph{Segmentation demo} in the file
      inst/doc/segmentation.pdf (source file inst/scripts/segmentation.Rnw).
    \item The function \code{\link{plotAlongChrom}} for generating pretty
@@ -30,7 +29,8 @@
    \item The function \code{\link{normalizeByReference}}
      for probe-sequence dependent response adjustment from 
      a (set of) reference hybridizations.
-     Please see the vignette \emph{Assessing signal/noise ratio before and after normalization} in the file
+     Please see the vignette \emph{Assessing signal/noise ratio before
+    and after normalization} in the file 
      inst/doc/assessNorm.pdf (source file inst/scripts/assessNorm.Rnw).
      }
 }

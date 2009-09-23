@@ -1,5 +1,5 @@
 Package: tilingArray
-Version: 1.23.4
+Version: 1.23.5
 Title: Transcript mapping with high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Zhenyu Xu, Joern Toedling with contributions from Matt Ritchie
 Maintainer: Zhenyu Xu <zhenyu@ebi.ac.uk>
@@ -13,13 +13,14 @@ Description: The package provides functionality that can be
 	'segmentation' for representing partitionings of a linear series of
 	data; 2. the function 'segment' for fitting piecewise constant models
 	using a dynamic programming algorithm that is both fast and exact; 3.
-	the function 'confint' for calculating confidence intervals using the strucchange
-	package; 4. the function 'plotAlongChrom' for generating pretty
-	plots; 5. the function 'normalizeByReference' for probe-sequence
+	the function 'confint' for calculating confidence intervals using the
+	strucchange package; 4. the function 'plotAlongChrom' for generating
+	pretty plots; 5. the function 'normalizeByReference' for probe-sequence
 	dependent response adjustment from a (set of) reference
 	hybridizations.
-Reference: Huber W, Toedling J, Steinmetz, L. Transcript mapping with high-density 
-	oligonucleotide tiling arrays. Bioinformatics 22, 1963-1970 (2006).
+Reference: Huber W, Toedling J, Steinmetz, L. Transcript mapping with
+           high-density oligonucleotide tiling arrays. Bioinformatics 22,
+	   1963-1970 (2006). 
 License: Artistic-2.0
 Collate: AllClasses.R AllGeneric.R
 	 normalizeByReference.R posMin.R otherStrand.R qcPlots.R
