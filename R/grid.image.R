@@ -1,4 +1,4 @@
-grid.image = function(x, y, z, xlim, uniq=uniq,
+grid.image = function(x, y, z, uniq=uniq,
   colRamp=colorRamp(brewer.pal(9, "YlGnBu")),
   width=22, just=c("left","centre")) {
   

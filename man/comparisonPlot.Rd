@@ -26,7 +26,6 @@ comparisonPlot(x, y, xscale=range(x), yscale, anno, ticks, pch=20, cex=1, bgcol=
   \item{cex}{Multiplier applied to fontsize, see \code{\link[grid]{gpar}}.}
   \item{bgcol}{Color to use as background for some of the plot panels.}
 }
-\details{}
 
 \value{
   Function is called for its side-effect.

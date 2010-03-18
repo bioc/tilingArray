@@ -1,4 +1,4 @@
-all: findsegments costMatrix assessNorm segmentation clean
+all: findsegments costMatrix assessNorm segmentation plotAlongChrom clean
 
 findsegments: findsegments.tex
 	pdflatex findsegments
@@ -14,8 +14,11 @@ assessNorm: assessNorm.tex
 segmentation: segmentation.tex
 	cp -p ../scripts/segmentation.pdf .
 
+plotAlongChrom: plotAlongChrom.tex
+	pdflatex plotAlongChrom
+	pdflatex plotAlongChrom
 clean:
 	rm -f *.out *.bbl *.log *.aux *.blg *.brf *.toc *.tex
-	rm -f *.dvi *.ps findsegments-* costMatrix-* Rplots.pdf
+	rm -f *.dvi *.ps findsegments-* costMatrix-* plotAlongChrom-* Rplots.pdf
 
 

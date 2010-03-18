@@ -10,7 +10,7 @@ plotSegmentationHeatmap(dat, xlim, ylab, rowNames,
                         colHeatmap=colorRamp(brewer.pal(9, "YlGnBu")), 
                         showConfidenceIntervals=TRUE,
                         just=c("left","centre"),
-                        main, ...)
+                        main,makeRasterImage = TRUE, ...)
 }
 
 \arguments{
@@ -41,6 +41,10 @@ plotSegmentationHeatmap(dat, xlim, ylab, rowNames,
     x-coordinates are the probe middle positions. Usually the second
     entry should be "centre" (see \code{\link[grid]{grid.rect}})}
   \item{main}{character vector specifying plot title.}
+  \item{makeRasterImage}{logical scalar indicating whether to plot the heatmap image
+  	by the grid.raster (see \code{\link[grid]{grid.raster}}) or 
+  	the grid.rect (see \code{\link[grid]{grid.rect}}) function in grid package.The default is to 
+  	generate raster image, as it can be displayed much faster with a relatively smaller file size.}
   \item{...}{additional arguments.}
 }
 
@@ -55,5 +59,12 @@ plotSegmentationHeatmap(dat, xlim, ylab, rowNames,
     \item{\code{flag}}{indicates probe uniqueness in the genome.  Possibilities are 3: multiple perfect matches, 2: has no PM but one or more near-matches, 1: has exactly one PM and some near-matches in the genome, 0: has exactly one PM and no near-matches.}
     \item{\code{extras}}{(optional) matrix of additional values (such as test-statistics/p-values) to be plotted}
   }
+}
+\examples{
+  data(segnf)
+  data(gffSub)
+  nmLabel = colnames(segnf$"1.+"@y)
+  plotAlongChrom(segnf,chr=1,coord=c(35000,50000),what="heatmap", 
+  		gff=gffSub,rowNamesHeatmap=nmLabel) ##using raster image
 }
 \author{Wolfgang Huber <huber@ebi.ac.uk>}

@@ -1,9 +1,10 @@
 Package: tilingArray
-Version: 1.25.0
+Version: 1.25.1
+Date: 2010-3-18
 Title: Transcript mapping with high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Zhenyu Xu, Joern Toedling with contributions from Matt Ritchie
 Maintainer: Zhenyu Xu <zhenyu@ebi.ac.uk>
-Depends: Biobase, methods, pixmap
+Depends: R (>= 2.11.0), Biobase, methods, pixmap
 Imports: strucchange, affy, vsn, genefilter, RColorBrewer, grid
 Suggests:
 Description: The package provides functionality that can be
@@ -27,7 +28,7 @@ Collate: AllClasses.R AllGeneric.R
 	 comparisonPlot.R plotAlongChromLegend.R readCel2eSet.R
 	 confint.segmentation.R plotAlongChrom.R sampleStep.R
 	 costMatrix.R plotPenLL.R segChrom.R
-	 findsegments.R  grid.image.R 
+	 findsegments.R  grid.image.R raster.image.R 
 	 plotSegmentationDots.R plotSegmentationHeatmap.R
 	 PMindex.R methods-segmentation.R
 	 zzz.R

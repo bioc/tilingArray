@@ -140,5 +140,16 @@ plotAlongChrom(segObj, y, probeAnno, gff,
 \examples{
   ## 1. see viewSegmentation.R script in the inst/scripts directory
   ## 2. (newer): segmentation.Rnw
- }
+  ## 3. (newer): see the plotALongChrom vignette
+  data(segnf)
+  data(gffSub)
+  nmLabel = colnames(segnf$"1.+"@y)
+  plotAlongChrom(segnf,chr=1,coord=c(35000,50000),
+  			gff=gffSub,rowNamesHeatmap=nmLabel) ##the dots
+  plotAlongChrom(segnf,chr=1,coord=c(35000,50000),what="heatmap", 
+  			gff=gffSub,rowNamesHeatmap=nmLabel) ##the heatmap
+  			
+  plotAlongChrom(segnf,chr=1,coord=c(35000,50000),gff=gffSub,
+  			showConfidenceIntervals=FALSE) ##do not show the segment confidence interval	
+   }
 
