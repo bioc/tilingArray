@@ -1,6 +1,6 @@
 Package: tilingArray
-Version: 1.25.1
-Date: 2010-3-18
+Version: 1.25.2
+Date: 2010-4-7
 Title: Transcript mapping with high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Zhenyu Xu, Joern Toedling with contributions from Matt Ritchie
 Maintainer: Zhenyu Xu <zhenyu@ebi.ac.uk>

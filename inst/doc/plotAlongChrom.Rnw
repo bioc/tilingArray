@@ -47,9 +47,9 @@ pagecolor=darkblue,raiselinks,plainpages,pdftex]{hyperref}
 %----------------------------------------
 The purpose of this vignette is to demonstrate some of the functionalities of the 
 \Rfunction{plotAlongChrom} in the \Rpackage{tilingArray}
-package. We use a small subset data from a expression profiling paper \cite{Xu2009}; The data
-only include the region from 35000bp to 50000bp in yeast chromosome one. expression profiling 
-is done in YPE and YPD condition, 3 replicates each. Further information about the experimental design 
+package. We use a small subset data from an expression profiling paper \cite{Xu2009}; The data
+only include the region from 35000bp to 50000bp in yeast chromosome one. Expression profiling 
+is done in YPE and YPD conditions, 3 replicates each. Further information about the experimental design 
 can be found at the paper website {http://steinmetzlab.embl.de/NFRsharing/}.
 <<load, results=hide>>=
 library("grid")
@@ -100,18 +100,18 @@ first argument, which is expected to contain objects of class
 \Robject{paste(chr, c("+", "-"), sep=".")}, where \Robject{chr} is the
 chromosome identifier. 
 
-The following code generate Figure~\ref{plotAlongChrom-alongChromDot1},a dot plot that averaged across all the hybes.
-<<alongChromDot1,fig=TRUE, eps=FALSE, include=FALSE, width=16, height=6,echo=FALSE>>=
+The following code generates Figure~\ref{plotAlongChrom-alongChromDot1}, a dot plot that averaged across all hybes.
+<<alongChromDot1,fig=TRUE, eps=FALSE, include=FALSE, width=16, height=6,echo=TRUE>>=
 grid.newpage()
 plotAlongChrom(segnf,chr=1, coord=c(35000,50000),what="dots", gff=gffSub)
 @
 \myincfig{plotAlongChrom-alongChromDot1}{0.96\textwidth}{% 
-Along-chromosome dot plot of the averaged value across all the hybes.}
+Along-chromosome dot plot of the averaged value across all hybes.}
 
-We could also make seprate dot plots for different hybes by setting the parameter\textit{sepPlot} as TRUE. The 
-following code generate Figure~\ref{plotAlongChrom-alongChromDot2} that plot the expression for the two 
-condition seprately.
-<<alongChromDot2,fig=TRUE, eps=FALSE, include=FALSE, width=16, height=8,echo=FALSE>>=
+We could also make separate dot plot for different hybes by setting the parameter \textit{sepPlot} as TRUE. The 
+following code generates Figure~\ref{plotAlongChrom-alongChromDot2} that plots the expression separately for the two 
+conditions.
+<<alongChromDot2,fig=TRUE, eps=FALSE, include=FALSE, width=16, height=8,echo=TRUE>>=
 segObj = new.env(parent = baseenv())
 nmLabel = colnames(segnf$"1.+"@y)
 lab = gsub("\\d","",nmLabel)
@@ -129,9 +129,9 @@ plotAlongChrom(segObj,chr=1, coord=c(35000,50000),what="dots", gff=gffSub,sepPlo
 Along-chromosome dot plot of the averaged value among different replicates for YPD and YPE condition.}
  
 However, with the number of hybes increases, it is very hard to see the difference 
-in dot plots in a normal screen, thus if the number of hybes is more than 4, the function will 
-force to take the average. a better alternative of display multiple hybes is to use the heatmap.        
-The following code generate Figure~\ref{plotAlongChrom-alongChromHeatmap1} that makes the heatmap plot.
+in dot plots in a normal screen. Thus, if the number of hybes is more than 4, the function will 
+force to take the average. A better alternative of displaying multiple hybes is to use the heatmap.        
+The following code generates Figure~\ref{plotAlongChrom-alongChromHeatmap1} that makes the heatmap plot.
 <<alongChromHeatmap1,fig=TRUE, eps=FALSE, include=FALSE, width=16, height=6>>=
 grid.newpage() 
 plotAlongChrom(segnf,chr=1, coord=c(35000,50000),what="heatmap", gff=gffSub,
@@ -142,10 +142,10 @@ plotAlongChrom(segnf,chr=1, coord=c(35000,50000),what="heatmap", gff=gffSub,
 Along-chromosome heatmap plot of all the replicates in YPD and YPE condition.}
  
 Start with R 2.11.0, the \Rpackage{grid} pacakge introduced the raster array image function 
-\Rfunction{grid.raster} which is a faster and efficient way of generating heatmap images.Now the  
-\Rpackage{tilingArray} package uses the \Rfunction{grid.raster} function as default to make heatmap
+\Rfunction{grid.raster} which is a faster and efficient way of generating heatmap images. From R 2.11.0, The  
+\Rpackage{tilingArray} package will use the \Rfunction{grid.raster} function as default to make heatmap
 images replacing the previous \Rfunction{grid.rect} function. The choose of the two drawing function
-can be changed by the parameter \textit{makeRasterImage}. The following code generate 
+can be changed by the parameter \textit{makeRasterImage}. The following code generates 
 Figure~\ref{plotAlongChrom-alongChromHeatmap2} that makes the raster heatmap plot.
 
 <<alongChromHeatmap2,fig=TRUE, eps=FALSE, include=FALSE, width=16, height=6>>=
@@ -158,8 +158,8 @@ plotAlongChrom(segnf,chr=1, coord=c(35000,50000),what="heatmap", gff=gffSub,
 Along-chromosome raster heatmap plot of all the replicates in YPD and YPE condition.}
 
 The color gradient of the heatmap could be changed by the parameter \textit{colHeatmap}.
-The following code generate Figure~\ref{plotAlongChrom-alongChromHeatmap3} 
-that makes the raster heatmap plot using a blue gradient.
+The following code generates Figure~\ref{plotAlongChrom-alongChromHeatmap3} 
+that makes the raster heatmap plot using a blue color gradient.
 <<alongChromHeatmap3,fig=TRUE, eps=FALSE, include=FALSE, width=16, height=6>>=
 grid.newpage() 
 plotAlongChrom(segnf,chr=1, coord=c(35000,50000),what="heatmap", gff=gffSub,
