@@ -141,10 +141,10 @@ plotAlongChrom(segnf,chr=1, coord=c(35000,50000),what="heatmap", gff=gffSub,
 \myincfig{plotAlongChrom-alongChromHeatmap1}{0.96\textwidth}{% 
 Along-chromosome heatmap plot of all the replicates in YPD and YPE condition.}
  
-Start with R 2.11.0, the \Rpackage{grid} pacakge introduced the raster array image function 
+Start with R 2.11.0, the \Rpackage{grid} package introduced the raster array image function 
 \Rfunction{grid.raster} which is a faster and efficient way of generating heatmap images. From R 2.11.0, The  
 \Rpackage{tilingArray} package will use the \Rfunction{grid.raster} function as default to make heatmap
-images replacing the previous \Rfunction{grid.rect} function. The choose of the two drawing function
+images replacing the previous \Rfunction{grid.rect} function. The choice between the two drawing functions
 can be changed by the parameter \textit{makeRasterImage}. The following code generates 
 Figure~\ref{plotAlongChrom-alongChromHeatmap2} that makes the raster heatmap plot.
 
