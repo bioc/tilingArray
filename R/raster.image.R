@@ -11,6 +11,7 @@ interpolateZ <- function(x,y,xout,space = 8){
     xAdd = setdiff(xInter.right,xInter.left) ##the missing position that is in the right shift, but not in the left shift should be added and considered as the border that could take a value
     xInsert = c(xInter.left,xAdd)
     yInsert = c(y,rep(-1000,length(xAdd)))
+    yInsert[is.na(yInsert)] = -1000 ##this step is very important to make sure that there is no NAs in y,otherwise the interpolate will have problems
     ord = order(xInsert)
     rv = approx(xInsert[ord], yInsert[ord], xout, method="constant", f=0)$y
     rv[rv== -1000] = NA
@@ -18,7 +19,7 @@ interpolateZ <- function(x,y,xout,space = 8){
 }
 raster.image = function(x, y, z, uniq=uniq,
         colRamp = colorRamp(brewer.pal(9, "YlGnBu")),
-        width = 8)   ## the typical spacing between neighbouring probes 
+        width = 8,space = 8,...)   ## the typical spacing between neighbouring probes 
 {
     
     rg = range(z, na.rm=TRUE)
@@ -39,7 +40,7 @@ raster.image = function(x, y, z, uniq=uniq,
     
     # interpolate z
 #    z.equi = apply(z, 2, function(v) approx(x, y=v, xout=x.equi, method="constant", f=0.5)$y)
-    z.equi = apply(z, 2, function(v) interpolateZ(x, y=v, xout=x.equi,space = width)) 
+    z.equi = apply(z, 2, function(v) interpolateZ(x, y=v, xout=x.equi,space = space)) 
     
     mcol = colRamp(as.vector(z.equi)) / 256
     mcol[ uniq!=0, ] = 1

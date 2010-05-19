@@ -65,7 +65,7 @@ plotSegmentationHeatmap = function(dat, xlim, ylab, rowNames,
   colo = ifelse(dat$flag[ord]==0, colors[strand], colors["duplicated"])
   if(makeRasterImage){
       raster.image(dat$x, 1:ncol(dat$y), z=dat$y, uniq=dat$flag,
-              colRamp=colHeatmap)
+              colRamp=colHeatmap,...)
   }else{
       grid.image(dat$x, 1:ncol(dat$y), z=dat$y, uniq=dat$flag,
               colRamp=colHeatmap, just=just)
