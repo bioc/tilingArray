@@ -23,7 +23,7 @@ Reference: Huber W, Toedling J, Steinmetz, L. Transcript mapping with
            high-density oligonucleotide tiling arrays. Bioinformatics 22,
 	   1963-1970 (2006). 
 License: Artistic-2.0
-Collate: AllClasses.R AllGeneric.R
+Collate: AllClasses.R AllGenerics.R
 	 normalizeByReference.R posMin.R otherStrand.R qcPlots.R
 	 comparisonPlot.R plotAlongChromLegend.R readCel2eSet.R
 	 confint.segmentation.R plotAlongChrom.R sampleStep.R
