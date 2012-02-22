@@ -21,7 +21,7 @@
 }
 
 \usage{
-residuals.breakpointsPretend(object, breaks, ...)
+\S3method{residuals}{breakpointsPretend}(object, breaks, ...)
 breakpoints.breakpointsPretend(obj, breaks, ...) 
 }
 

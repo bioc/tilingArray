@@ -7,9 +7,9 @@ comparisonPlot = function(x, y, xscale=range(x), yscale, anno, ticks, pch=20, ce
   
   n = length(y)
   grid.newpage()
-  pushViewport(viewport(layout=grid.layout(n+2, 1, height=c(rep(1,n), 0.2, 0.2))))
+  pushViewport(viewport(layout=grid.layout(n+2, 1, heights=c(rep(1,n), 0.2, 0.2))))
   for(i in 1:n) { 
-    pushViewport(viewport(layout=grid.layout(2, 2, height=c(.95, 0.05), width=c(0.1, 0.9)),
+    pushViewport(viewport(layout=grid.layout(2, 2, heights=c(.95, 0.05), widths=c(0.1, 0.9)),
                             layout.pos.col=1, layout.pos.row=i, clip="off"))
     if(i%%2==1) grid.rect(x=0.5, y=0.5, width=1, height=1, default.units="npc",
             gp=gpar(col=bgcol, fill=bgcol))
@@ -29,7 +29,7 @@ comparisonPlot = function(x, y, xscale=range(x), yscale, anno, ticks, pch=20, ce
     grid.points(x, y[[i]], pch=pch, gp=gpar(col=cols))
     popViewport(2)
   }
-  pushViewport(viewport(layout=grid.layout(2, 2, height=c(.95, 0.05), width=c(0.1, 0.9)),
+  pushViewport(viewport(layout=grid.layout(2, 2, heights=c(.95, 0.05), widths=c(0.1, 0.9)),
                             layout.pos.col=1, layout.pos.row=n+1, clip="off"))
   pushViewport(dataViewport(xscale=xscale, yscale=c(0,1),
                               layout.pos.col=2, layout.pos.row=1, clip="off"))

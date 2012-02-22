@@ -56,7 +56,7 @@ newVP <- function(main, cexMain=1, dataPanelHeight=1, vpHeight=0.7, titleOffSet=
      if(!missing(main)) {
         vpr = c("title"=0.1, "data"=dataPanelHeight)
         pushViewport(viewport(width=0.85, height=vpHeight)) ## plot margin
-        pushViewport(viewport(layout=grid.layout(length(vpr), 1, height=vpr)))  
+        pushViewport(viewport(layout=grid.layout(length(vpr), 1, heights=vpr)))  
         pushViewport(viewport(layout.pos.col=1, layout.pos.row=which(names(vpr)=="title")))
         grid.text(label=main, x=0.5, y=1.1+titleOffSet, just="centre", gp=gpar(cex=cexMain))  
         popViewport()
@@ -64,7 +64,7 @@ newVP <- function(main, cexMain=1, dataPanelHeight=1, vpHeight=0.7, titleOffSet=
      } else {
         vpr = c("data"=dataPanelHeight)
         pushViewport(viewport(width=0.85, height=vpHeight)) ## plot margin
-        pushViewport(viewport(layout=grid.layout(length(vpr), 1, height=vpr)))
+        pushViewport(viewport(layout=grid.layout(length(vpr), 1, heights=vpr)))
      }
   vpr
   }

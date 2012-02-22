@@ -2,7 +2,7 @@ useDynLib("tilingArray")
 
 import("methods")
 import("grid")
-importFrom("graphics", "plot")
+importFrom("BiocGenerics", "plot")
 importFrom("stats", "confint", "logLik", "residuals")
 importFrom("strucchange", "breakpoints")
 importFrom("vsn", "vsnMatrix")

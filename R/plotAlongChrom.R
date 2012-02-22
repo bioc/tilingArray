@@ -83,7 +83,7 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
   }
 
   pushViewport(viewport(width=0.85, height=0.95)) ## plot margin
-  pushViewport(viewport(layout=grid.layout(length(VP), 1, height=VP)))
+  pushViewport(viewport(layout=grid.layout(length(VP), 1, heights=VP)))
   for(i in 1:2) {
     strand = c("+", "-")[i]
 
