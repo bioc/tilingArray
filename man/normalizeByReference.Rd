@@ -67,7 +67,7 @@ normalizeByReference(x, reference, pm, background, refSig, nrStrata=10,
   The functions \code{PMindex} and \code{BGindex} can be used to produce
   the \code{pm} and \code{background} arguments from a \code{probeAnno}
   environment such as provided in the davidTiling package.
-  
+
   To summarize, a reference probe (indicated by argument \code{pm}) is a
   probe that perfectly matches the target genome exactly once, a
   background probe (indicated by argument \code{background})
@@ -84,8 +84,10 @@ normalizeByReference(x, reference, pm, background, refSig, nrStrata=10,
 
 \author{W. Huber \email{huber@ebi.ac.uk}}
 
-\references{Huber W, Toedling J, Steinmetz, L. Transcript mapping with high-density 
-	oligonucleotide tiling arrays. Bioinformatics 22, 1963-1970 (2006).}
+\references{The method implemented in this function is described in
+  detail in Section 2.3 of the article
+  Huber W, Toedling J, Steinmetz, L. Transcript mapping with
+  high-density oligonucleotide tiling arrays. Bioinformatics 22, 1963-1970 (2006).}
 \examples{
   ## see vignette assessNorm.Rnw in inst/scripts directory
 }
