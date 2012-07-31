@@ -41,9 +41,11 @@ raster.image = function(x, y, z, uniq=uniq,
     # interpolate z
 #    z.equi = apply(z, 2, function(v) approx(x, y=v, xout=x.equi, method="constant", f=0.5)$y)
     z.equi = apply(z, 2, function(v) interpolateZ(x, y=v, xout=x.equi,space = space)) 
-    
+	uniq.equi = interpolateZ(x, y=uniq, xout=x.equi,space = space)
+	
     mcol = colRamp(as.vector(z.equi)) / 256
-    mcol[ uniq!=0, ] = 1
+	
+    mcol[ uniq.equi!=0, ] = 1 ###the uniq.euqi will be re-cycled
     indna <- is.na(mcol[,1])
     mcol[indna,] = 1
     rast = rgb(mcol[,1], mcol[,2], mcol[,3])
@@ -53,8 +55,8 @@ raster.image = function(x, y, z, uniq=uniq,
     trsf = function(x) t(x)[seq(from=ncol(x), to=1, by=-1),, drop=FALSE]
     
     grid.raster(image = trsf(rast),
-            y = y.equi[1], height = y.equi[length(y.equi)] - y.equi[1], hjust=0, 
-            x = x.equi[1], width  = x.equi[length(x.equi)] - x.equi[1], vjust=0,
+			y = 0.5, height = length(y.equi), hjust=0, #y position starts at 0.5, as the label starts at 0.5, height is the number of hybes 
+            x = x.equi[1], width  = x.equi[length(x.equi)] - x.equi[1]+1, vjust=0,
             default.units = "native", interpolate=FALSE)
     
 }

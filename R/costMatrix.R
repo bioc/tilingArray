@@ -17,8 +17,8 @@ costMatrix = function(x, maxk) {
   }
   n = length(r)
   
-  if(!is.numeric(maxk)||(length(maxk)!=1)||(maxk<1)||(maxk>n))
-    stop(sprintf("'maxk' must be a single number between 1 and the number of rows of 'x': %d.", n))
+  if(!is.numeric(maxk)||(length(maxk)!=1)||(maxk<=1)||(maxk>n))
+    stop(sprintf("'maxk' must be a single number between 2 and the number of rows of 'x': %d.", n))
 
   ## see inst/doc/costMatrix.tex (.pdf) for explanation of the algebra
   cr = cumsum(r)
@@ -27,7 +27,8 @@ costMatrix = function(x, maxk) {
   G = matrix(as.numeric(NA), nrow=maxk, ncol=n)
   k = 1:maxk
   G[, 1] = cq[k] - cr[k]*cr[k]/(k*d)
-  for(k in 1:(maxk-1)) {
+  m = if(n==maxk) (maxk-1) else (maxk)
+  for(k in seq_len(m)) {
     i   = 1:(n-k)
     j   = 2:(n-k+1)
     cqk = cq[i+k]-cq[i]
