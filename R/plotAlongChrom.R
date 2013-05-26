@@ -58,9 +58,9 @@ plotAlongChrom = function(segObj, y, probeAnno, gff,
      VP <- c(VP[1:(indgff-1)], "extras+"=1, VP[indgff:(indlegend-1)], "extras-"=1, VP[indlegend:length(VP)])
   }
   if(!doLegend)
-     VP = VP[-which(names(VP)=="legend")]
+     VP = VP[names(VP)!="legend"]
   if(missing(gff))
-     VP = VP[-which(names(VP)=="gff+" | names(VP)=="gff-")]
+     VP = VP[!(names(VP)=="gff+" | names(VP)=="gff-")]
   defaultColors = c("+" = "#00441b", "-" = "#081d58", "duplicated" = "grey",
     "cp" = "#555555", "ci" = "#777777", "highlight" = "red", "threshold" = "grey")
   if(!missing(colors)) {
