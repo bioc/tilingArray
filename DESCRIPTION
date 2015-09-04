@@ -1,8 +1,8 @@
 Package: tilingArray
-Version: 1.47.0
+Version: 1.47.1
 Title: Transcript mapping with high-density oligonucleotide tiling arrays
 Author: Wolfgang Huber, Zhenyu Xu, Joern Toedling with contributions from Matt Ritchie
-Maintainer: Zhenyu Xu <zhenyu@ebi.ac.uk>
+Maintainer: Zhenyu Xu <zxu@embl.de>
 Depends: R (>= 2.11.0), Biobase, methods, pixmap
 Imports: strucchange, affy, vsn, genefilter, RColorBrewer, grid, stats4
 Suggests:
